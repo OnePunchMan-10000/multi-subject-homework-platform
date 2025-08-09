@@ -100,18 +100,30 @@ def format_solution_output(response_text, subject):
     html_output += get_subject_badge(subject)
     html_output += f'<h3>📚 {subject} Solution:</h3>'
     
+    # If response is too short or doesn't have steps, show raw content
+    if len(response_text.strip()) < 50 or not re.search(r'step', response_text, re.IGNORECASE):
+        html_output += f'<div class="explanation-text">{response_text}</div>'
+        html_output += '</div>'
+        return html_output
+    
     # Split response into lines for processing
     lines = response_text.split('\n')
     current_explanation = ""
     step_counter = 1
+    found_steps = False
     
     for line in lines:
         line = line.strip()
         if not line:
+            # Add accumulated explanation before empty line
+            if current_explanation:
+                html_output += f'<div class="explanation-text">{current_explanation}</div>'
+                current_explanation = ""
             continue
             
         # Check if line contains step information
         if re.search(r'step\s*\d*:?', line, re.IGNORECASE):
+            found_steps = True
             # Add previous explanation if exists
             if current_explanation:
                 html_output += f'<div class="explanation-text">{current_explanation}</div>'
@@ -121,25 +133,29 @@ def format_solution_output(response_text, subject):
             step_match = re.search(r'step\s*(\d*):?\s*(.*)', line, re.IGNORECASE)
             if step_match:
                 step_num = step_match.group(1) if step_match.group(1) else str(step_counter)
-                step_content = step_match.group(2)
+                step_content = step_match.group(2) if step_match.group(2) else "Continue with calculation"
                 html_output += f'<div class="step-header">📝 Step {step_num}: {step_content}</div>'
                 step_counter += 1
             continue
         
         # Check if line contains mathematical expressions or formulas
-        if re.search(r'[=+\-*/^()]', line) and len(line) < 100:
+        if re.search(r'[=+\-*/^()]', line) and len(line) < 150:
             # This looks like an equation or formula
             html_output += f'<div class="equation-box">{line}</div>'
         # Check for final answers or conclusions
-        elif any(word in line.lower() for word in ['therefore', 'thus', 'answer', 'solution is']):
+        elif any(word in line.lower() for word in ['therefore', 'thus', 'answer', 'solution is', 'result', 'final']):
             html_output += f'<div class="final-answer">🎯 {line}</div>'
         else:
-            # Regular explanation text
+            # Regular explanation text - always include it
             current_explanation += line + " "
     
     # Add any remaining explanation
     if current_explanation:
         html_output += f'<div class="explanation-text">{current_explanation}</div>'
+    
+    # If no steps were found, show the entire response as explanation
+    if not found_steps and not current_explanation:
+        html_output += f'<div class="explanation-text">{response_text}</div>'
     
     html_output += '</div>'
     return html_output
