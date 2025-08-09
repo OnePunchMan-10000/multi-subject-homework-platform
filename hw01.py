@@ -1,4 +1,3 @@
-# multi_subject_app.py
 import streamlit as st
 import requests
 import matplotlib.pyplot as plt
@@ -9,11 +8,9 @@ import PIL.Image
 import math
 import re
 
-# === FREE API Setup (Hugging Face) ===
 def get_hf_headers():
-    return {"Authorization": "Bearer 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"}  # Replace with your HF token
+    return {"Authorization": f"Bearer {st.secrets.get('HUGGINGFACE_TOKEN', 'your-token-here')}"}
 
-# Subject-specific model endpoints
 SUBJECT_MODELS = {
     "Math": "microsoft/DialoGPT-medium",
     "English": "facebook/blenderbot-400M-distill", 
@@ -26,10 +23,10 @@ SUBJECT_MODELS = {
     "Economics": "microsoft/DialoGPT-medium"
 }
 
-# === OpenRouter API Setup (YOUR WORKING SETUP) ===
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
 headers = {
-    "Authorization": "Bearer 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",
+    "Authorization": f"Bearer {st.secrets['OPENROUTER_API_KEY']}",
     "Content-Type": "application/json"
 }
 
@@ -64,21 +61,18 @@ def query_subject_llm(prompt, subject="Math"):
     except Exception as e:
         return f"Error: {str(e)}"
 
-# === Geometry Functions (Keep for Math subject) ===
 def extract_triangle_json(question):
     """Simplified triangle extraction for math geometry problems"""
-    # Basic pattern matching for triangle problems
+
     sides = {}
     angles = {}
-    points = ["A", "B", "C"]  # Default triangle points
-    
-    # Extract sides (e.g., "AB = 5 cm")
+    points = ["A", "B", "C"]
+
     side_pattern = r'([A-Z][A-Z])\s*=\s*(\d+(?:\.\d+)?)\s*cm'
     side_matches = re.findall(side_pattern, question, re.IGNORECASE)
     for match in side_matches:
         sides[match[0].upper()] = float(match[1])
-    
-    # Extract angles (e.g., "∠ABC = 60°")
+   
     angle_pattern = r'∠([A-Z]+)\s*=\s*(\d+(?:\.\d+)?)\s*°?'
     angle_matches = re.findall(angle_pattern, question, re.IGNORECASE)
     for match in angle_matches:
@@ -93,7 +87,6 @@ def extract_triangle_json(question):
         }
     return None
 
-# === Simple Triangle Drawing (Math only) ===
 def draw_simple_triangle(sides, points=["A", "B", "C"]):
     """Simplified triangle drawing for math problems"""
     try:
@@ -139,14 +132,12 @@ with col1:
         index=0
     )
     
-    # Show model info
     model_name = SUBJECT_MODELS[subject]
     st.info(f"Using: `{model_name}`")
 
 with col2:
     st.markdown(f"### {subject} Homework Helper")
     
-    # Subject-specific placeholders
     placeholders = {
         "Math": "Enter your math problem (e.g., 'Solve: 2x + 5 = 15' or 'Draw triangle ABC with AB=5cm, BC=6cm, ∠ABC=60°')",
         "English": "Ask about grammar, writing, or literature (e.g., 'Explain the theme of Romeo and Juliet')",
@@ -166,7 +157,6 @@ question = st.text_area(
     height=120
 )
 
-# === Quick Examples per Subject ===
 with st.expander(f"📝 {subject} Example Questions"):
     examples = {
         "Math": [
@@ -200,7 +190,6 @@ with st.expander(f"📝 {subject} Example Questions"):
         if st.button(f"📌 {ex}", key=f"ex_{subject}_{i}"):
             st.session_state.question_input = ex
 
-# === Solve Button ===
 if st.button("🚀 Get Solution", type="primary"):
     if question.strip():
         with st.spinner(f"🧠 Solving {subject} problem..."):
