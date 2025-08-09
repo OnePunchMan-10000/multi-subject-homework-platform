@@ -8,9 +8,148 @@ import PIL.Image
 import math
 import re
 
+# === ENHANCED STYLING CSS ===
+st.markdown("""
+<style>
+    .step-header {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 16px;
+        margin: 15px 0 10px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .equation-box {
+        background-color: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 18px;
+        text-align: center;
+        margin: 10px 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .explanation-text {
+        background-color: #f8f9fa;
+        padding: 12px 16px;
+        border-left: 4px solid #667eea;
+        margin: 10px 0;
+        border-radius: 0 8px 8px 0;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    
+    .solution-container {
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        background: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+    }
+    
+    .subject-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    
+    .math-badge { background: #e3f2fd; color: #1565c0; }
+    .english-badge { background: #f3e5f5; color: #7b1fa2; }
+    .science-badge { background: #e8f5e8; color: #2e7d32; }
+    .history-badge { background: #fff3e0; color: #ef6c00; }
+    .geography-badge { background: #e0f2f1; color: #00695c; }
+    .physics-badge { background: #fce4ec; color: #c2185b; }
+    .chemistry-badge { background: #f1f8e9; color: #558b2f; }
+    .biology-badge { background: #fff8e1; color: #f57f17; }
+    .economics-badge { background: #e8eaf6; color: #3f51b5; }
+    
+    .final-answer {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        font-weight: bold;
+        text-align: center;
+        margin: 15px 0;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# === ENHANCED OUTPUT FORMATTING FUNCTIONS ===
+def get_subject_badge(subject):
+    """Return HTML for subject badge"""
+    badge_class = f"{subject.lower()}-badge"
+    return f'<span class="subject-badge {badge_class}">{subject}</span>'
+
+def format_solution_output(response_text, subject):
+    """Enhanced formatting for solution output"""
+    
+    # Start the solution container
+    html_output = f'<div class="solution-container">'
+    html_output += get_subject_badge(subject)
+    html_output += f'<h3>📚 {subject} Solution:</h3>'
+    
+    # Split response into lines for processing
+    lines = response_text.split('\n')
+    current_explanation = ""
+    step_counter = 1
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        # Check if line contains step information (including **Step** format from your prompts)
+        if re.search(r'(\*\*step\s*\d*\*\*|step\s*\d*:?)', line, re.IGNORECASE):
+            # If we have previous explanation, add it
+            if current_explanation:
+                html_output += f'<div class="explanation-text">{current_explanation}</div>'
+                current_explanation = ""
+            
+            # Extract step content
+            step_match = re.search(r'(\*\*)?(step\s*(\d*))(\*\*)?:?\s*(.*)', line, re.IGNORECASE)
+            if step_match:
+                step_num = step_match.group(3) if step_match.group(3) else str(step_counter)
+                step_content = step_match.group(5)
+                html_output += f'<div class="step-header">📝 Step {step_num}: {step_content}</div>'
+                step_counter += 1
+            continue
+        
+        # Check if line contains mathematical expressions or equations
+        if re.search(r'[=+\-*/^()x]|\d+.*[=+\-*/^()x]', line) and not any(word in line.lower() for word in ['step', 'therefore', 'thus', 'final']):
+            # This looks like an equation
+            html_output += f'<div class="equation-box">{line}</div>'
+        else:
+            # Check for final answers or conclusions
+            if any(word in line.lower() for word in ['therefore', 'thus', 'so the answer', 'final answer', 'solution is', 'answer:']):
+                html_output += f'<div class="final-answer">🎯 {line}</div>'
+            else:
+                # Regular explanation text
+                current_explanation += line + " "
+    
+    # Add any remaining explanation
+    if current_explanation:
+        html_output += f'<div class="explanation-text">{current_explanation}</div>'
+    
+    html_output += '</div>'
+    return html_output
+
+# === FREE API Setup (Hugging Face) ===
 def get_hf_headers():
     return {"Authorization": f"Bearer {st.secrets.get('HUGGINGFACE_TOKEN', 'your-token-here')}"}
 
+# Subject-specific model endpoints
 SUBJECT_MODELS = {
     "Math": "microsoft/DialoGPT-medium",
     "English": "facebook/blenderbot-400M-distill", 
@@ -23,8 +162,8 @@ SUBJECT_MODELS = {
     "Economics": "microsoft/DialoGPT-medium"
 }
 
+# === OpenRouter API Setup (YOUR WORKING SETUP) ===
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-
 headers = {
     "Authorization": f"Bearer {st.secrets['OPENROUTER_API_KEY']}",
     "Content-Type": "application/json"
@@ -32,15 +171,15 @@ headers = {
 
 def query_subject_llm(prompt, subject="Math"):
     system_prompts = {
-        "Math": "You are a math tutor. Solve step-by-step with clear explanations. Format with **Step 1**, **Step 2**, etc.",
-        "English": "You are an English tutor. Help with grammar, writing, and literature analysis. Be clear and educational.",
-        "Science": "You are a science tutor. Explain concepts clearly with examples and scientific reasoning.",
-        "History": "You are a history tutor. Provide historical context, dates, and analyze events objectively.",
-        "Geography": "You are a geography tutor. Explain locations, climate, physical features, and human geography.",
-        "Physics": "You are a physics tutor. Use formulas, show calculations, and explain physical phenomena.",
-        "Chemistry": "You are a chemistry tutor. Explain reactions, show equations, and describe chemical properties.",
-        "Biology": "You are a biology tutor. Explain biological processes, systems, and life sciences clearly.",
-        "Economics": "You are an economics tutor. Explain economic principles, theories, and real-world applications."
+        "Math": "You are a math tutor. Solve step-by-step with clear explanations. Format with **Step 1**, **Step 2**, etc. Show equations clearly on separate lines.",
+        "English": "You are an English tutor. Help with grammar, writing, and literature analysis. Be clear and educational. Use **Step 1**, **Step 2** format for multi-step explanations.",
+        "Science": "You are a science tutor. Explain concepts clearly with examples and scientific reasoning. Use step-by-step format when explaining processes.",
+        "History": "You are a history tutor. Provide historical context, dates, and analyze events objectively. Use clear step-by-step analysis when needed.",
+        "Geography": "You are a geography tutor. Explain locations, climate, physical features, and human geography. Use structured explanations.",
+        "Physics": "You are a physics tutor. Use formulas, show calculations step-by-step, and explain physical phenomena. Format with **Step 1**, **Step 2**, etc.",
+        "Chemistry": "You are a chemistry tutor. Explain reactions, show equations step-by-step, and describe chemical properties. Use clear formatting.",
+        "Biology": "You are a biology tutor. Explain biological processes, systems, and life sciences clearly. Use step-by-step explanations for processes.",
+        "Economics": "You are an economics tutor. Explain economic principles, theories, and real-world applications. Use structured step-by-step analysis."
     }
     
     payload = {
@@ -61,18 +200,20 @@ def query_subject_llm(prompt, subject="Math"):
     except Exception as e:
         return f"Error: {str(e)}"
 
+# === Geometry Functions (Keep for Math subject) ===
 def extract_triangle_json(question):
     """Simplified triangle extraction for math geometry problems"""
-
     sides = {}
     angles = {}
     points = ["A", "B", "C"]
-
+    
+    # Extract sides (e.g., "AB = 5 cm")
     side_pattern = r'([A-Z][A-Z])\s*=\s*(\d+(?:\.\d+)?)\s*cm'
     side_matches = re.findall(side_pattern, question, re.IGNORECASE)
     for match in side_matches:
         sides[match[0].upper()] = float(match[1])
-   
+    
+    # Extract angles (e.g., "∠ABC = 60°")
     angle_pattern = r'∠([A-Z]+)\s*=\s*(\d+(?:\.\d+)?)\s*°?'
     angle_matches = re.findall(angle_pattern, question, re.IGNORECASE)
     for match in angle_matches:
@@ -91,7 +232,6 @@ def draw_simple_triangle(sides, points=["A", "B", "C"]):
     """Simplified triangle drawing for math problems"""
     try:
         if len(sides) >= 2:
-            # Simple right triangle for demo
             fig, ax = plt.subplots(figsize=(6, 6))
             
             # Create a simple triangle
@@ -132,12 +272,14 @@ with col1:
         index=0
     )
     
+    # Show model info
     model_name = SUBJECT_MODELS[subject]
     st.info(f"Using: `{model_name}`")
 
 with col2:
     st.markdown(f"### {subject} Homework Helper")
     
+    # Subject-specific placeholders
     placeholders = {
         "Math": "Enter your math problem (e.g., 'Solve: 2x + 5 = 15' or 'Draw triangle ABC with AB=5cm, BC=6cm, ∠ABC=60°')",
         "English": "Ask about grammar, writing, or literature (e.g., 'Explain the theme of Romeo and Juliet')",
@@ -157,6 +299,7 @@ question = st.text_area(
     height=120
 )
 
+# === Quick Examples per Subject ===
 with st.expander(f"📝 {subject} Example Questions"):
     examples = {
         "Math": [
@@ -183,13 +326,34 @@ with st.expander(f"📝 {subject} Example Questions"):
             "What is the climate of the Sahara Desert?",
             "Explain plate tectonics",
             "Where are the Rocky Mountains located?"
+        ],
+        "Physics": [
+            "Calculate force when mass=10kg, acceleration=5m/s²",
+            "Explain Newton's three laws of motion",
+            "What is electromagnetic induction?"
+        ],
+        "Chemistry": [
+            "Balance: H2 + O2 → H2O",
+            "Explain the difference between ionic and covalent bonds",
+            "What happens during photosynthesis chemically?"
+        ],
+        "Biology": [
+            "Explain cell division process",
+            "How does DNA replication work?",
+            "What is the difference between mitosis and meiosis?"
+        ],
+        "Economics": [
+            "What is supply and demand?",
+            "Explain inflation and its causes",
+            "What is GDP and how is it calculated?"
         ]
     }
     
     for i, ex in enumerate(examples.get(subject, [])[:3]):
         if st.button(f"📌 {ex}", key=f"ex_{subject}_{i}"):
-            st.session_state.question_input = ex
+            question = ex
 
+# === Solve Button ===
 if st.button("🚀 Get Solution", type="primary"):
     if question.strip():
         with st.spinner(f"🧠 Solving {subject} problem..."):
@@ -197,10 +361,12 @@ if st.button("🚀 Get Solution", type="primary"):
             solution = query_subject_llm(question, subject)
             
             st.markdown("---")
-            st.subheader(f"📘 {subject} Solution:")
-            st.write(solution)
             
-            # Special handling for Math geometry
+            # ENHANCED: Use formatted output instead of plain text
+            formatted_solution = format_solution_output(solution, subject)
+            st.markdown(formatted_solution, unsafe_allow_html=True)
+            
+            # Special handling for Math geometry (unchanged)
             if subject == "Math" and any(word in question.lower() for word in ["triangle", "draw", "construct"]):
                 triangle_data = extract_triangle_json(question)
                 if triangle_data and triangle_data["sides"]:
@@ -210,6 +376,11 @@ if st.button("🚀 Get Solution", type="primary"):
                         st.pyplot(fig)
                     else:
                         st.info("Could not generate diagram automatically")
+            
+            # Add expandable raw solution text
+            with st.expander("📋 Raw Solution Text (for copying)"):
+                st.text_area("Copy this text:", solution, height=200)
+                
     else:
         st.warning("⚠️ Please enter a question first!")
 
@@ -223,4 +394,4 @@ with col2:
 with col3:
     st.metric("API Calls", "Unlimited*")
 
-st.caption("*Subject to Hugging Face free tier limits")
+st.caption("*Subject to OpenRouter free tier limits")
