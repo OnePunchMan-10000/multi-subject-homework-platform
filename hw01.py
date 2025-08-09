@@ -81,9 +81,11 @@ st.markdown("""
         border-radius: 6px;
         padding: 15px 20px;
         font-family: 'Courier New', monospace;
-        font-size: 16px;
+        font-size: 18px;
         color: #ffffff;
         margin: 15px 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
     }
     
     .final-answer-section {
@@ -111,6 +113,10 @@ st.markdown("""
         color: #ffffff;
         border: 1px solid #404040;
         font-family: 'Segoe UI', sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        resize: vertical;
+        min-height: 120px;
     }
     
     .stButton > button {
@@ -177,7 +183,7 @@ def query_subject_llm(prompt, subject="Math"):
         return f"Error: {str(e)}"
 
 def format_clean_solution(response_text, subject):
-    """Format solution in clean, minimal style"""
+    """Format solution in clean, minimal style with proper mathematical notation"""
     
     html_output = '<div class="problem-section">'
     
@@ -206,18 +212,24 @@ def format_clean_solution(response_text, subject):
                 step_content = step_match.group(2) if step_match.group(2) else "Continue with calculation"
                 html_output += f'<div class="step-title">Step {step_num}</div>'
                 if step_content:
+                    # Clean up mathematical notation
+                    step_content = fix_math_notation(step_content)
                     html_output += f'<div class="step-content">{step_content}</div>'
                 step_counter += 1
             continue
         
         # Check if line contains mathematical expressions or formulas
-        if re.search(r'[=+\-*/^()]', line) and len(line) < 150:
-            html_output += f'<div class="equation-display">{line}</div>'
+        if re.search(r'[=+\-*/^()²³√∫∂]', line) and len(line) < 200:
+            # Clean up mathematical notation for display
+            clean_line = fix_math_notation(line)
+            html_output += f'<div class="equation-display">{clean_line}</div>'
         # Check for final answers or conclusions
         elif any(word in line.lower() for word in ['therefore', 'thus', 'answer', 'solution is', 'result', 'final']):
-            html_output += f'<div class="final-answer-section"><div class="section-title">Final Answer</div><div class="final-answer">{line}</div></div>'
+            clean_line = fix_math_notation(line)
+            html_output += f'<div class="final-answer-section"><div class="section-title">Final Answer</div><div class="final-answer">{clean_line}</div></div>'
         else:
-            current_explanation += line + " "
+            clean_line = fix_math_notation(line)
+            current_explanation += clean_line + " "
     
     # Add any remaining explanation
     if current_explanation:
@@ -226,22 +238,88 @@ def format_clean_solution(response_text, subject):
     html_output += '</div>'
     return html_output
 
+def fix_math_notation(text):
+    """Fix mathematical notation for proper display"""
+    # Replace common mathematical symbols
+    replacements = {
+        'x^2': 'x²',
+        'x^3': 'x³',
+        'x^4': 'x⁴',
+        'x^5': 'x⁵',
+        '^2': '²',
+        '^3': '³',
+        '^4': '⁴',
+        '^5': '⁵',
+        'sqrt(': '√(',
+        'derivative': 'derivative',
+        'integral': '∫',
+        'partial': '∂',
+        '+-': '±',
+        '+/-': '±',
+        'pi': 'π',
+        'theta': 'θ',
+        'alpha': 'α',
+        'beta': 'β',
+        'gamma': 'γ',
+        'delta': 'δ',
+        'infinity': '∞',
+        'sum': '∑',
+        'product': '∏',
+        '<=': '≤',
+        '>=': '≥',
+        '!=': '≠',
+        'approximately': '≈',
+        'approx': '≈'
+    }
+    
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    
+    return text
+
 # Minimal interface
 st.markdown('<div class="main-container">', unsafe_allow_html=True)
 
 # Input section at top (minimal)
-col1, col2 = st.columns([1, 4])
+col1, col2 = st.columns([1, 5])
 with col1:
     subject = st.selectbox("", options=["Math", "English", "Science", "History", "Geography", "Physics", "Chemistry", "Biology", "Economics"], label_visibility="collapsed")
 
 with col2:
-    question = st.text_area("", placeholder="Enter your homework question here...", height=60, label_visibility="collapsed")
+    question = st.text_area("", placeholder="Enter your homework question here...", height=120, label_visibility="collapsed")
 
 if st.button("Solve", type="primary"):
     if question.strip():
         # Show example solution immediately for demo
-        if "quadratic" in question.lower() or "2x" in question:
-            example_solution = """Step 1: Identify the coefficients in the quadratic equation ax² + bx + c = 0.
+        if "quadratic" in question.lower() or "2x" in question or "derivative" in question.lower():
+            if "derivative" in question.lower():
+                example_solution = """Step 1: Identify the function and apply differentiation rules.
+
+Given: y = x² + (1/x) - 1
+
+We need to find dy/dx by differentiating each term separately.
+
+Step 2: Differentiate the term x².
+
+The derivative of x² with respect to x is 2x.
+
+Step 3: Differentiate the term (1/x).
+
+Rewrite 1/x as x⁻¹
+The derivative of x⁻¹ with respect to x is -1·x⁻² = -1/x²
+
+Step 4: Differentiate the constant term -1.
+
+The derivative of any constant is 0.
+
+Step 5: Combine all derivatives.
+
+dy/dx = 2x + (-1/x²) + 0
+dy/dx = 2x - 1/x²
+
+Final Answer: The derivative is dy/dx = 2x - 1/x²"""
+            else:
+                example_solution = """Step 1: Identify the coefficients in the quadratic equation ax² + bx + c = 0.
 
 Given equation: 2x² + 5x - 3 = 0
 
