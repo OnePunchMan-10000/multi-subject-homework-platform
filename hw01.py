@@ -1,364 +1,275 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homework Helper</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-        
-        .problem-section {
-            margin-bottom: 40px;
-        }
-        
-        .section-title {
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .problem-text {
-            color: #cccccc;
-            font-size: 16px;
-            margin-bottom: 10px;
-            line-height: 1.8;
-        }
-        
-        .step-title {
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 600;
-            margin: 30px 0 15px 0;
-        }
-        
-        .step-content {
-            color: #cccccc;
-            font-size: 15px;
-            margin-bottom: 15px;
-            line-height: 1.7;
-        }
-        
-        .equation {
-            background-color: #2a2a2a;
-            border: 1px solid #404040;
-            border-radius: 6px;
-            padding: 15px 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            color: #ffffff;
-            margin: 15px 0;
-            text-align: left;
-        }
-        
-        .final-answer-section {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #404040;
-        }
-        
-        .final-answer {
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 500;
-        }
-        
-        .input-section {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #1a1a1a;
-            border-top: 1px solid #404040;
-            padding: 20px;
-        }
-        
-        .input-container {
-            max-width: 900px;
-            margin: 0 auto;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .subject-select {
-            background-color: #2a2a2a;
-            color: #ffffff;
-            border: 1px solid #404040;
-            border-radius: 6px;
-            padding: 10px 15px;
-            font-size: 14px;
-            min-width: 120px;
-        }
-        
-        .question-input {
-            flex: 1;
-            background-color: #2a2a2a;
-            color: #ffffff;
-            border: 1px solid #404040;
-            border-radius: 6px;
-            padding: 10px 15px;
-            font-size: 14px;
-            resize: vertical;
-            min-height: 40px;
-        }
-        
-        .solve-btn {
-            background-color: #4a4a4a;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            padding: 10px 20px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .solve-btn:hover {
-            background-color: #5a5a5a;
-        }
-        
-        .content-area {
-            margin-bottom: 100px;
-        }
-        
-        .loading {
-            text-align: center;
-            color: #888;
-            padding: 40px;
-        }
-        
-        ::placeholder {
-            color: #888;
-        }
-        
-        :focus {
-            outline: none;
-            border-color: #666;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="content-area" id="content">
-            <!-- Example problem displayed by default -->
-            <div class="problem-section">
-                <div class="section-title">Given</div>
-                <div class="problem-text">The quadratic equation to solve is: 2x² + 5x - 3 = 0.</div>
-                
-                <div class="section-title">To Find</div>
-                <div class="problem-text">The values of x that satisfy the equation.</div>
-                
-                <div class="step-title">Step 1</div>
-                <div class="step-content">Identify the coefficients a, b, and c in the quadratic equation ax² + bx + c = 0.</div>
-                <div class="equation">a = 2,    b = 5,    c = -3</div>
-                
-                <div class="step-title">Step 2</div>
-                <div class="step-content">Apply the quadratic formula: x = (-b ± √(b² - 4ac)) / 2a.</div>
-                
-                <div class="step-title">Step 3</div>
-                <div class="step-content">Substitute the values of a, b, and c into the quadratic formula and simplify.</div>
-                <div class="equation">x = (-5 ± √(5² - 4 • 2 • (-3))) / 2 • 2</div>
-                <div class="equation">x = (-5 ± √(25 + 24)) / 4</div>
-                <div class="equation">x = (-5 ± √49) / 4</div>
-                <div class="equation">x = (-5 ± 7) / 4</div>
-                
-                <div class="final-answer-section">
-                    <div class="section-title">Final Answer</div>
-                    <div class="final-answer">The solutions for x are: x = -3/2 or x = 1.</div>
-                </div>
-            </div>
-        </div>
-    </div>
+import streamlit as st
+import requests
+import matplotlib.pyplot as plt
+import numpy as np
+import json
+from io import BytesIO
+import PIL.Image
+import math
+import re
+
+# Hide Streamlit UI elements
+hide_streamlit_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+.stDeployButton {visibility: hidden;}
+.stDecoration {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# Clean, minimal dark theme CSS
+st.markdown("""
+<style>
+    .stApp {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+    }
     
-    <div class="input-section">
-        <div class="input-container">
-            <select class="subject-select" id="subject">
-                <option value="Math">Math</option>
-                <option value="English">English</option>
-                <option value="Science">Science</option>
-                <option value="History">History</option>
-                <option value="Geography">Geography</option>
-                <option value="Physics">Physics</option>
-                <option value="Chemistry">Chemistry</option>
-                <option value="Biology">Biology</option>
-                <option value="Economics">Economics</option>
-            </select>
-            <textarea class="question-input" id="question" placeholder="Enter your homework question here..." rows="1"></textarea>
-            <button class="solve-btn" onclick="solveProblem()">Solve</button>
-        </div>
-    </div>
+    .main-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+    
+    .problem-section {
+        margin-bottom: 40px;
+        background-color: #1a1a1a;
+        border: none;
+        padding: 0;
+    }
+    
+    .section-title {
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .problem-text {
+        color: #cccccc;
+        font-size: 16px;
+        margin-bottom: 20px;
+        line-height: 1.8;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .step-title {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 30px 0 15px 0;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .step-content {
+        color: #cccccc;
+        font-size: 15px;
+        margin-bottom: 15px;
+        line-height: 1.7;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .equation-display {
+        background-color: #2a2a2a;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        padding: 15px 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 16px;
+        color: #ffffff;
+        margin: 15px 0;
+    }
+    
+    .final-answer-section {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #404040;
+    }
+    
+    .final-answer {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 500;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    /* Hide Streamlit elements */
+    .stSelectbox > div > div {
+        background-color: #2a2a2a;
+        color: #ffffff;
+        border: 1px solid #404040;
+    }
+    
+    .stTextArea > div > div > textarea {
+        background-color: #2a2a2a;
+        color: #ffffff;
+        border: 1px solid #404040;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .stButton > button {
+        background-color: #4a4a4a;
+        color: #ffffff;
+        border: 1px solid #404040;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .stButton > button:hover {
+        background-color: #5a5a5a;
+        border: 1px solid #606060;
+    }
+    
+    /* Remove padding and margins */
+    .css-1d391kg, .css-12oz5g7 {
+        padding: 0;
+    }
+    
+    .block-container {
+        padding: 20px;
+        max-width: 900px;
+    }
+    
+</style>
+""", unsafe_allow_html=True)
 
-    <script>
-        // Auto-resize textarea
-        const textarea = document.getElementById('question');
-        textarea.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = this.scrollHeight + 'px';
-        });
+# API Setup
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
+headers = {
+    "Authorization": f"Bearer {st.secrets['OPENROUTER_API_KEY']}",
+    "Content-Type": "application/json"
+}
 
-        // Sample problems for different subjects
-        const sampleProblems = {
-            "Math": {
-                problem: "Solve the quadratic equation: 2x² + 5x - 3 = 0",
-                solution: `<div class="problem-section">
-                    <div class="section-title">Given</div>
-                    <div class="problem-text">The quadratic equation to solve is: 2x² + 5x - 3 = 0.</div>
-                    
-                    <div class="section-title">To Find</div>
-                    <div class="problem-text">The values of x that satisfy the equation.</div>
-                    
-                    <div class="step-title">Step 1</div>
-                    <div class="step-content">Identify the coefficients a, b, and c in the quadratic equation ax² + bx + c = 0.</div>
-                    <div class="equation">a = 2,    b = 5,    c = -3</div>
-                    
-                    <div class="step-title">Step 2</div>
-                    <div class="step-content">Apply the quadratic formula: x = (-b ± √(b² - 4ac)) / 2a.</div>
-                    
-                    <div class="step-title">Step 3</div>
-                    <div class="step-content">Substitute the values of a, b, and c into the quadratic formula and simplify.</div>
-                    <div class="equation">x = (-5 ± √(5² - 4 • 2 • (-3))) / 2 • 2</div>
-                    <div class="equation">x = (-5 ± √(25 + 24)) / 4</div>
-                    <div class="equation">x = (-5 ± √49) / 4</div>
-                    <div class="equation">x = (-5 ± 7) / 4</div>
-                    
-                    <div class="final-answer-section">
-                        <div class="section-title">Final Answer</div>
-                        <div class="final-answer">The solutions for x are: x = -3/2 or x = 1.</div>
-                    </div>
-                </div>`
-            },
-            "Physics": {
-                problem: "Calculate the force when mass = 10 kg and acceleration = 5 m/s²",
-                solution: `<div class="problem-section">
-                    <div class="section-title">Given</div>
-                    <div class="problem-text">Mass (m) = 10 kg<br>Acceleration (a) = 5 m/s²</div>
-                    
-                    <div class="section-title">To Find</div>
-                    <div class="problem-text">Force (F) acting on the object.</div>
-                    
-                    <div class="step-title">Step 1</div>
-                    <div class="step-content">Apply Newton's second law of motion.</div>
-                    <div class="equation">F = ma</div>
-                    
-                    <div class="step-title">Step 2</div>
-                    <div class="step-content">Substitute the given values into the formula.</div>
-                    <div class="equation">F = 10 kg × 5 m/s²</div>
-                    <div class="equation">F = 50 N</div>
-                    
-                    <div class="final-answer-section">
-                        <div class="section-title">Final Answer</div>
-                        <div class="final-answer">The force acting on the object is 50 Newtons (N).</div>
-                    </div>
-                </div>`
-            },
-            "Chemistry": {
-                problem: "Balance the chemical equation: H₂ + O₂ → H₂O",
-                solution: `<div class="problem-section">
-                    <div class="section-title">Given</div>
-                    <div class="problem-text">Unbalanced equation: H₂ + O₂ → H₂O</div>
-                    
-                    <div class="section-title">To Find</div>
-                    <div class="problem-text">The balanced chemical equation with proper coefficients.</div>
-                    
-                    <div class="step-title">Step 1</div>
-                    <div class="step-content">Count the atoms on both sides of the equation.</div>
-                    <div class="equation">Left side: 2 H atoms, 2 O atoms<br>Right side: 2 H atoms, 1 O atom</div>
-                    
-                    <div class="step-title">Step 2</div>
-                    <div class="step-content">Balance oxygen atoms by adding coefficient 2 to H₂O.</div>
-                    <div class="equation">H₂ + O₂ → 2H₂O</div>
-                    
-                    <div class="step-title">Step 3</div>
-                    <div class="step-content">Balance hydrogen atoms by adding coefficient 2 to H₂.</div>
-                    <div class="equation">2H₂ + O₂ → 2H₂O</div>
-                    
-                    <div class="final-answer-section">
-                        <div class="section-title">Final Answer</div>
-                        <div class="final-answer">The balanced equation is: 2H₂ + O₂ → 2H₂O</div>
-                    </div>
-                </div>`
-            }
-        };
+def query_subject_llm(prompt, subject="Math"):
+    system_prompts = {
+        "Math": "You are a math tutor. Solve step-by-step with clear explanations. Format as 'Step 1: [Brief action]' then explain in detail on next lines. Put equations on separate lines.",
+        "English": "You are an English tutor. Help with grammar, writing, and literature analysis. Use 'Step 1: [Brief action]' format then detailed explanation on following lines.",
+        "Science": "You are a science tutor. Explain concepts clearly with examples. Use 'Step 1: [Brief action]' then detailed explanation and formulas on separate lines.",
+        "History": "You are a history tutor. Provide historical context and analysis. Use 'Step 1: [Brief topic]' then detailed analysis on following lines.",
+        "Geography": "You are a geography tutor. Explain locations, climate, and physical features. Use 'Step 1: [Brief topic]' then detailed explanation.",
+        "Physics": "You are a physics tutor. Use formulas and show calculations step-by-step. Format as 'Step 1: [Brief action]' then explanation, then formulas on separate lines.",
+        "Chemistry": "You are a chemistry tutor. Explain reactions and show equations step-by-step. Use 'Step 1: [Brief action]' then explanation, then equations on separate lines.",
+        "Biology": "You are a biology tutor. Explain biological processes clearly. Use 'Step 1: [Brief process]' then detailed explanation on following lines.",
+        "Economics": "You are an economics tutor. Explain economic principles and theories. Use 'Step 1: [Brief concept]' then detailed analysis on following lines."
+    }
+    
+    payload = {
+        "model": "openai/gpt-3.5-turbo",
+        "temperature": 0.3,
+        "messages": [
+            {"role": "system", "content": system_prompts.get(subject, "You are a helpful educational tutor.")},
+            {"role": "user", "content": prompt}
+        ]
+    }
+    
+    try:
+        resp = requests.post(API_URL, headers=headers, json=payload, timeout=30)
+        if resp.status_code == 200:
+            return resp.json()['choices'][0]['message']['content']
+        else:
+            return f"Error: {resp.status_code} - {resp.text}"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
-        function solveProblem() {
-            const question = document.getElementById('question').value.trim();
-            const subject = document.getElementById('subject').value;
-            const content = document.getElementById('content');
+def format_clean_solution(response_text, subject):
+    """Format solution in clean, minimal style"""
+    
+    html_output = '<div class="problem-section">'
+    
+    # Split response into lines for processing
+    lines = response_text.split('\n')
+    current_explanation = ""
+    step_counter = 1
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            if current_explanation:
+                html_output += f'<div class="step-content">{current_explanation}</div>'
+                current_explanation = ""
+            continue
             
-            if (!question) {
-                alert('Please enter a question first!');
-                return;
-            }
+        # Check if line contains step information
+        if re.search(r'step\s*\d*:?', line, re.IGNORECASE):
+            if current_explanation:
+                html_output += f'<div class="step-content">{current_explanation}</div>'
+                current_explanation = ""
             
-            // Show loading state
-            content.innerHTML = '<div class="loading">Solving your ' + subject + ' problem...</div>';
-            
-            // Simulate API call delay
-            setTimeout(() => {
-                // For demo purposes, show sample problems based on subject
-                const sample = sampleProblems[subject];
-                if (sample) {
-                    content.innerHTML = sample.solution;
-                } else {
-                    // Generic solution format
-                    content.innerHTML = `<div class="problem-section">
-                        <div class="section-title">Question</div>
-                        <div class="problem-text">${question}</div>
-                        
-                        <div class="step-title">Analysis</div>
-                        <div class="step-content">This is a ${subject} problem that requires step-by-step analysis.</div>
-                        
-                        <div class="step-title">Step 1</div>
-                        <div class="step-content">Identify the key components and concepts involved in this ${subject} problem.</div>
-                        
-                        <div class="step-title">Step 2</div>
-                        <div class="step-content">Apply relevant ${subject} principles and formulas to solve the problem.</div>
-                        
-                        <div class="step-title">Step 3</div>
-                        <div class="step-content">Calculate and verify the solution using appropriate methods.</div>
-                        
-                        <div class="final-answer-section">
-                            <div class="section-title">Solution</div>
-                            <div class="final-answer">The solution to this ${subject} problem requires specialized knowledge and calculation.</div>
-                        </div>
-                    </div>`;
-                }
-                
-                // Clear the input
-                document.getElementById('question').value = '';
-                document.getElementById('question').style.height = 'auto';
-            }, 1500);
-        }
+            step_match = re.search(r'step\s*(\d*):?\s*(.*)', line, re.IGNORECASE)
+            if step_match:
+                step_num = step_match.group(1) if step_match.group(1) else str(step_counter)
+                step_content = step_match.group(2) if step_match.group(2) else "Continue with calculation"
+                html_output += f'<div class="step-title">Step {step_num}</div>'
+                if step_content:
+                    html_output += f'<div class="step-content">{step_content}</div>'
+                step_counter += 1
+            continue
+        
+        # Check if line contains mathematical expressions or formulas
+        if re.search(r'[=+\-*/^()]', line) and len(line) < 150:
+            html_output += f'<div class="equation-display">{line}</div>'
+        # Check for final answers or conclusions
+        elif any(word in line.lower() for word in ['therefore', 'thus', 'answer', 'solution is', 'result', 'final']):
+            html_output += f'<div class="final-answer-section"><div class="section-title">Final Answer</div><div class="final-answer">{line}</div></div>'
+        else:
+            current_explanation += line + " "
+    
+    # Add any remaining explanation
+    if current_explanation:
+        html_output += f'<div class="step-content">{current_explanation}</div>'
+    
+    html_output += '</div>'
+    return html_output
 
-        // Allow Enter key to solve (Ctrl+Enter for newline)
-        document.getElementById('question').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.ctrlKey) {
-                e.preventDefault();
-                solveProblem();
-            }
-        });
-    </script>
-</body>
-</html>
+# Minimal interface
+st.markdown('<div class="main-container">', unsafe_allow_html=True)
+
+# Input section at top (minimal)
+col1, col2 = st.columns([1, 4])
+with col1:
+    subject = st.selectbox("", options=["Math", "English", "Science", "History", "Geography", "Physics", "Chemistry", "Biology", "Economics"], label_visibility="collapsed")
+
+with col2:
+    question = st.text_area("", placeholder="Enter your homework question here...", height=60, label_visibility="collapsed")
+
+if st.button("Solve", type="primary"):
+    if question.strip():
+        # Show example solution immediately for demo
+        if "quadratic" in question.lower() or "2x" in question:
+            example_solution = """Step 1: Identify the coefficients in the quadratic equation ax² + bx + c = 0.
+
+Given equation: 2x² + 5x - 3 = 0
+
+a = 2, b = 5, c = -3
+
+Step 2: Apply the quadratic formula.
+
+x = (-b ± √(b² - 4ac)) / 2a
+
+Step 3: Substitute the values and simplify.
+
+x = (-5 ± √(5² - 4(2)(-3))) / 2(2)
+x = (-5 ± √(25 + 24)) / 4
+x = (-5 ± √49) / 4
+x = (-5 ± 7) / 4
+
+Therefore, x = (-5 + 7)/4 = 1/2 or x = (-5 - 7)/4 = -3
+
+Final Answer: The solutions are x = 1/2 and x = -3."""
+        else:
+            # Get actual solution from API
+            with st.spinner("Solving..."):
+                example_solution = query_subject_llm(question, subject)
+        
+        # Display solution
+        formatted_solution = format_clean_solution(example_solution, subject)
+        st.markdown(formatted_solution, unsafe_allow_html=True)
+    else:
+        st.warning("Please enter a question first!")
+
+st.markdown('</div>', unsafe_allow_html=True)
