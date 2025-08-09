@@ -29,7 +29,7 @@ SUBJECT_MODELS = {
 # === OpenRouter API Setup (YOUR WORKING SETUP) ===
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 headers = {
-    "Authorization": "Bearer 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",
+    "Authorization": f"Bearer {st.secrets['OPENROUTER_API_KEY']}",
     "Content-Type": "application/json"
 }
 
