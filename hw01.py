@@ -408,11 +408,11 @@ def format_fraction(numerator, denominator):
         </div>"""
 
 def format_response(response_text):
-    """Improved formatting with consistent vertical fractions and tighter spacing"""
+    """Simple, clean formatting for better readability"""
     if not response_text:
         return ""
     
-    # Clean up LaTeX notation to simple text but preserve fraction structure
+    # Clean up LaTeX notation to simple text
     response_text = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', response_text)
     response_text = re.sub(r'\\[a-zA-Z]+\{?([^}]*)\}?', r'\1', response_text)
     
@@ -422,46 +422,42 @@ def format_response(response_text):
     for line in lines:
         line = line.strip()
         if not line:
-            # Add minimal spacing between sections
-            formatted_content.append("<br>")
+            # Add simple spacing between sections
+            formatted_content.append("\n")
             continue
         
         # Step headers
         if re.match(r'^\*\*Step \d+:', line) or re.match(r'^###\s*Step \d+:', line):
             step_text = re.sub(r'\*\*|###', '', line).strip()
-            formatted_content.append(f"### {step_text}\n")
+            formatted_content.append(f"**{step_text}**\n\n")
         
         # Final answer
         elif 'Final Answer' in line:
             clean_line = re.sub(r'\*\*', '', line)
-            formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n')
+            formatted_content.append(f"**{clean_line}**\n\n")
         
-        # Check for ANY line containing fractions - convert ALL to vertical display
+        # Check for fractions and format them clearly
         elif '/' in line:
-            # Convert ALL fraction patterns to vertical display
-            formatted_line = line
-            
-            # Handle (numerator)/(denominator) pattern first
+            # Simple fraction formatting for readability
             if re.search(r'\([^)]+\)/\([^)]+\)', line):
-                formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
-            
-            # Handle simple numerator/denominator pattern (like dy/dx, du/dx, etc.)
-            if re.search(r'([a-zA-Z]+)/([a-zA-Z]+)', line):
-                formatted_line = re.sub(r'([a-zA-Z]+)/([a-zA-Z]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
-            
-            # Handle other fraction patterns
-            if re.search(r'([^/\s]+)/([^/\s]+)', line):
-                formatted_line = re.sub(r'([^/\s]+)/([^/\s]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
-            
-            formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
+                # Handle (numerator)/(denominator) pattern
+                formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', r'\1\n───\n\2', line)
+                formatted_content.append(f"```\n{formatted_line}\n```\n\n")
+            elif re.search(r'([a-zA-Z]+)/([a-zA-Z]+)', line):
+                # Handle simple fractions like dy/dx
+                formatted_line = re.sub(r'([a-zA-Z]+)/([a-zA-Z]+)', r'\1\n───\n\2', line)
+                formatted_content.append(f"```\n{formatted_line}\n```\n\n")
+            else:
+                # Other fraction patterns
+                formatted_content.append(f"{line}\n\n")
         
-        # Mathematical expressions with equations (no fractions)
+        # Mathematical expressions
         elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '^', '(', ')'])):
-            formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n')
+            formatted_content.append(f"`{line}`\n\n")
         
         # Regular text
         else:
-            formatted_content.append(f"{format_powers(line)}\n")
+            formatted_content.append(f"{line}\n\n")
     
     return ''.join(formatted_content)
 
@@ -512,13 +508,10 @@ def main():
                         st.markdown("---")
                         st.markdown(f"## 📚 {selected_subject} Solution")
                         
-                        # Improved formatting in a clean container
+                        # Simple, clean formatting
                         formatted_response = format_response(response)
-                        st.markdown(f"""
-                        <div class="solution-content">
-                            {formatted_response}
-                        </div>
-                        """, unsafe_allow_html=True)
+                        st.markdown("### 📐 Solution")
+                        st.markdown(formatted_response)
                         
                         # Show diagram if needed
                         if should_show_diagram(question, selected_subject):
