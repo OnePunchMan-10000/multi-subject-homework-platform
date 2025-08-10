@@ -37,59 +37,57 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     
-    /* Improved solution content styling with tighter spacing */
+    /* Improved solution content styling with better spacing */
     .solution-content {
         background-color: rgba(255,255,255,0.05);
         border-left: 4px solid #4CAF50;
-        padding: 1.5rem;
-        margin: 1rem 0;
+        padding: 2rem;
+        margin: 1.5rem 0;
         border-radius: 8px;
-        line-height: 1.6;
+        line-height: 1.8;
     }
     
     .solution-content h3 {
         color: #4CAF50;
-        margin: 1.5rem 0 0.8rem 0;
+        margin: 2rem 0 1rem 0;
         font-size: 1.3em;
         border-bottom: 2px solid #4CAF50;
         padding-bottom: 0.5rem;
     }
     
     .solution-content p {
-        margin: 0.8rem 0;
-        line-height: 1.6;
+        margin: 1.2rem 0;
+        line-height: 1.8;
         color: #e0e0e0;
         font-size: 1.05em;
     }
     
-    /* Better mathematical expression styling with tighter spacing */
+    /* Better mathematical expression styling */
     .math-line {
         font-family: 'Courier New', monospace;
         background-color: rgba(255,193,7,0.15);
-        padding: 0.8rem 1.2rem;
-        margin: 0.6rem 0;
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
         border-radius: 6px;
         color: #ffc107;
         text-align: center;
         font-size: 1.1em;
-        line-height: 1.4;
+        line-height: 1.6;
         border: 1px solid rgba(255,193,7,0.3);
     }
     
-    /* Improved fraction display - always vertical */
+    /* Fraction display within math-line - like the original */
     .fraction-display {
-        display: block;
+        display: inline-block;
         text-align: center;
-        margin: 0.5rem auto;
+        margin: 0 8px;
         vertical-align: middle;
-        line-height: 1.2;
     }
     
     .fraction-bar {
         border-bottom: 2px solid #ffc107;
-        margin: 3px 0;
+        margin: 2px 0;
         line-height: 1;
-        width: 100%;
     }
     
     /* Superscript styling for powers */
