@@ -582,6 +582,7 @@ def get_api_response(question, subject):
     - Put the final derivative/answer in a clear "Therefore" or "Final Answer" statement
     
     FRACTION FORMATTING (CRITICAL):
+    - NEVER use LaTeX fractions like \\frac{...}{...}
     - When writing fractions, use this EXACT format:
       numerator
       ───────
@@ -594,6 +595,7 @@ def get_api_response(question, subject):
     - Always put the fraction bar (──────) on its own line
     - Always put numerator and denominator on separate lines
     - Use simple dashes (─) for the fraction bar, not complex symbols
+    - For simple fractions like x²/(x-1), write as (x²)/(x-1) then format vertically
     
     FORMATTING FOR OTHER SUBJECTS:
     - Use clear headings and subheadings
@@ -647,6 +649,16 @@ def format_math_response(response_text):
             processed_lines.append('<br>')
             continue
             
+        # Convert LaTeX fractions to simple format
+        if '\\frac{' in line:
+            # Extract LaTeX fraction: \frac{numerator}{denominator}
+            frac_match = re.search(r'\\frac\{([^}]+)\}\{([^}]+)\}', line)
+            if frac_match:
+                numerator = frac_match.group(1)
+                denominator = frac_match.group(2)
+                # Replace the LaTeX fraction with simple text
+                line = line.replace(frac_match.group(0), f'({numerator})/({denominator})')
+        
         # Convert basic math symbols only
         # Convert fractions like (a)/(b) to proper fraction symbols
         if '= (' in line and ')/(x' in line:
@@ -661,6 +673,31 @@ def format_math_response(response_text):
                         numerator = num_denom[0]
                         denominator = 'x' + num_denom[1]
                         # Create vertical fraction with simple formatting
+                        processed_lines.append(f'''
+                        <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
+                            <span style="color: #2196F3;">{left_side}</span>
+                            <br><br>
+                            <span style="color: #4CAF50; font-weight: bold;">{numerator}</span>
+                            <br>
+                            <span style="color: #4CAF50; font-weight: bold;">─────</span>
+                            <br>
+                            <span style="color: #4CAF50; font-weight: bold;">{denominator}</span>
+                        </p>
+                        ''')
+                        continue
+        
+        # Handle other fraction patterns like (x² + 1)/(x - 1)
+        if '= (' in line and ')/(' in line:
+            parts = line.split('= (')
+            if len(parts) == 2:
+                left_side = parts[0] + '='
+                fraction_part = parts[1]
+                if ')/(' in fraction_part:
+                    num_denom = fraction_part.split(')/(')
+                    if len(num_denom) == 2:
+                        numerator = num_denom[0]
+                        denominator = num_denom[1].rstrip(')')
+                        # Create vertical fraction
                         processed_lines.append(f'''
                         <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
                             <span style="color: #2196F3;">{left_side}</span>
