@@ -76,18 +76,20 @@ st.markdown("""
         border: 1px solid rgba(255,193,7,0.3);
     }
     
-    /* Fraction display within math-line - like the original */
+    /* Fraction display within math-line - ensure proper vertical display */
     .fraction-display {
         display: inline-block;
         text-align: center;
         margin: 0 8px;
         vertical-align: middle;
+        line-height: 1.2;
     }
     
     .fraction-bar {
         border-bottom: 2px solid #ffc107;
         margin: 2px 0;
         line-height: 1;
+        width: 100%;
     }
     
     /* Superscript styling for powers */
@@ -430,8 +432,10 @@ def format_response(response_text):
             # Convert all fractions in the line to vertical display
             # First handle complex fractions like (numerator)/(denominator)
             formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
-            # Then handle simple fractions like du/dx, dv/dx, dy/dx
-            formatted_line = re.sub(r'([a-zA-Z]+)/([a-zA-Z]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
+            # Then handle simple fractions like du/dx, dv/dx, dy/dx - more specific pattern
+            formatted_line = re.sub(r'\b([a-zA-Z]+)/([a-zA-Z]+)\b', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
+            # Also handle any remaining fractions that might have been missed
+            formatted_line = re.sub(r'([^/\s]+)/([^/\s]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
             formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
         
         # Mathematical expressions with equations (no fractions)
