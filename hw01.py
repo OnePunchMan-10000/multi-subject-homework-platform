@@ -22,17 +22,17 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Clean background */
+    /* Dark background */
     .stApp {
-        background-color: #ffffff;
-        color: #2c3e50;
+        background-color: #0e1117;
+        color: #ffffff;
     }
     
     /* Simple header */
     .main-header {
         text-align: center;
         padding: 2rem 0 1rem 0;
-        color: #2c3e50;
+        color: #ffffff;
         border-bottom: 3px solid #3498db;
         margin-bottom: 2rem;
     }
@@ -40,27 +40,27 @@ st.markdown("""
     .main-header h1 {
         font-size: 2.5em;
         margin-bottom: 0.5rem;
-        color: #2c3e50;
+        color: #ffffff;
     }
     
     .main-header p {
         font-size: 1.2em;
-        color: #7f8c8d;
+        color: #b0b8c1;
         margin: 0;
     }
     
     /* Clean form elements */
     .stSelectbox > div > div {
-        background-color: #f8f9fa;
-        border: 2px solid #e9ecef;
-        color: #2c3e50;
+        background-color: #262730;
+        border: 2px solid #444;
+        color: #ffffff;
     }
     
     .stTextArea textarea {
-        background-color: #f8f9fa !important;
-        border: 2px solid #e9ecef !important;
+        background-color: #262730 !important;
+        border: 2px solid #444 !important;
         border-radius: 8px !important;
-        color: #2c3e50 !important;
+        color: #ffffff !important;
         font-size: 16px !important;
         line-height: 1.5 !important;
     }
@@ -83,22 +83,22 @@ st.markdown("""
     
     /* Textbook-style solution container */
     .solution-container {
-        background: #ffffff;
+        background: #1a1d23;
         border: 2px solid #3498db;
         border-radius: 12px;
         padding: 2rem;
         margin: 2rem 0;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     
     /* Textbook-style step headers */
     .step-header {
         font-size: 1.3em;
         font-weight: bold;
-        color: #2c3e50;
+        color: #ffffff;
         margin: 1.5rem 0 1rem 0;
         padding-bottom: 0.5rem;
-        border-bottom: 2px solid #ecf0f1;
+        border-bottom: 2px solid #3498db;
     }
     
     /* Mathematical expressions */
@@ -108,14 +108,15 @@ st.markdown("""
         text-align: center;
         margin: 1rem 0;
         padding: 1rem;
-        background: #f8f9fa;
+        background: #262730;
         border-left: 4px solid #3498db;
         border-radius: 4px;
+        color: #ffffff;
     }
     
     /* Final answer highlight */
     .final-answer {
-        background: #e8f6f3;
+        background: #1e3a2e;
         border: 3px solid #27ae60;
         border-radius: 8px;
         padding: 1.5rem;
@@ -130,16 +131,49 @@ st.markdown("""
     .explanation-text {
         font-size: 1.1em;
         line-height: 1.6;
-        color: #2c3e50;
+        color: #ffffff;
         margin: 1rem 0;
     }
     
     /* Subject selection styling */
     .subject-selection {
-        background: #f8f9fa;
+        background: #1a1d23;
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 2rem;
+    }
+    
+    /* Color overrides for dark theme */
+    .stSelectbox label, .stTextArea label {
+        color: #ffffff !important;
+    }
+    
+    .stMarkdown, .stText {
+        color: #ffffff;
+    }
+    
+    /* Proper fraction display */
+    .fraction {
+        display: inline-block;
+        text-align: center;
+        vertical-align: middle;
+        margin: 0 8px;
+        font-family: 'Times New Roman', serif;
+        font-size: 1.1em;
+    }
+    
+    .fraction-numerator {
+        display: block;
+        padding: 2px 8px;
+        border-bottom: 2px solid #ffffff;
+        margin-bottom: 2px;
+        line-height: 1.2;
+    }
+    
+    .fraction-denominator {
+        display: block;
+        padding: 2px 8px;
+        line-height: 1.2;
     }
     
     /* Remove any box styling */
@@ -518,10 +552,47 @@ def get_api_response(question, subject):
         return None
 
 def format_textbook_response(response_text, subject):
-    """Format response in clean textbook style"""
+    """Format response in clean textbook style with proper fractions"""
     
     # Clean up the response
     formatted = response_text.strip()
+    
+    # Fix fractions - convert LaTeX and text fractions to proper HTML fractions
+    def create_proper_fraction(numerator, denominator):
+        """Create proper fraction with numerator over denominator"""
+        return f'''<span class="fraction">
+            <span class="fraction-numerator">{numerator.strip()}</span>
+            <span class="fraction-denominator">{denominator.strip()}</span>
+        </span>'''
+    
+    # Handle LaTeX fractions: \frac{numerator}{denominator}
+    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', 
+                      lambda m: create_proper_fraction(m.group(1), m.group(2)), 
+                      formatted)
+    
+    # Handle text fractions: (numerator)/(denominator) or numerator/denominator
+    formatted = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', 
+                      lambda m: create_proper_fraction(m.group(1), m.group(2)), 
+                      formatted)
+    
+    # Handle simple fractions like 3/4, (-b)/2a, etc.
+    formatted = re.sub(r'\b(\d+|\([^)]+\))/(\d+|\([^)]+\))\b', 
+                      lambda m: create_proper_fraction(m.group(1), m.group(2)), 
+                      formatted)
+    
+    # Handle complex fractions with variables
+    formatted = re.sub(r'([+-]?\w+[^/\s]*)/([+-]?\w+[^/\s]*)', 
+                      lambda m: create_proper_fraction(m.group(1), m.group(2)), 
+                      formatted)
+    
+    # Clean up other LaTeX symbols
+    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'√(\1)', formatted)
+    formatted = re.sub(r'\\[a-zA-Z]+\{([^}]*)\}', r'\1', formatted)  # Remove other LaTeX commands
+    
+    # Fix exponents
+    formatted = re.sub(r'\^2', '²', formatted)
+    formatted = re.sub(r'\^3', '³', formatted)
+    formatted = re.sub(r'\^(\d)', r'<sup>\1</sup>', formatted)
     
     # Split into sections
     sections = []
@@ -614,11 +685,6 @@ def main():
         )
         
         selected_subject = selected_display.split(' ', 1)[1]
-        
-        # Simple example
-        with st.expander("💡 See example"):
-            st.write(f"**{selected_subject}**")
-            st.write(SUBJECTS[selected_subject]['example'])
     
     with col2:
         st.markdown("### ❓ Your Question")
@@ -642,7 +708,7 @@ def main():
                         
                         st.markdown(f"""
                         <div class="solution-container">
-                            <h2 style="color: #2c3e50; margin-bottom: 1.5rem; text-align: center;">
+                            <h2 style="color: #ffffff; margin-bottom: 1.5rem; text-align: center;">
                                 {SUBJECTS[selected_subject]['icon']} {selected_subject} Solution
                             </h2>
                             {formatted_response}
