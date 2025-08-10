@@ -746,14 +746,14 @@ def format_math_response(response_text):
                                 numerator = frac_match.group(1)
                                 denominator = frac_match.group(2)
                                 processed_lines.append(f'''
-                                <div style="margin: 15px 0; text-align: center;">
-                                    <span style="color: #2196F3; font-weight: bold; font-family: monospace; font-size: 1.1em;">{left_side} =</span>
-                                    <div style="display: inline-block; text-align: center; vertical-align: middle; margin-left: 10px;">
-                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">{numerator}</div>
-                                        <div style="border-top: 1px solid #4CAF50; margin: 2px 0;"></div>
-                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">{denominator}</div>
+                                <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
+                                    <span style="color: #2196F3;">{left_side} =</span>
+                                    <div style="display: inline-block; margin-left: 10px;">
+                                        <div style="color: #4CAF50; font-weight: bold;">{numerator}</div>
+                                        <div style="color: #4CAF50; font-weight: bold;">─────</div>
+                                        <div style="color: #4CAF50; font-weight: bold;">{denominator}</div>
                                     </div>
-                                </div>
+                                </p>
                                 ''')
                             else:
                                 processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
@@ -761,25 +761,25 @@ def format_math_response(response_text):
                             # Handle dy/dx or dx/dy
                             if 'dy/dx' in right_side:
                                 processed_lines.append(f'''
-                                <div style="margin: 15px 0; text-align: center;">
-                                    <span style="color: #2196F3; font-weight: bold; font-family: monospace; font-size: 1.1em;">{left_side} =</span>
-                                    <div style="display: inline-block; text-align: center; vertical-align: middle; margin-left: 10px;">
-                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">dy</div>
-                                        <div style="border-top: 1px solid #4CAF50; margin: 2px 0;"></div>
-                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">dx</div>
+                                <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
+                                    <span style="color: #2196F3;">{left_side} =</span>
+                                    <div style="display: inline-block; margin-left: 10px;">
+                                        <div style="color: #4CAF50; font-weight: bold;">dy</div>
+                                        <div style="color: #4CAF50; font-weight: bold;">──</div>
+                                        <div style="color: #4CAF50; font-weight: bold;">dx</div>
                                     </div>
-                                </div>
+                                </p>
                                 ''')
                             elif 'dx/dy' in right_side:
                                 processed_lines.append(f'''
-                                <div style="margin: 15px 0; text-align: center;">
-                                    <span style="color: #2196F3; font-weight: bold; font-family: monospace; font-size: 1.1em;">{left_side} =</span>
-                                    <div style="display: inline-block; text-align: center; vertical-align: middle; margin-left: 10px;">
-                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">dx</div>
-                                        <div style="border-top: 1px solid #4CAF50; margin: 2px 0;"></div>
-                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">dy</div>
+                                <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
+                                    <span style="color: #2196F3;">{left_side} =</span>
+                                    <div style="display: inline-block; margin-left: 10px;">
+                                        <div style="color: #4CAF50; font-weight: bold;">dx</div>
+                                        <div style="color: #4CAF50; font-weight: bold;">──</div>
+                                        <div style="color: #4CAF50; font-weight: bold;">dy</div>
                                     </div>
-                                </div>
+                                </p>
                                 ''')
                             else:
                                 processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
