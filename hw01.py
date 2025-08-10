@@ -1,353 +1,366 @@
 import streamlit as st
 import requests
+import json
 import matplotlib.pyplot as plt
 import numpy as np
-import json
 from io import BytesIO
-import PIL.Image
-import math
-import re
+import base64
 
-# Hide Streamlit UI elements
-hide_streamlit_style = """
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-.stDeployButton {visibility: hidden;}
-.stDecoration {visibility: hidden;}
-</style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+# Page configuration
+st.set_page_config(
+    page_title="Academic Assistant Pro",
+    page_icon="🎓",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# Clean, minimal dark theme CSS
+# Custom CSS for clean, modern UI
 st.markdown("""
 <style>
-    .stApp {
-        background-color: #1a1a1a;
-        color: #e0e0e0;
+    /* Hide Streamlit default elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Custom styling */
+    .main-header {
+        text-align: center;
+        padding: 1rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        margin-bottom: 2rem;
     }
     
-    .main-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 40px 20px;
+    .subject-card {
+        background: #f8f9ff;
+        border: 1px solid #e1e5f2;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
     }
     
-    .problem-section {
-        margin-bottom: 40px;
-        background-color: #1a1a1a;
-        border: none;
-        padding: 0;
+    .answer-container {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    .section-title {
-        color: #ffffff;
-        font-size: 18px;
-        font-weight: 500;
-        margin-bottom: 15px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-family: 'Segoe UI', sans-serif;
+    .step-box {
+        background: #f5f7fa;
+        border-left: 4px solid #4CAF50;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 4px;
     }
     
-    .problem-text {
-        color: #cccccc;
-        font-size: 16px;
-        margin-bottom: 20px;
-        line-height: 1.8;
-        font-family: 'Segoe UI', sans-serif;
-    }
-    
-    .step-title {
-        color: #ffffff;
-        font-size: 16px;
-        font-weight: 600;
-        margin: 30px 0 15px 0;
-        font-family: 'Segoe UI', sans-serif;
-    }
-    
-    .step-content {
-        color: #cccccc;
-        font-size: 15px;
-        margin-bottom: 15px;
-        line-height: 1.7;
-        font-family: 'Segoe UI', sans-serif;
-    }
-    
-    .equation-display {
-        background-color: #2a2a2a;
-        border: 1px solid #404040;
-        border-radius: 6px;
-        padding: 15px 20px;
+    .formula-box {
+        background: #fff8e1;
+        border: 1px solid #ffc107;
+        padding: 10px;
+        border-radius: 4px;
+        text-align: center;
         font-family: 'Courier New', monospace;
-        font-size: 18px;
-        color: #ffffff;
-        margin: 15px 0;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+        margin: 10px 0;
     }
     
-    .final-answer-section {
-        margin-top: 40px;
-        padding-top: 20px;
-        border-top: 1px solid #404040;
-    }
-    
-    .final-answer {
-        color: #ffffff;
-        font-size: 16px;
-        font-weight: 500;
-        font-family: 'Segoe UI', sans-serif;
-    }
-    
-    /* Hide Streamlit elements */
     .stSelectbox > div > div {
-        background-color: #2a2a2a;
-        color: #ffffff;
-        border: 1px solid #404040;
+        background-color: #f8f9ff;
     }
     
-    .stTextArea > div > div > textarea {
-        background-color: #2a2a2a;
-        color: #ffffff;
-        border: 1px solid #404040;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 16px;
-        line-height: 1.5;
-        resize: vertical;
-        min-height: 120px;
+    .stTextArea textarea {
+        background-color: #fafafa;
+        border: 2px solid #e1e5f2;
+        border-radius: 8px;
     }
     
     .stButton > button {
-        background-color: #4a4a4a;
-        color: #ffffff;
-        border: 1px solid #404040;
-        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 2rem;
+        font-weight: 600;
+        width: 100%;
     }
-    
-    .stButton > button:hover {
-        background-color: #5a5a5a;
-        border: 1px solid #606060;
-    }
-    
-    /* Remove padding and margins */
-    .css-1d391kg, .css-12oz5g7 {
-        padding: 0;
-    }
-    
-    .block-container {
-        padding: 20px;
-        max-width: 900px;
-    }
-    
 </style>
 """, unsafe_allow_html=True)
 
-# API Setup
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
-headers = {
-    "Authorization": f"Bearer {st.secrets['OPENROUTER_API_KEY']}",
-    "Content-Type": "application/json"
+# Enhanced subject configurations with refined prompts
+SUBJECTS = {
+    "Mathematics": {
+        "icon": "📐",
+        "prompt": """You are an expert mathematics tutor with PhD-level knowledge. Provide step-by-step solutions that are:
+- Mathematically rigorous and textbook-accurate
+- Clearly explained with proper mathematical notation
+- Include all intermediate steps
+- Show work verification
+- Use proper mathematical terminology
+- Format equations clearly using standard notation""",
+        "example": "Solve: 3x² - 12x + 9 = 0"
+    },
+    "Physics": {
+        "icon": "⚡",
+        "prompt": """You are a physics professor with expertise in all physics domains. Provide solutions that:
+- Use correct physics principles and formulas
+- Show dimensional analysis where applicable
+- Include proper units throughout calculations
+- Explain the physics concepts involved
+- Draw connections to real-world applications
+- Follow standard physics problem-solving methodology""",
+        "example": "A 2kg object falls from 10m height. Find velocity just before impact."
+    },
+    "Chemistry": {
+        "icon": "🧪",
+        "prompt": """You are a chemistry expert with advanced knowledge. Provide solutions that:
+- Use accurate chemical formulas and equations
+- Balance chemical equations properly
+- Include proper chemical nomenclature
+- Show stoichiometric calculations step-by-step
+- Explain molecular behavior and mechanisms
+- Use standard chemistry notation and units""",
+        "example": "Balance: Al + O₂ → Al₂O₃"
+    },
+    "Biology": {
+        "icon": "🧬",
+        "prompt": """You are a biology expert with comprehensive knowledge. Provide explanations that:
+- Use accurate biological terminology
+- Explain biological processes clearly
+- Include relevant examples and analogies
+- Connect concepts to real biological systems
+- Use proper scientific classification
+- Reference current biological understanding""",
+        "example": "Explain the process of cellular respiration in detail."
+    },
+    "English Literature": {
+        "icon": "📚",
+        "prompt": """You are an English literature scholar with deep analytical skills. Provide analysis that:
+- Uses proper literary terminology and concepts
+- Includes textual evidence and citations
+- Analyzes themes, symbols, and literary devices
+- Considers historical and cultural context
+- Follows academic writing standards
+- Provides insightful interpretations""",
+        "example": "Analyze the symbolism of light and darkness in Romeo and Juliet."
+    },
+    "History": {
+        "icon": "🏛️",
+        "prompt": """You are a history professor with expertise across time periods. Provide analysis that:
+- Uses accurate historical facts and dates
+- Considers multiple perspectives and sources
+- Analyzes cause-and-effect relationships
+- Includes relevant historical context
+- Uses proper historical methodology
+- Maintains objectivity while explaining significance""",
+        "example": "Analyze the causes of World War I."
+    },
+    "Economics": {
+        "icon": "💰",
+        "prompt": """You are an economics expert with theoretical and practical knowledge. Provide explanations that:
+- Use correct economic terminology and principles
+- Include relevant graphs and models where applicable
+- Explain both micro and macroeconomic concepts
+- Use real-world examples and applications
+- Show mathematical calculations for economic problems
+- Connect theory to current economic conditions""",
+        "example": "Explain supply and demand equilibrium with a market example."
+    },
+    "Computer Science": {
+        "icon": "💻",
+        "prompt": """You are a computer science expert with programming and theoretical knowledge. Provide solutions that:
+- Use correct programming syntax and best practices
+- Explain algorithms clearly with complexity analysis
+- Include working code examples when relevant
+- Explain computer science concepts thoroughly
+- Use proper technical terminology
+- Consider efficiency and optimization""",
+        "example": "Implement binary search algorithm in Python."
+    }
 }
 
-def query_subject_llm(prompt, subject="Math"):
-    system_prompts = {
-        "Math": "You are a math tutor. Solve step-by-step with clear explanations. Format as 'Step 1: [Brief action]' then explain in detail on next lines. Put equations on separate lines.",
-        "English": "You are an English tutor. Help with grammar, writing, and literature analysis. Use 'Step 1: [Brief action]' format then detailed explanation on following lines.",
-        "Science": "You are a science tutor. Explain concepts clearly with examples. Use 'Step 1: [Brief action]' then detailed explanation and formulas on separate lines.",
-        "History": "You are a history tutor. Provide historical context and analysis. Use 'Step 1: [Brief topic]' then detailed analysis on following lines.",
-        "Geography": "You are a geography tutor. Explain locations, climate, and physical features. Use 'Step 1: [Brief topic]' then detailed explanation.",
-        "Physics": "You are a physics tutor. Use formulas and show calculations step-by-step. Format as 'Step 1: [Brief action]' then explanation, then formulas on separate lines.",
-        "Chemistry": "You are a chemistry tutor. Explain reactions and show equations step-by-step. Use 'Step 1: [Brief action]' then explanation, then equations on separate lines.",
-        "Biology": "You are a biology tutor. Explain biological processes clearly. Use 'Step 1: [Brief process]' then detailed explanation on following lines.",
-        "Economics": "You are an economics tutor. Explain economic principles and theories. Use 'Step 1: [Brief concept]' then detailed analysis on following lines."
+def get_api_response(question, subject):
+    """Get response from OpenRouter API with enhanced prompting"""
+    
+    # Check if API key exists
+    if 'OPENROUTER_API_KEY' not in st.secrets:
+        st.error("⚠️ API key not configured. Please add OPENROUTER_API_KEY to Streamlit secrets.")
+        return None
+    
+    api_key = st.secrets['OPENROUTER_API_KEY']
+    
+    # Enhanced system prompt
+    system_prompt = f"""
+    {SUBJECTS[subject]['prompt']}
+    
+    CRITICAL FORMATTING REQUIREMENTS:
+    1. Provide clean, academic-quality responses
+    2. Use clear step-by-step format when solving problems
+    3. Include proper mathematical/scientific notation
+    4. No unnecessary formatting or UI elements in the response
+    5. Focus on educational clarity and accuracy
+    6. Use standard academic conventions
+    
+    Format your response professionally as if writing in a textbook or academic paper.
+    """
+    
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
     }
     
-    payload = {
-        "model": "openai/gpt-3.5-turbo",
-        "temperature": 0.3,
+    data = {
+        "model": "openai/gpt-4-turbo-preview",  # Upgraded to GPT-4 for better accuracy
         "messages": [
-            {"role": "system", "content": system_prompts.get(subject, "You are a helpful educational tutor.")},
-            {"role": "user", "content": prompt}
-        ]
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question}
+        ],
+        "temperature": 0.1,  # Lower temperature for more consistent, accurate responses
+        "max_tokens": 2000
     }
     
     try:
-        resp = requests.post(API_URL, headers=headers, json=payload, timeout=30)
-        if resp.status_code == 200:
-            return resp.json()['choices'][0]['message']['content']
-        else:
-            return f"Error: {resp.status_code} - {resp.text}"
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-def format_clean_solution(response_text, subject):
-    """Format solution in clean, minimal style with proper mathematical notation"""
-    
-    html_output = '<div class="problem-section">'
-    
-    # Split response into lines for processing
-    lines = response_text.split('\n')
-    current_explanation = ""
-    step_counter = 1
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
-            if current_explanation:
-                html_output += f'<div class="step-content">{current_explanation}</div>'
-                current_explanation = ""
-            continue
-            
-        # Check if line contains step information
-        if re.search(r'step\s*\d*:?', line, re.IGNORECASE):
-            if current_explanation:
-                html_output += f'<div class="step-content">{current_explanation}</div>'
-                current_explanation = ""
-            
-            step_match = re.search(r'step\s*(\d*):?\s*(.*)', line, re.IGNORECASE)
-            if step_match:
-                step_num = step_match.group(1) if step_match.group(1) else str(step_counter)
-                step_content = step_match.group(2) if step_match.group(2) else "Continue with calculation"
-                html_output += f'<div class="step-title">Step {step_num}</div>'
-                if step_content:
-                    # Clean up mathematical notation
-                    step_content = fix_math_notation(step_content)
-                    html_output += f'<div class="step-content">{step_content}</div>'
-                step_counter += 1
-            continue
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=data,
+            timeout=30
+        )
         
-        # Check if line contains mathematical expressions or formulas
-        if re.search(r'[=+\-*/^()²³√∫∂]', line) and len(line) < 200:
-            # Clean up mathematical notation for display
-            clean_line = fix_math_notation(line)
-            html_output += f'<div class="equation-display">{clean_line}</div>'
-        # Check for final answers or conclusions
-        elif any(word in line.lower() for word in ['therefore', 'thus', 'answer', 'solution is', 'result', 'final']):
-            clean_line = fix_math_notation(line)
-            html_output += f'<div class="final-answer-section"><div class="section-title">Final Answer</div><div class="final-answer">{clean_line}</div></div>'
+        if response.status_code == 200:
+            return response.json()['choices'][0]['message']['content']
         else:
-            clean_line = fix_math_notation(line)
-            current_explanation += clean_line + " "
+            st.error(f"API Error: {response.status_code} - {response.text}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        st.error(f"Network Error: {str(e)}")
+        return None
+
+def create_math_visualization(equation_text):
+    """Create mathematical visualizations for geometry and functions"""
+    try:
+        # Simple function plotting for demonstration
+        if any(term in equation_text.lower() for term in ['x²', 'x^2', 'quadratic', 'parabola']):
+            x = np.linspace(-10, 10, 100)
+            y = x**2  # Simple quadratic
+            
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.plot(x, y, 'b-', linewidth=2, label='y = x²')
+            ax.grid(True, alpha=0.3)
+            ax.axhline(y=0, color='k', linewidth=0.5)
+            ax.axvline(x=0, color='k', linewidth=0.5)
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+            ax.set_title('Quadratic Function Visualization')
+            ax.legend()
+            
+            buf = BytesIO()
+            plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+            buf.seek(0)
+            plt.close()
+            
+            return buf
+    except:
+        pass
+    return None
+
+def main():
+    # Header
+    st.markdown("""
+    <div class="main-header">
+        <h1>🎓 Academic Assistant Pro</h1>
+        <p>Expert-level homework assistance across all subjects</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Add any remaining explanation
-    if current_explanation:
-        html_output += f'<div class="step-content">{current_explanation}</div>'
+    # Main interface
+    col1, col2 = st.columns([1, 2])
     
-    html_output += '</div>'
-    return html_output
-
-def fix_math_notation(text):
-    """Fix mathematical notation for proper display"""
-    # Replace common mathematical symbols
-    replacements = {
-        'x^2': 'x²',
-        'x^3': 'x³',
-        'x^4': 'x⁴',
-        'x^5': 'x⁵',
-        '^2': '²',
-        '^3': '³',
-        '^4': '⁴',
-        '^5': '⁵',
-        'sqrt(': '√(',
-        'derivative': 'derivative',
-        'integral': '∫',
-        'partial': '∂',
-        '+-': '±',
-        '+/-': '±',
-        'pi': 'π',
-        'theta': 'θ',
-        'alpha': 'α',
-        'beta': 'β',
-        'gamma': 'γ',
-        'delta': 'δ',
-        'infinity': '∞',
-        'sum': '∑',
-        'product': '∏',
-        '<=': '≤',
-        '>=': '≥',
-        '!=': '≠',
-        'approximately': '≈',
-        'approx': '≈'
-    }
+    with col1:
+        st.markdown("### 📖 Select Subject")
+        
+        # Subject selection with icons
+        subject_options = [f"{info['icon']} {subject}" for subject, info in SUBJECTS.items()]
+        selected_subject_display = st.selectbox(
+            "Choose your subject:",
+            subject_options,
+            help="Select the academic subject for your question"
+        )
+        
+        # Extract actual subject name
+        selected_subject = selected_subject_display.split(' ', 1)[1]
+        
+        # Show example question
+        st.markdown("### 💡 Example Question")
+        with st.expander("See example"):
+            st.info(f"**{selected_subject}**: {SUBJECTS[selected_subject]['example']}")
     
-    for old, new in replacements.items():
-        text = text.replace(old, new)
-    
-    return text
-
-# Minimal interface
-st.markdown('<div class="main-container">', unsafe_allow_html=True)
-
-# Input section at top (minimal)
-col1, col2 = st.columns([1, 5])
-with col1:
-    subject = st.selectbox("", options=["Math", "English", "Science", "History", "Geography", "Physics", "Chemistry", "Biology", "Economics"], label_visibility="collapsed")
-
-with col2:
-    question = st.text_area("", placeholder="Enter your homework question here...", height=120, label_visibility="collapsed")
-
-if st.button("Solve", type="primary"):
-    if question.strip():
-        # Show example solution immediately for demo
-        if "quadratic" in question.lower() or "2x" in question or "derivative" in question.lower():
-            if "derivative" in question.lower():
-                example_solution = """Step 1: Identify the function and apply differentiation rules.
-
-Given: y = x² + (1/x) - 1
-
-We need to find dy/dx by differentiating each term separately.
-
-Step 2: Differentiate the term x².
-
-The derivative of x² with respect to x is 2x.
-
-Step 3: Differentiate the term (1/x).
-
-Rewrite 1/x as x⁻¹
-The derivative of x⁻¹ with respect to x is -1·x⁻² = -1/x²
-
-Step 4: Differentiate the constant term -1.
-
-The derivative of any constant is 0.
-
-Step 5: Combine all derivatives.
-
-dy/dx = 2x + (-1/x²) + 0
-dy/dx = 2x - 1/x²
-
-Final Answer: The derivative is dy/dx = 2x - 1/x²"""
+    with col2:
+        st.markdown("### ❓ Your Question")
+        
+        # Question input
+        question = st.text_area(
+            "Enter your homework question:",
+            height=120,
+            placeholder=f"Ask your {selected_subject} question here...",
+            help="Be specific and include all relevant details"
+        )
+        
+        # Solve button
+        if st.button("🎯 Get Solution", type="primary"):
+            if question.strip():
+                with st.spinner(f"Analyzing your {selected_subject} question..."):
+                    # Get AI response
+                    response = get_api_response(question, selected_subject)
+                    
+                    if response:
+                        # Display clean answer
+                        st.markdown("### 📝 Solution")
+                        
+                        with st.container():
+                            st.markdown(f"""
+                            <div class="answer-container">
+                                <h4>{SUBJECTS[selected_subject]['icon']} {selected_subject} Solution</h4>
+                                <div style="line-height: 1.6; font-size: 16px;">
+                                    {response.replace('**', '<strong>').replace('**', '</strong>')}
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        # Add visualization for math problems
+                        if selected_subject == "Mathematics":
+                            viz = create_math_visualization(question)
+                            if viz:
+                                st.markdown("### 📊 Visualization")
+                                st.image(viz, use_column_width=True)
+                        
+                        # Feedback section
+                        st.markdown("### 📊 Rate this solution")
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            if st.button("👍 Helpful"):
+                                st.success("Thank you for your feedback!")
+                        with col_b:
+                            if st.button("👎 Needs improvement"):
+                                st.info("We'll work on improving our responses!")
+                        with col_c:
+                            if st.button("🔄 Try again"):
+                                st.rerun()
+                    
             else:
-                example_solution = """Step 1: Identify the coefficients in the quadratic equation ax² + bx + c = 0.
+                st.warning("⚠️ Please enter a question to get help.")
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; color: #666; padding: 1rem;">
+        <p>🎓 Academic Assistant Pro - Powered by Advanced AI</p>
+        <p><small>Providing accurate, textbook-quality educational assistance</small></p>
+    </div>
+    """, unsafe_allow_html=True)
 
-Given equation: 2x² + 5x - 3 = 0
-
-a = 2, b = 5, c = -3
-
-Step 2: Apply the quadratic formula.
-
-x = (-b ± √(b² - 4ac)) / 2a
-
-Step 3: Substitute the values and simplify.
-
-x = (-5 ± √(5² - 4(2)(-3))) / 2(2)
-x = (-5 ± √(25 + 24)) / 4
-x = (-5 ± √49) / 4
-x = (-5 ± 7) / 4
-
-Therefore, x = (-5 + 7)/4 = 1/2 or x = (-5 - 7)/4 = -3
-
-Final Answer: The solutions are x = 1/2 and x = -3."""
-        else:
-            # Get actual solution from API
-            with st.spinner("Solving..."):
-                example_solution = query_subject_llm(question, subject)
-        
-        # Display solution
-        formatted_solution = format_clean_solution(example_solution, subject)
-        st.markdown(formatted_solution, unsafe_allow_html=True)
-    else:
-        st.warning("Please enter a question first!")
-
-st.markdown('</div>', unsafe_allow_html=True)
+if __name__ == "__main__":
+    main()
