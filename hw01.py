@@ -582,7 +582,6 @@ def get_api_response(question, subject):
     - Put the final derivative/answer in a clear "Therefore" or "Final Answer" statement
     
     FRACTION FORMATTING (CRITICAL):
-    - NEVER use LaTeX fractions like \\frac{...}{...}
     - When writing fractions, use this EXACT format:
       numerator
       ───────
@@ -595,7 +594,6 @@ def get_api_response(question, subject):
     - Always put the fraction bar (──────) on its own line
     - Always put numerator and denominator on separate lines
     - Use simple dashes (─) for the fraction bar, not complex symbols
-    - For simple fractions like x²/(x-1), write as (x²)/(x-1) then format vertically
     
     FORMATTING FOR OTHER SUBJECTS:
     - Use clear headings and subheadings
@@ -639,97 +637,140 @@ def get_api_response(question, subject):
         return None
 
 def format_math_response(response_text):
-    """Format math response with minimal symbol conversion while keeping structure clean"""
-    lines = response_text.split('\n')
+    """Format mathematical responses with proper styling and clear mathematical notation."""
+    
+    formatted = response_text
+    
+    # Convert LaTeX fractions to readable format
+    def replace_frac(match):
+        numerator = match.group(1)
+        denominator = match.group(2)
+        # Handle nested fractions
+        numerator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, numerator)
+        denominator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, denominator)
+        return f"({numerator_conv})/({denominator_conv})"
+    
+    # Multiple passes for nested fractions
+    for _ in range(5):
+        if r'\frac{' not in formatted:
+            break
+        formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
+    
+    # Handle remaining simple fractions
+    formatted = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1)/(\2)', formatted)
+    
+    # Replace LaTeX symbols with readable equivalents
+    replacements = {
+        r'\\sqrt\{([^}]+)\}': r'sqrt(\1)',
+        r'\\sqrt': 'sqrt',
+        r'\\\(|\\\)': '',
+        r'\\\[|\\\]': '',
+        r'\\left\(': '(',
+        r'\\right\)': ')',
+        r'\\cdot': '·',
+        r'\\pm': '±',
+        r'\\times': '×',
+        r'\\div': '÷',
+        r'\\leq': '≤',
+        r'\\geq': '≥',
+        r'\\neq': '≠',
+        r'\\approx': '≈',
+        r'\\infty': '∞',
+        r'\\theta': 'θ',
+        r'\\pi': 'π',
+        r'\\alpha': 'α',
+        r'\\beta': 'β',
+        r'\\gamma': 'γ',
+        r'\\delta': 'Δ',
+        r'\\sum': 'Σ',
+        r'\\int': '∫',
+        r'\\lim': 'lim',
+        r'\\to': '→',
+        r'\\leftarrow': '←',
+        r'\\rightarrow': '→',
+        r'\\Leftarrow': '⇐',
+        r'\\Rightarrow': '⇒',
+        r'\\iff': '⇔',
+        r'\\forall': '∀',
+        r'\\exists': '∃',
+        r'\\in': '∈',
+        r'\\notin': '∉',
+        r'\\subset': '⊂',
+        r'\\subseteq': '⊆',
+        r'\\cup': '∪',
+        r'\\cap': '∩',
+        r'\\emptyset': '∅',
+        r'\\mathbb\{R\}': 'ℝ',
+        r'\\mathbb\{Z\}': 'ℤ',
+        r'\\mathbb\{N\}': 'ℕ',
+        r'\\mathbb\{Q\}': 'ℚ',
+        r'\\mathbb\{C\}': 'ℂ'
+    }
+    
+    for pattern, replacement in replacements.items():
+        formatted = re.sub(pattern, replacement, formatted)
+    
+    # Clean up any remaining LaTeX commands
+    formatted = re.sub(r'\\[a-zA-Z]+', '', formatted)
+    
+    # Format for HTML display with better structure
+    lines = formatted.split('\n')
     processed_lines = []
     
-    for line in lines:
+    for i, line in enumerate(lines):
         line = line.strip()
         if not line:
             processed_lines.append('<br>')
             continue
-            
-        # Convert LaTeX fractions to simple format
-        if '\\frac{' in line:
-            # Extract LaTeX fraction: \frac{numerator}{denominator}
-            frac_match = re.search(r'\\frac\{([^}]+)\}\{([^}]+)\}', line)
-            if frac_match:
-                numerator = frac_match.group(1)
-                denominator = frac_match.group(2)
-                # Replace the LaTeX fraction with simple text
-                line = line.replace(frac_match.group(0), f'({numerator})/({denominator})')
         
-        # Convert basic math symbols only
-        # Convert fractions like (a)/(b) to proper fraction symbols
-        if '= (' in line and ')/(x' in line:
-            # Extract the fraction parts
-            parts = line.split('= (')
-            if len(parts) == 2:
-                left_side = parts[0] + '='
-                fraction_part = parts[1]
-                if ')/(x' in fraction_part:
-                    num_denom = fraction_part.split(')/(x')
-                    if len(num_denom) == 2:
-                        numerator = num_denom[0]
-                        denominator = 'x' + num_denom[1]
-                        # Create vertical fraction with simple formatting
-                        processed_lines.append(f'''
-                        <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
-                            <span style="color: #2196F3;">{left_side}</span>
-                            <br><br>
-                            <span style="color: #4CAF50; font-weight: bold;">{numerator}</span>
-                            <br>
-                            <span style="color: #4CAF50; font-weight: bold;">─────</span>
-                            <br>
-                            <span style="color: #4CAF50; font-weight: bold;">{denominator}</span>
-                        </p>
-                        ''')
-                        continue
+        # Format step headers with clear numbering
+        if re.match(r'^\*\*Step \d+:', line) or re.match(r'^Step \d+:', line):
+            clean_line = re.sub(r'\*\*', '', line)
+            step_num = re.search(r'Step (\d+):', clean_line)
+            if step_num:
+                num = step_num.group(1)
+                content = clean_line.replace(f'Step {num}:', '').strip()
+                processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #4CAF50; font-size: 1.3em;">Step {num}: {content}</h3>')
+            else:
+                processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #4CAF50; font-size: 1.3em;">{clean_line}</h3>')
         
-        # Handle other fraction patterns like (x² + 1)/(x - 1)
-        if '= (' in line and ')/(' in line:
-            parts = line.split('= (')
-            if len(parts) == 2:
-                left_side = parts[0] + '='
-                fraction_part = parts[1]
-                if ')/(' in fraction_part:
-                    num_denom = fraction_part.split(')/(')
-                    if len(num_denom) == 2:
-                        numerator = num_denom[0]
-                        denominator = num_denom[1].rstrip(')')
-                        # Create vertical fraction
-                        processed_lines.append(f'''
-                        <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
-                            <span style="color: #2196F3;">{left_side}</span>
-                            <br><br>
-                            <span style="color: #4CAF50; font-weight: bold;">{numerator}</span>
-                            <br>
-                            <span style="color: #4CAF50; font-weight: bold;">─────</span>
-                            <br>
-                            <span style="color: #4CAF50; font-weight: bold;">{denominator}</span>
-                        </p>
-                        ''')
-                        continue
+        # Handle standalone step numbers (like "2" without "Step 2:")
+        elif re.match(r'^\d+$', line):
+            processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #4CAF50; font-size: 1.3em;">Step {line}:</h3>')
         
-        # Convert sqrt() to √ symbol
-        if 'sqrt(' in line:
-            line = line.replace('sqrt(', '√(')
-        
-        # Convert x^2 to x², x^3 to x³
-        line = re.sub(r'x\^2', 'x²', line)
-        line = re.sub(r'x\^3', 'x³', line)
-        
-        # Keep everything else simple - just basic paragraph formatting
-        if line.startswith('**') and line.endswith('**'):
-            # Step headers
+        # Format section headers
+        elif line.startswith('**') and line.endswith('**'):
             clean_line = line.replace('**', '')
-            processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #4CAF50; font-size: 1.3em;">{clean_line}</h3>')
-        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', '√', '(', ')', '·', '±', '×', '÷', 'y', 'dy', 'dx']):
-            # Mathematical equations - keep simple
-            processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
+            processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #ffc107; font-size: 1.3em; text-align: center;">{clean_line}</h3>')
+        
+        # Format mathematical equations with simple styling
+        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷', 'y', 'dy', 'dx']):
+            # Check if line contains fractions that need vertical formatting
+            if '/' in line and ('(' in line or 'dx' in line or 'dy' in line):
+                # Just display the line as-is, let the AI handle formatting
+                processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
+            else:
+                # Simple equation formatting - just clean text with line breaks
+                processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
+        
+        # Format final answers with simple styling
+        elif (line.startswith('Final Answer:') or line.startswith('Therefore') or 
+              line.startswith('Answer:') or 'solutions to the equation' in line or
+              'x =' in line and ('±' in line or 'sqrt' in line) or
+              'dy/dx' in line or '(dy)/(dx)' in line):
+            processed_lines.append(f'<p style="margin: 15px 0; color: #4CAF50; font-size: 1.2em; font-weight: bold; text-align: center;">{line}</p>')
+        
+        # Format solution headers and given information
+        elif line.startswith('Solution:') or line.startswith('Given:') or line.startswith('To solve'):
+            processed_lines.append(f'<h4 style="margin: 15px 0 8px 0; color: #9C27B0; font-size: 1.2em;">{line}</h4>')
+        
+        # Format mathematical formulas and expressions
+        elif any(ch in line for ch in ['+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷', 'x^', 'dx', 'dy']):
+            processed_lines.append(f'<p style="margin: 8px 0; color: #ffc107; line-height: 1.6; font-size: 1.1em; font-family: monospace; text-align: center;">{line}</p>')
+        
+        # Regular text with proper spacing
         else:
-            # Regular text
-            processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em;">{line}</p>')
+            processed_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.6; font-size: 1.05em;">{line}</p>')
     
     return ''.join(processed_lines)
 
@@ -785,10 +826,9 @@ def main():
                     if response:
                         # Display response based on subject
                         if selected_subject == "Mathematics":
-                            # For Mathematics, use minimal formatting with symbol conversion
+                            # For Mathematics, use simple markdown display like trii.py
                             st.markdown("### 📐 Mathematics Solution")
-                            formatted_response = format_math_response(response)
-                            st.markdown(formatted_response, unsafe_allow_html=True)
+                            st.markdown(response.replace("\n", "<br/>"), unsafe_allow_html=True)
                         else:
                             # For other subjects, use the existing formatting
                             st.markdown("### 📚 Solution")
