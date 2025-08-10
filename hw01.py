@@ -68,6 +68,23 @@ st.markdown("""
         border-radius: 3px;
         color: #ffc107;
         text-align: center;
+        white-space: pre-line;
+    }
+    
+    .fraction-display {
+        font-family: 'Courier New', monospace;
+        background-color: rgba(255,193,7,0.1);
+        padding: 0.8rem;
+        margin: 0.5rem 0;
+        border-radius: 3px;
+        color: #ffc107;
+        text-align: center;
+        line-height: 1.2;
+    }
+    
+    .fraction-bar {
+        border-bottom: 2px solid #ffc107;
+        margin: 2px 0;
     }
     
     .final-answer {
@@ -119,12 +136,17 @@ SUBJECTS = {
 
 FORMATTING REQUIREMENTS:
 1. Use "**Step 1:**", "**Step 2:**" etc. for each step
-2. Write mathematical expressions in plain text: use x^2 for x², a/b for fractions, sqrt(x) for square roots
-3. Put each mathematical equation on its own line
-4. Explain the reasoning behind each step
-5. End with "**Final Answer:**" 
-6. Keep explanations clear and concise
-7. Use simple mathematical notation that's easy to read
+2. Write mathematical expressions in plain text: use x^2 for x², sqrt(x) for square roots
+3. For fractions, use format: (numerator)/(denominator) - this will be displayed properly
+4. Put each mathematical equation on its own line
+5. Explain the reasoning behind each step
+6. End with "**Final Answer:**" 
+7. Keep explanations clear and concise
+
+FRACTION EXAMPLES:
+- Write dy/dx = (2x + 1)/(x^2 + 1) 
+- Write y = (x^2 + 3x + 2)/(x + 1)
+- This will display with numerator over denominator in a single box
 
 Provide detailed explanations but keep the formatting clean and readable.""",
         "example": "Solve: 3x² - 12x + 9 = 0"
@@ -336,12 +358,11 @@ def get_api_response(question, subject):
         return None
 
 def format_response(response_text):
-    """Simple, clean formatting focused on readability"""
+    """Simple, clean formatting focused on readability with proper fraction display"""
     if not response_text:
         return ""
     
-    # Clean up LaTeX notation to simple text
-    response_text = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1)/(\2)', response_text)
+    # Clean up LaTeX notation to simple text but preserve fraction structure
     response_text = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', response_text)
     response_text = re.sub(r'\\[a-zA-Z]+\{?([^}]*)\}?', r'\1', response_text)
     
@@ -354,8 +375,8 @@ def format_response(response_text):
             continue
         
         # Step headers
-        if re.match(r'^\*\*Step \d+:', line):
-            step_text = re.sub(r'\*\*', '', line)
+        if re.match(r'^\*\*Step \d+:', line) or re.match(r'^###\s*Step \d+:', line):
+            step_text = re.sub(r'\*\*|###', '', line).strip()
             formatted_content.append(f"### {step_text}\n")
         
         # Final answer
@@ -363,15 +384,38 @@ def format_response(response_text):
             clean_line = re.sub(r'\*\*', '', line)
             formatted_content.append(f'<div class="final-answer">{clean_line}</div>\n')
         
-        # Mathematical expressions
+        # Mathematical expressions - check for fractions first
         elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', '(', ')'])):
-            formatted_content.append(f'<div class="math-line">{line}</div>\n')
+            # Check if line contains a fraction in format (numerator)/(denominator)
+            fraction_pattern = r'\(([^)]+)\)/\(([^)]+)\)'
+            if re.search(fraction_pattern, line):
+                # Format as proper fraction
+                formatted_line = re.sub(fraction_pattern, lambda m: format_fraction(m.group(1), m.group(2)), line)
+                formatted_content.append(f'<div class="fraction-display">{formatted_line}</div>\n')
+            else:
+                # Simple mathematical expression
+                formatted_content.append(f'<div class="math-line">{line}</div>\n')
         
         # Regular text
         else:
             formatted_content.append(f"{line}\n\n")
     
     return ''.join(formatted_content)
+
+def format_fraction(numerator, denominator):
+    """Format a fraction with numerator over denominator"""
+    # Clean up the numerator and denominator
+    num_clean = numerator.strip()
+    den_clean = denominator.strip()
+    
+    # Create stacked fraction display
+    fraction_html = f"""<div style="display: inline-block; text-align: center; margin: 0 8px;">
+        <div>{num_clean}</div>
+        <div class="fraction-bar"></div>
+        <div>{den_clean}</div>
+    </div>"""
+    
+    return fraction_html
 
 def main():
     # Header
