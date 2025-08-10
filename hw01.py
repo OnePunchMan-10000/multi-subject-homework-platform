@@ -557,42 +557,46 @@ def format_textbook_response(response_text, subject):
     # Clean up the response
     formatted = response_text.strip()
     
-    # Fix fractions - convert LaTeX and text fractions to proper HTML fractions
+    # FIRST: Clean up all LaTeX and broken formatting
+    # Remove LaTeX commands completely
+    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1)/(\2)', formatted)
+    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'√(\1)', formatted)
+    formatted = re.sub(r'\\left\(', '(', formatted)
+    formatted = re.sub(r'\\right\)', ')', formatted)
+    formatted = re.sub(r'\\[a-zA-Z]+\{([^}]*)\}', r'\1', formatted)
+    formatted = re.sub(r'\\[a-zA-Z]+', '', formatted)
+    
+    # Fix broken HTML spans
+    formatted = re.sub(r'<span[^>]*>', '', formatted)
+    formatted = re.sub(r'</span>', '', formatted)
+    
+    # NOW: Create proper fractions
     def create_proper_fraction(numerator, denominator):
         """Create proper fraction with numerator over denominator"""
-        return f'''<span class="fraction">
-            <span class="fraction-numerator">{numerator.strip()}</span>
-            <span class="fraction-denominator">{denominator.strip()}</span>
-        </span>'''
+        return f'''<div style="display: inline-block; text-align: center; vertical-align: middle; margin: 0 8px; font-family: 'Times New Roman', serif; color: #ffffff;">
+            <div style="padding: 2px 8px; border-bottom: 2px solid #ffffff; margin-bottom: 2px; line-height: 1.2;">{numerator.strip()}</div>
+            <div style="padding: 2px 8px; line-height: 1.2;">{denominator.strip()}</div>
+        </div>'''
     
-    # Handle LaTeX fractions: \frac{numerator}{denominator}
-    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', 
-                      lambda m: create_proper_fraction(m.group(1), m.group(2)), 
-                      formatted)
-    
-    # Handle text fractions: (numerator)/(denominator) or numerator/denominator
+    # Handle fractions more carefully - only clear mathematical ones
     formatted = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', 
                       lambda m: create_proper_fraction(m.group(1), m.group(2)), 
                       formatted)
     
-    # Handle simple fractions like 3/4, (-b)/2a, etc.
-    formatted = re.sub(r'\b(\d+|\([^)]+\))/(\d+|\([^)]+\))\b', 
+    # Simple variable fractions
+    formatted = re.sub(r'\b([a-zA-Z0-9²³]+)/([a-zA-Z0-9²³]+)\b', 
                       lambda m: create_proper_fraction(m.group(1), m.group(2)), 
                       formatted)
-    
-    # Handle complex fractions with variables
-    formatted = re.sub(r'([+-]?\w+[^/\s]*)/([+-]?\w+[^/\s]*)', 
-                      lambda m: create_proper_fraction(m.group(1), m.group(2)), 
-                      formatted)
-    
-    # Clean up other LaTeX symbols
-    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'√(\1)', formatted)
-    formatted = re.sub(r'\\[a-zA-Z]+\{([^}]*)\}', r'\1', formatted)  # Remove other LaTeX commands
     
     # Fix exponents
     formatted = re.sub(r'\^2', '²', formatted)
     formatted = re.sub(r'\^3', '³', formatted)
     formatted = re.sub(r'\^(\d)', r'<sup>\1</sup>', formatted)
+    
+    # Clean up extra spaces and formatting
+    formatted = re.sub(r'\s+', ' ', formatted)
+    formatted = re.sub(r'\[\s*', '', formatted)
+    formatted = re.sub(r'\s*\]', '', formatted)
     
     # Split into sections
     sections = []
@@ -615,7 +619,7 @@ def format_textbook_response(response_text, subject):
                 sections.append(current_section)
             current_section = line
         else:
-            current_section += "\n" + line
+            current_section += " " + line
     
     if current_section:
         sections.append(current_section)
@@ -624,9 +628,13 @@ def format_textbook_response(response_text, subject):
     html_output = []
     
     for section in sections:
-        lines = section.split('\n')
-        header = lines[0].strip()
-        content = '\n'.join(lines[1:]).strip()
+        parts = section.split(':', 1)
+        if len(parts) == 2:
+            header = parts[0].strip()
+            content = parts[1].strip()
+        else:
+            header = "Step"
+            content = section
         
         # Clean header
         clean_header = header.replace('**', '').strip()
@@ -635,28 +643,20 @@ def format_textbook_response(response_text, subject):
         if 'Final Answer' in clean_header or 'Answer:' in clean_header:
             html_output.append(f'''
             <div class="final-answer">
-                <strong>{clean_header}</strong><br>
+                <strong>{clean_header}</strong><br><br>
                 {content}
             </div>
             ''')
         
-        elif clean_header.startswith('Step ') or 'Given:' in clean_header or 'Solution:' in clean_header:
+        elif any(keyword in clean_header for keyword in ['Step', 'Given', 'Solution', 'Verification']):
             html_output.append(f'''
             <div class="step-header">{clean_header}</div>
             <div class="explanation-text">{content}</div>
             ''')
         
-        elif any(symbol in content for symbol in ['=', '+', '-', '×', '÷', '^', '²', '³']) and len(content) < 200:
-            # Mathematical expressions
-            html_output.append(f'''
-            <div class="step-header">{clean_header}</div>
-            <div class="math-expression">{content}</div>
-            ''')
-        
         else:
             # Regular explanation
             html_output.append(f'''
-            <div class="step-header">{clean_header}</div>
             <div class="explanation-text">{content}</div>
             ''')
     
@@ -721,7 +721,7 @@ def main():
                                 viz = create_smart_visualization(question, selected_subject)
                                 if viz:
                                     st.markdown("### 📊 Visual Representation")
-                                    st.image(viz, use_column_width=True)
+                                    st.image(viz, use_container_width=True)
                         
                         # Simple feedback
                         st.markdown("---")
