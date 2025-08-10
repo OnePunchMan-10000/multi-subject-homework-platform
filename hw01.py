@@ -207,6 +207,280 @@ SUBJECTS = {
     }
 }
 
+def should_show_diagram(question, subject):
+    """
+    Intelligent diagram detection based on keywords and context
+    """
+    question_lower = question.lower()
+    
+    # Define comprehensive keyword categories
+    diagram_keywords = {
+        'explicit_visual': [
+            'draw', 'sketch', 'plot', 'graph', 'construct', 'visualize', 
+            'diagram', 'figure', 'chart', 'show graphically', 'illustrate',
+            'represent visually', 'create diagram', 'make chart'
+        ],
+        'geometry_shapes': [
+            'triangle', 'circle', 'rectangle', 'square', 'polygon', 'angle',
+            'line segment', 'parallel lines', 'perpendicular', 'coordinate plane',
+            'pentagon', 'hexagon', 'rhombus', 'trapezoid'
+        ],
+        'function_graphing': [
+            'parabola', 'curve', 'slope', 'intercept', 'quadratic', 'linear function',
+            'exponential', 'logarithmic', 'sine', 'cosine', 'tangent', 'graph function',
+            'plot equation', 'coordinate system'
+        ],
+        'statistics_visual': [
+            'histogram', 'bar chart', 'pie chart', 'scatter plot', 'box plot',
+            'distribution', 'frequency', 'data visualization', 'statistical graph'
+        ],
+        'physics_diagrams': [
+            'force diagram', 'free body diagram', 'circuit diagram', 'wave pattern',
+            'magnetic field', 'electric field', 'trajectory', 'motion diagram',
+            'vector diagram', 'ray diagram'
+        ],
+        'chemistry_diagrams': [
+            'molecular structure', 'lewis structure', 'bond diagram', 'orbital',
+            'reaction mechanism', 'phase diagram', 'electron configuration'
+        ],
+        'biology_diagrams': [
+            'cell cycle', 'dna structure', 'population growth', 'ecosystem',
+            'life cycle', 'phylogenetic tree', 'anatomical diagram'
+        ],
+        'economics_graphs': [
+            'supply curve', 'demand curve', 'supply and demand', 'market equilibrium',
+            'production possibilities', 'cost curve', 'revenue graph'
+        ]
+    }
+    
+    # Keywords that suggest NO diagram needed (pure calculation/text)
+    no_diagram_keywords = [
+        'solve for', 'calculate', 'find the value', 'simplify', 'factorize',
+        'expand', 'substitute', 'evaluate', 'compute', 'what is the answer',
+        'how much', 'how many', 'prove that', 'show that', 'derive',
+        'explain why', 'define', 'list', 'enumerate'
+    ]
+    
+    # Check for explicit "no diagram" indicators first
+    no_diagram_count = sum(1 for keyword in no_diagram_keywords if keyword in question_lower)
+    
+    # If it's primarily a computational/theoretical question, likely no diagram needed
+    if no_diagram_count >= 2:
+        # But still check if there are strong visual keywords
+        strong_visual = any(keyword in question_lower for keyword in diagram_keywords['explicit_visual'])
+        if not strong_visual:
+            return False
+    
+    # Subject-specific relevance mapping
+    subject_relevance = {
+        'Mathematics': ['explicit_visual', 'geometry_shapes', 'function_graphing', 'statistics_visual'],
+        'Physics': ['explicit_visual', 'physics_diagrams', 'function_graphing'],
+        'Chemistry': ['explicit_visual', 'chemistry_diagrams'],
+        'Biology': ['explicit_visual', 'biology_diagrams', 'statistics_visual'],
+        'Economics': ['explicit_visual', 'economics_graphs', 'statistics_visual'],
+        'Computer Science': ['explicit_visual', 'function_graphing'],
+        'History': ['explicit_visual'],
+        'English Literature': ['explicit_visual']
+    }
+    
+    # Get relevant categories for the subject
+    relevant_categories = subject_relevance.get(subject, ['explicit_visual'])
+    
+    # Check for relevant keywords
+    for category in relevant_categories:
+        if category in diagram_keywords:
+            for keyword in diagram_keywords[category]:
+                if keyword in question_lower:
+                    return True
+    
+    # Special pattern matching for visual requests
+    visual_patterns = [
+        r'graph.*function',
+        r'plot.*points?',
+        r'draw.*line',
+        r'sketch.*curve',
+        r'show.*relationship',
+        r'visualize.*data',
+        r'create.*chart',
+        r'make.*diagram'
+    ]
+    
+    for pattern in visual_patterns:
+        if re.search(pattern, question_lower):
+            return True
+    
+    return False
+
+def create_smart_visualization(question, subject):
+    """Create intelligent visualizations based on question context and subject"""
+    question_lower = question.lower()
+    
+    try:
+        plt.style.use('default')
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # Mathematics visualizations
+        if subject == "Mathematics":
+            if any(term in question_lower for term in ['x²', 'x^2', 'quadratic', 'parabola']):
+                x = np.linspace(-10, 10, 400)
+                y = x**2
+                ax.plot(x, y, 'b-', linewidth=2, label='y = x²')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Quadratic Function', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+            elif any(term in question_lower for term in ['linear', 'y=', 'slope', 'line']):
+                x = np.linspace(-10, 10, 100)
+                y = 2*x + 3
+                ax.plot(x, y, 'r-', linewidth=2, label='y = 2x + 3')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Linear Function', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+            elif any(term in question_lower for term in ['sin', 'cos', 'tan', 'trigonometric']):
+                x = np.linspace(-2*np.pi, 2*np.pi, 400)
+                y1 = np.sin(x)
+                y2 = np.cos(x)
+                ax.plot(x, y1, 'b-', linewidth=2, label='sin(x)')
+                ax.plot(x, y2, 'r-', linewidth=2, label='cos(x)')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x (radians)', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Trigonometric Functions', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+            elif any(term in question_lower for term in ['circle', 'radius', 'circumference']):
+                theta = np.linspace(0, 2*np.pi, 100)
+                r = 5
+                x = r * np.cos(theta)
+                y = r * np.sin(theta)
+                ax.plot(x, y, 'b-', linewidth=2, label=f'Circle (r={r})')
+                ax.set_aspect('equal')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Circle', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+            else:
+                plt.close(fig)
+                return None
+        
+        # Physics visualizations
+        elif subject == "Physics":
+            if any(term in question_lower for term in ['wave', 'frequency', 'amplitude']):
+                t = np.linspace(0, 4*np.pi, 400)
+                y = np.sin(t)
+                ax.plot(t, y, 'b-', linewidth=2, label='Wave Function')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlabel('Time/Position', fontsize=12)
+                ax.set_ylabel('Amplitude', fontsize=12)
+                ax.set_title('Wave Pattern', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+            elif any(term in question_lower for term in ['projectile', 'trajectory', 'motion']):
+                t = np.linspace(0, 5, 100)
+                x = 10 * t  # horizontal motion
+                y = 10 * t - 0.5 * 9.8 * t**2  # vertical motion with gravity
+                y[y < 0] = 0  # ground level
+                ax.plot(x, y, 'r-', linewidth=2, label='Projectile Path')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlabel('Horizontal Distance (m)', fontsize=12)
+                ax.set_ylabel('Height (m)', fontsize=12)
+                ax.set_title('Projectile Motion', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+            else:
+                plt.close(fig)
+                return None
+        
+        # Chemistry visualizations
+        elif subject == "Chemistry":
+            if any(term in question_lower for term in ['reaction rate', 'concentration', 'time']):
+                t = np.linspace(0, 10, 100)
+                concentration = 1.0 * np.exp(-0.3 * t)  # exponential decay
+                ax.plot(t, concentration, 'g-', linewidth=2, label='Concentration vs Time')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlabel('Time (s)', fontsize=12)
+                ax.set_ylabel('Concentration (M)', fontsize=12)
+                ax.set_title('Reaction Kinetics', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+            else:
+                plt.close(fig)
+                return None
+        
+        # Biology visualizations
+        elif subject == "Biology":
+            if any(term in question_lower for term in ['population', 'growth', 'exponential']):
+                t = np.linspace(0, 10, 100)
+                population = 100 * np.exp(0.2 * t)
+                ax.plot(t, population, 'g-', linewidth=2, label='Population Growth')
+                ax.set_xlabel('Time', fontsize=12)
+                ax.set_ylabel('Population Size', fontsize=12)
+                ax.set_title('Exponential Population Growth', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                ax.grid(True, alpha=0.3)
+                
+            elif any(term in question_lower for term in ['cell cycle', 'mitosis', 'phases']):
+                phases = ['G1', 'S', 'G2', 'M']
+                sizes = [25, 30, 20, 25]
+                colors = ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99']
+                ax.pie(sizes, labels=phases, colors=colors, autopct='%1.1f%%', startangle=90)
+                ax.set_title('Cell Cycle Phases', fontsize=14, fontweight='bold')
+            else:
+                plt.close(fig)
+                return None
+        
+        # Economics visualizations
+        elif subject == "Economics":
+            if any(term in question_lower for term in ['supply', 'demand', 'curve', 'equilibrium']):
+                price = np.linspace(1, 10, 100)
+                supply = 2 * price  # supply curve
+                demand = 20 - price  # demand curve
+                ax.plot(price, supply, 'b-', linewidth=2, label='Supply')
+                ax.plot(price, demand, 'r-', linewidth=2, label='Demand')
+                
+                # Find equilibrium point
+                eq_price = 20/3
+                eq_quantity = 2 * eq_price
+                ax.plot(eq_price, eq_quantity, 'go', markersize=8, label='Equilibrium')
+                
+                ax.grid(True, alpha=0.3)
+                ax.set_xlabel('Quantity', fontsize=12)
+                ax.set_ylabel('Price', fontsize=12)
+                ax.set_title('Supply and Demand', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+            else:
+                plt.close(fig)
+                return None
+        
+        # For other subjects, only show if explicitly requested
+        else:
+            plt.close(fig)
+            return None
+        
+        # Save plot to bytes
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150, facecolor='white')
+        buf.seek(0)
+        plt.close(fig)
+        
+        return buf
+        
+    except Exception as e:
+        plt.close('all')
+        return None
+
 def get_api_response(question, subject):
     """Get response from OpenRouter API with enhanced prompting"""
     
@@ -246,13 +520,13 @@ def get_api_response(question, subject):
     }
     
     data = {
-        "model": "openai/gpt-3.5-turbo",  # Cheaper model to save credits
+        "model": "openai/gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question}
         ],
         "temperature": 0.1,
-        "max_tokens": 1200  # Increased for more detailed responses
+        "max_tokens": 1200
     }
     
     try:
@@ -271,134 +545,6 @@ def get_api_response(question, subject):
             
     except requests.exceptions.RequestException as e:
         st.error(f"Network Error: {str(e)}")
-        return None
-
-def create_advanced_visualization(question, subject):
-    """Create subject-specific visualizations and diagrams for Mathematics and Biology only"""
-    question_lower = question.lower()
-    
-    try:
-        plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
-        if subject == "Mathematics":
-            # Quadratic functions
-            if any(term in question_lower for term in ['x²', 'x^2', 'quadratic', 'parabola']):
-                x = np.linspace(-10, 10, 400)
-                y = x**2
-                ax.plot(x, y, 'b-', linewidth=2, label='y = x²')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.5)
-                ax.axvline(x=0, color='k', linewidth=0.5)
-                ax.set_xlabel('x', fontsize=12)
-                ax.set_ylabel('y', fontsize=12)
-                ax.set_title('Quadratic Function', fontsize=14, fontweight='bold')
-                ax.legend(fontsize=11)
-                
-            # Linear equations
-            elif any(term in question_lower for term in ['linear', 'y=', 'slope']):
-                x = np.linspace(-10, 10, 100)
-                y = 2*x + 3  # Example linear function
-                ax.plot(x, y, 'r-', linewidth=2, label='y = 2x + 3')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.5)
-                ax.axvline(x=0, color='k', linewidth=0.5)
-                ax.set_xlabel('x', fontsize=12)
-                ax.set_ylabel('y', fontsize=12)
-                ax.set_title('Linear Function', fontsize=14, fontweight='bold')
-                ax.legend(fontsize=11)
-                
-            # Trigonometric functions
-            elif any(term in question_lower for term in ['sin', 'cos', 'tan', 'trigonometric']):
-                x = np.linspace(-2*np.pi, 2*np.pi, 400)
-                y1 = np.sin(x)
-                y2 = np.cos(x)
-                ax.plot(x, y1, 'b-', linewidth=2, label='sin(x)')
-                ax.plot(x, y2, 'r-', linewidth=2, label='cos(x)')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.5)
-                ax.axvline(x=0, color='k', linewidth=0.5)
-                ax.set_xlabel('x (radians)', fontsize=12)
-                ax.set_ylabel('y', fontsize=12)
-                ax.set_title('Trigonometric Functions', fontsize=14, fontweight='bold')
-                ax.legend(fontsize=11)
-                
-            # Circle/geometry
-            elif any(term in question_lower for term in ['circle', 'radius', 'circumference']):
-                theta = np.linspace(0, 2*np.pi, 100)
-                r = 5  # radius
-                x = r * np.cos(theta)
-                y = r * np.sin(theta)
-                ax.plot(x, y, 'b-', linewidth=2, label=f'Circle (r={r})')
-                ax.set_aspect('equal')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.5)
-                ax.axvline(x=0, color='k', linewidth=0.5)
-                ax.set_xlabel('x', fontsize=12)
-                ax.set_ylabel('y', fontsize=12)
-                ax.set_title('Circle', fontsize=14, fontweight='bold')
-                ax.legend(fontsize=11)
-                
-        elif subject == "Biology":
-            # Cell cycle diagram
-            if any(term in question_lower for term in ['cell cycle', 'mitosis', 'phases']):
-                phases = ['G1', 'S', 'G2', 'M']
-                sizes = [25, 30, 20, 25]  # Relative time in each phase
-                colors = ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99']
-                
-                ax.pie(sizes, labels=phases, colors=colors, autopct='%1.1f%%', startangle=90)
-                ax.set_title('Cell Cycle Phases', fontsize=14, fontweight='bold')
-                
-            # DNA structure
-            elif any(term in question_lower for term in ['dna', 'double helix', 'nucleotide']):
-                # Simple DNA helix representation
-                t = np.linspace(0, 4*np.pi, 100)
-                x1 = np.cos(t)
-                y1 = np.sin(t)
-                z1 = t
-                x2 = -np.cos(t)
-                y2 = -np.sin(t)
-                z2 = t
-                
-                ax.plot(z1, x1, 'b-', linewidth=2, label='DNA Strand 1')
-                ax.plot(z2, x2, 'r-', linewidth=2, label='DNA Strand 2')
-                ax.set_xlabel('Length', fontsize=12)
-                ax.set_ylabel('Width', fontsize=12)
-                ax.set_title('DNA Double Helix (Simplified)', fontsize=14, fontweight='bold')
-                ax.legend(fontsize=11)
-                ax.grid(True, alpha=0.3)
-                
-            # Population growth
-            elif any(term in question_lower for term in ['population', 'growth', 'exponential']):
-                t = np.linspace(0, 10, 100)
-                population = 100 * np.exp(0.2 * t)  # Exponential growth
-                ax.plot(t, population, 'g-', linewidth=2, label='Population Growth')
-                ax.set_xlabel('Time', fontsize=12)
-                ax.set_ylabel('Population Size', fontsize=12)
-                ax.set_title('Exponential Population Growth', fontsize=14, fontweight='bold')
-                ax.legend(fontsize=11)
-                ax.grid(True, alpha=0.3)
-                
-            else:
-                # If no specific biology visualization, return None
-                plt.close(fig)
-                return None
-                
-        # If no specific visualization created, return None
-        else:
-            plt.close(fig)
-            return None
-            
-        # Save plot to bytes
-        buf = BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150, facecolor='white')
-        buf.seek(0)
-        plt.close(fig)
-        
-        return buf
-        
-    except Exception as e:
-        plt.close('all')
         return None
 
 def format_math_response(response_text):
@@ -551,10 +697,10 @@ def main():
                             </div>
                             """, unsafe_allow_html=True)
                         
-                        # Add visualizations only for Mathematics and Biology
-                        if selected_subject in ["Mathematics", "Biology"]:
+                        # Smart diagram detection and generation
+                        if should_show_diagram(question, selected_subject):
                             with st.spinner("Creating visualization..."):
-                                viz = create_advanced_visualization(question, selected_subject)
+                                viz = create_smart_visualization(question, selected_subject)
                                 if viz:
                                     st.markdown("### 📊 Visual Representation")
                                     st.image(viz, use_container_width=True, caption=f"{selected_subject} Visualization")
