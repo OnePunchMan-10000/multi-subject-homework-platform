@@ -77,6 +77,41 @@ st.markdown("""
         color: #ffc107;
     }
     
+    .math-step {
+        background: rgba(33, 150, 243, 0.1);
+        border: 2px solid #2196F3;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 1.1em;
+        text-align: center;
+        color: #2196F3;
+    }
+    
+    .equation-highlight {
+        background: rgba(76, 175, 80, 0.1);
+        border: 2px solid #4CAF50;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+    }
+    
+    .step-number {
+        background: #4CAF50;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    
     .stSelectbox > div > div {
         background-color: rgba(255,255,255,0.1);
         color: white;
@@ -511,11 +546,19 @@ def get_api_response(question, subject):
     7. Break complex problems into smaller, manageable steps
     8. Be thorough and educational - students should understand the process completely
     
-    FORMATTING:
+    FORMATTING FOR MATHEMATICS:
     - Use "Step 1:", "Step 2:", etc. for clear organization
     - Put final answers in a separate "Final Answer:" section
     - Use simple text formatting (no LaTeX symbols like \\frac or \\sqrt)
     - Write equations clearly: x = (-b ± sqrt(b^2 - 4ac)) / (2a)
+    - Show intermediate calculations: 2x + 3 = 7 → 2x = 4 → x = 2
+    - Use proper spacing and clear structure
+    - Include verification steps when possible
+    
+    FORMATTING FOR OTHER SUBJECTS:
+    - Use clear headings and subheadings
+    - Provide structured explanations
+    - Include relevant examples and context
     
     Subject: {subject}
     """
@@ -554,47 +597,83 @@ def get_api_response(question, subject):
         return None
 
 def format_math_response(response_text):
-    """Format mathematical responses with proper styling and convert LaTeX frac/sqrt to plain text."""
+    """Format mathematical responses with proper styling and clear mathematical notation."""
     
     formatted = response_text
     
-    # Convert nested fractions recursively - multiple passes to catch all
+    # Convert LaTeX fractions to readable format
     def replace_frac(match):
         numerator = match.group(1)
         denominator = match.group(2)
-        # Recursively convert numerator and denominator (to handle nested fracs)
+        # Handle nested fractions
         numerator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, numerator)
         denominator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, denominator)
         return f"({numerator_conv})/({denominator_conv})"
     
-    # Multiple passes to ensure all fractions are converted
-    for _ in range(5):  # Up to 5 levels of nesting
+    # Multiple passes for nested fractions
+    for _ in range(5):
         if r'\frac{' not in formatted:
             break
         formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
     
-    # Handle any remaining simple fractions with a basic pattern
+    # Handle remaining simple fractions
     formatted = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1)/(\2)', formatted)
     
-    # Replace \sqrt{...} with sqrt(...)
-    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', formatted)
+    # Replace LaTeX symbols with readable equivalents
+    replacements = {
+        r'\\sqrt\{([^}]+)\}': r'sqrt(\1)',
+        r'\\sqrt': 'sqrt',
+        r'\\\(|\\\)': '',
+        r'\\\[|\\\]': '',
+        r'\\left\(': '(',
+        r'\\right\)': ')',
+        r'\\cdot': '·',
+        r'\\pm': '±',
+        r'\\times': '×',
+        r'\\div': '÷',
+        r'\\leq': '≤',
+        r'\\geq': '≥',
+        r'\\neq': '≠',
+        r'\\approx': '≈',
+        r'\\infty': '∞',
+        r'\\theta': 'θ',
+        r'\\pi': 'π',
+        r'\\alpha': 'α',
+        r'\\beta': 'β',
+        r'\\gamma': 'γ',
+        r'\\delta': 'Δ',
+        r'\\sum': 'Σ',
+        r'\\int': '∫',
+        r'\\lim': 'lim',
+        r'\\to': '→',
+        r'\\leftarrow': '←',
+        r'\\rightarrow': '→',
+        r'\\Leftarrow': '⇐',
+        r'\\Rightarrow': '⇒',
+        r'\\iff': '⇔',
+        r'\\forall': '∀',
+        r'\\exists': '∃',
+        r'\\in': '∈',
+        r'\\notin': '∉',
+        r'\\subset': '⊂',
+        r'\\subseteq': '⊆',
+        r'\\cup': '∪',
+        r'\\cap': '∩',
+        r'\\emptyset': '∅',
+        r'\\mathbb\{R\}': 'ℝ',
+        r'\\mathbb\{Z\}': 'ℤ',
+        r'\\mathbb\{N\}': 'ℕ',
+        r'\\mathbb\{Q\}': 'ℚ',
+        r'\\mathbb\{C\}': 'ℂ'
+    }
     
-    # Remove various LaTeX delimiters
-    formatted = re.sub(r'\\\(|\\\)', '', formatted)
-    formatted = re.sub(r'\\\[|\\\]', '', formatted)
-    formatted = re.sub(r'\\left\(', '(', formatted)
-    formatted = re.sub(r'\\right\)', ')', formatted)
+    for pattern, replacement in replacements.items():
+        formatted = re.sub(pattern, replacement, formatted)
     
-    # Replace common LaTeX symbols
-    formatted = re.sub(r'\\cdot', '*', formatted)
-    formatted = re.sub(r'\\pm', '±', formatted)
-    formatted = re.sub(r'\\times', '×', formatted)
-    formatted = re.sub(r'\\div', '÷', formatted)
-    
-    # Clean up any remaining backslashes followed by letters (LaTeX commands)
+    # Clean up any remaining LaTeX commands
     formatted = re.sub(r'\\[a-zA-Z]+', '', formatted)
     
-    # Format for HTML display
+    # Format for HTML display with better structure
     lines = formatted.split('\n')
     processed_lines = []
     
@@ -604,33 +683,90 @@ def format_math_response(response_text):
             processed_lines.append('<br>')
             continue
         
-        # Format step headers (including **Step patterns)
+        # Format step headers with clear numbering
         if re.match(r'^\*\*Step \d+:', line) or re.match(r'^Step \d+:', line):
-            # Remove markdown bold formatting
             clean_line = re.sub(r'\*\*', '', line)
-            processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
+            step_num = re.search(r'Step (\d+):', clean_line)
+            if step_num:
+                num = step_num.group(1)
+                content = clean_line.replace(f'Step {num}:', '').strip()
+                processed_lines.append(f'''
+                <div class="step-box" style="margin: 15px 0; padding: 15px; background: rgba(76, 175, 80, 0.15); border-left: 5px solid #4CAF50; border-radius: 5px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <div style="background: #4CAF50; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px;">
+                            {num}
+                        </div>
+                        <h4 style="margin: 0; color: #4CAF50;">{content}</h4>
+                    </div>
+                </div>
+                ''')
+            else:
+                processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
         
         # Format section headers
         elif line.startswith('**') and line.endswith('**'):
             clean_line = line.replace('**', '')
-            processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
+            processed_lines.append(f'''
+            <div style="background: rgba(255, 193, 7, 0.2); border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
+                <h3 style="margin: 0; color: #ffc107; font-size: 1.3em;">{clean_line}</h3>
+            </div>
+            ''')
         
-        # Format equations (lines with = and mathematical content)
-        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')']):
-            processed_lines.append(f'<div class="math-step">{line}</div>')
+        # Format mathematical equations with special styling
+        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷']):
+            # Highlight the equals sign and make it stand out
+            parts = line.split('=')
+            if len(parts) == 2:
+                left_side = parts[0].strip()
+                right_side = parts[1].strip()
+                processed_lines.append(f'''
+                <div style="background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px; padding: 15px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 1.1em;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                        <span style="color: #2196F3; font-weight: bold;">{left_side}</span>
+                        <span style="color: #FF5722; font-size: 1.5em; font-weight: bold;">=</span>
+                        <span style="color: #4CAF50; font-weight: bold;">{right_side}</span>
+                    </div>
+                </div>
+                ''')
+            else:
+                processed_lines.append(f'''
+                <div style="background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px; padding: 15px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 1.1em; text-align: center; color: #2196F3;">
+                    {line}
+                </div>
+                ''')
         
-        # Format final answers
+        # Format final answers with prominent styling
         elif (line.startswith('Final Answer:') or line.startswith('Therefore') or 
-              line.startswith('Answer:') or 'solutions to the equation' in line):
-            processed_lines.append(f'<div class="formula-box">{line}</div>')
+              line.startswith('Answer:') or 'solutions to the equation' in line or
+              'x =' in line and ('±' in line or 'sqrt' in line)):
+            processed_lines.append(f'''
+            <div style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);">
+                <h3 style="margin: 0 0 15px 0; font-size: 1.4em;">🎯 Final Answer</h3>
+                <div style="font-family: 'Courier New', monospace; font-size: 1.3em; font-weight: bold; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px;">
+                    {line}
+                </div>
+            </div>
+            ''')
         
-        # Format solution headers
+        # Format solution headers and given information
         elif line.startswith('Solution:') or line.startswith('Given:') or line.startswith('To solve'):
-            processed_lines.append(f'<div class="step-box"><strong>{line}</strong></div>')
+            processed_lines.append(f'''
+            <div style="background: rgba(156, 39, 176, 0.15); border-left: 5px solid #9C27B0; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <h4 style="margin: 0; color: #9C27B0; font-size: 1.2em;">{line}</h4>
+            </div>
+            ''')
         
-        # Regular text
+        # Format mathematical formulas and expressions
+        elif any(ch in line for ch in ['+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷']):
+            processed_lines.append(f'''
+            <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 1.1em; text-align: center; color: #ffc107;">
+                {line}
+            </div>
+            ''')
+        
+        # Regular text with proper spacing
         else:
-            processed_lines.append(f'<p style="margin: 8px 0; color: white;">{line}</p>')
+            processed_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.6; font-size: 1.05em;">{line}</p>')
     
     return ''.join(processed_lines)
 
@@ -691,7 +827,30 @@ def main():
                         if selected_subject == "Mathematics":
                             formatted_response = format_math_response(response)
                         else:
-                            formatted_response = response.replace('\n\n', '<br><br>')
+                            # For non-math subjects, format with better structure
+                            lines = response.split('\n')
+                            formatted_lines = []
+                            for line in lines:
+                                line = line.strip()
+                                if not line:
+                                    formatted_lines.append('<br>')
+                                elif line.startswith('**') and line.endswith('**'):
+                                    clean_line = line.replace('**', '')
+                                    formatted_lines.append(f'''
+                                    <div style="background: rgba(156, 39, 176, 0.15); border-left: 5px solid #9C27B0; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                                        <h4 style="margin: 0; color: #9C27B0; font-size: 1.2em;">{clean_line}</h4>
+                                    </div>
+                                    ''')
+                                elif line.startswith('- ') or line.startswith('• '):
+                                    clean_line = line[2:].strip()
+                                    formatted_lines.append(f'''
+                                    <div style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid #ffc107; padding: 10px; margin: 8px 0; border-radius: 4px;">
+                                        <span style="color: #ffc107;">•</span> {clean_line}
+                                    </div>
+                                    ''')
+                                else:
+                                    formatted_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.6;">{line}</p>')
+                            formatted_response = ''.join(formatted_lines)
                         
                         with st.container():
                             st.markdown(f"""
