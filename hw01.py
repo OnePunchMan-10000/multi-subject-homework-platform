@@ -274,7 +274,7 @@ def get_api_response(question, subject):
         return None
 
 def create_advanced_visualization(question, subject):
-    """Create subject-specific visualizations and diagrams"""
+    """Create subject-specific visualizations and diagrams for Mathematics and Biology only"""
     question_lower = question.lower()
     
     try:
@@ -339,58 +339,50 @@ def create_advanced_visualization(question, subject):
                 ax.set_title('Circle', fontsize=14, fontweight='bold')
                 ax.legend(fontsize=11)
                 
-        elif subject == "Physics":
-            # Motion graphs
-            if any(term in question_lower for term in ['motion', 'velocity', 'acceleration', 'displacement']):
-                t = np.linspace(0, 10, 100)
-                # Example: uniformly accelerated motion
-                v = 5 + 2*t  # v = u + at
-                s = 5*t + t**2  # s = ut + 0.5*at²
+        elif subject == "Biology":
+            # Cell cycle diagram
+            if any(term in question_lower for term in ['cell cycle', 'mitosis', 'phases']):
+                phases = ['G1', 'S', 'G2', 'M']
+                sizes = [25, 30, 20, 25]  # Relative time in each phase
+                colors = ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99']
                 
-                fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+                ax.pie(sizes, labels=phases, colors=colors, autopct='%1.1f%%', startangle=90)
+                ax.set_title('Cell Cycle Phases', fontsize=14, fontweight='bold')
                 
-                ax1.plot(t, v, 'r-', linewidth=2, label='Velocity')
-                ax1.set_xlabel('Time (s)', fontsize=12)
-                ax1.set_ylabel('Velocity (m/s)', fontsize=12)
-                ax1.set_title('Velocity vs Time', fontsize=14, fontweight='bold')
-                ax1.grid(True, alpha=0.3)
-                ax1.legend(fontsize=11)
+            # DNA structure
+            elif any(term in question_lower for term in ['dna', 'double helix', 'nucleotide']):
+                # Simple DNA helix representation
+                t = np.linspace(0, 4*np.pi, 100)
+                x1 = np.cos(t)
+                y1 = np.sin(t)
+                z1 = t
+                x2 = -np.cos(t)
+                y2 = -np.sin(t)
+                z2 = t
                 
-                ax2.plot(t, s, 'b-', linewidth=2, label='Displacement')
-                ax2.set_xlabel('Time (s)', fontsize=12)
-                ax2.set_ylabel('Displacement (m)', fontsize=12)
-                ax2.set_title('Displacement vs Time', fontsize=14, fontweight='bold')
-                ax2.grid(True, alpha=0.3)
-                ax2.legend(fontsize=11)
-                
-                plt.tight_layout()
-                
-            # Wave functions
-            elif any(term in question_lower for term in ['wave', 'frequency', 'amplitude']):
-                x = np.linspace(0, 4*np.pi, 400)
-                y = 2 * np.sin(x)  # Amplitude = 2
-                ax.plot(x, y, 'g-', linewidth=2, label='Wave function')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.5)
-                ax.set_xlabel('Distance (m)', fontsize=12)
-                ax.set_ylabel('Amplitude', fontsize=12)
-                ax.set_title('Wave Function', fontsize=14, fontweight='bold')
+                ax.plot(z1, x1, 'b-', linewidth=2, label='DNA Strand 1')
+                ax.plot(z2, x2, 'r-', linewidth=2, label='DNA Strand 2')
+                ax.set_xlabel('Length', fontsize=12)
+                ax.set_ylabel('Width', fontsize=12)
+                ax.set_title('DNA Double Helix (Simplified)', fontsize=14, fontweight='bold')
                 ax.legend(fontsize=11)
-                
-        elif subject == "Chemistry":
-            # Molecular structures (simplified)
-            if any(term in question_lower for term in ['molecule', 'bond', 'structure']):
-                # Simple molecule representation
-                ax.scatter([0, 1, 2], [0, 1, 0], s=200, c=['red', 'blue', 'red'], alpha=0.7)
-                ax.plot([0, 1, 2], [0, 1, 0], 'k-', linewidth=2)
-                ax.text(0, -0.2, 'O', ha='center', fontsize=14, fontweight='bold')
-                ax.text(1, 1.2, 'C', ha='center', fontsize=14, fontweight='bold')
-                ax.text(2, -0.2, 'O', ha='center', fontsize=14, fontweight='bold')
-                ax.set_title('Molecular Structure Example', fontsize=14, fontweight='bold')
-                ax.set_xlim(-0.5, 2.5)
-                ax.set_ylim(-0.5, 1.5)
-                ax.set_aspect('equal')
                 ax.grid(True, alpha=0.3)
+                
+            # Population growth
+            elif any(term in question_lower for term in ['population', 'growth', 'exponential']):
+                t = np.linspace(0, 10, 100)
+                population = 100 * np.exp(0.2 * t)  # Exponential growth
+                ax.plot(t, population, 'g-', linewidth=2, label='Population Growth')
+                ax.set_xlabel('Time', fontsize=12)
+                ax.set_ylabel('Population Size', fontsize=12)
+                ax.set_title('Exponential Population Growth', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                ax.grid(True, alpha=0.3)
+                
+            else:
+                # If no specific biology visualization, return None
+                plt.close(fig)
+                return None
                 
         # If no specific visualization created, return None
         else:
@@ -559,13 +551,13 @@ def main():
                             </div>
                             """, unsafe_allow_html=True)
                         
-                        # Add visualizations for applicable subjects
-                        if selected_subject in ["Mathematics", "Physics", "Chemistry"]:
+                        # Add visualizations only for Mathematics and Biology
+                        if selected_subject in ["Mathematics", "Biology"]:
                             with st.spinner("Creating visualization..."):
                                 viz = create_advanced_visualization(question, selected_subject)
                                 if viz:
                                     st.markdown("### 📊 Visual Representation")
-                                    st.image(viz, use_column_width=True, caption=f"{selected_subject} Visualization")
+                                    st.image(viz, use_container_width=True, caption=f"{selected_subject} Visualization")
                                     st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
                         
                         # Feedback section
