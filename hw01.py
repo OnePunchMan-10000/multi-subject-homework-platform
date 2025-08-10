@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Minimal, clean CSS focusing on readability
+# Improved CSS with better spacing and fraction formatting
 st.markdown("""
 <style>
     /* Hide Streamlit default elements */
@@ -37,65 +37,92 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     
-    /* Simple, clean text styling */
+    /* Improved solution content styling with better spacing */
     .solution-content {
         background-color: rgba(255,255,255,0.05);
         border-left: 4px solid #4CAF50;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border-radius: 5px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        border-radius: 8px;
+        line-height: 1.8;
     }
     
     .solution-content h3 {
         color: #4CAF50;
-        margin: 1.5rem 0 0.5rem 0;
-        font-size: 1.2em;
+        margin: 2rem 0 1rem 0;
+        font-size: 1.3em;
         border-bottom: 2px solid #4CAF50;
-        padding-bottom: 0.3rem;
+        padding-bottom: 0.5rem;
     }
     
     .solution-content p {
-        margin: 0.8rem 0;
-        line-height: 1.6;
+        margin: 1.2rem 0;
+        line-height: 1.8;
         color: #e0e0e0;
+        font-size: 1.05em;
     }
     
+    /* Better mathematical expression styling */
     .math-line {
         font-family: 'Courier New', monospace;
-        background-color: rgba(255,193,7,0.1);
-        padding: 0.5rem;
-        margin: 0.5rem 0;
-        border-radius: 3px;
+        background-color: rgba(255,193,7,0.15);
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        border-radius: 6px;
         color: #ffc107;
         text-align: center;
-        white-space: pre-line;
+        font-size: 1.1em;
+        line-height: 1.6;
+        border: 1px solid rgba(255,193,7,0.3);
+    }
+    
+    /* Improved fraction display - each fraction in its own container */
+    .fraction-container {
+        font-family: 'Courier New', monospace;
+        background-color: rgba(255,193,7,0.15);
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-radius: 6px;
+        color: #ffc107;
+        text-align: center;
+        font-size: 1.1em;
+        border: 1px solid rgba(255,193,7,0.3);
     }
     
     .fraction-display {
-        font-family: 'Courier New', monospace;
-        background-color: rgba(255,193,7,0.1);
-        padding: 0.8rem;
-        margin: 0.5rem 0;
-        border-radius: 3px;
-        color: #ffc107;
+        display: inline-block;
         text-align: center;
-        line-height: 1.2;
+        margin: 0.5rem;
+        font-size: 1.2em;
     }
     
-    .fraction-bar {
+    .fraction-numerator {
+        padding: 0.3rem 0.8rem;
         border-bottom: 2px solid #ffc107;
-        margin: 2px 0;
+        margin-bottom: 2px;
+    }
+    
+    .fraction-denominator {
+        padding: 0.3rem 0.8rem;
+        margin-top: 2px;
+    }
+    
+    /* Superscript styling for powers */
+    .power {
+        font-size: 0.8em;
+        vertical-align: super;
+        line-height: 0;
     }
     
     .final-answer {
         background-color: rgba(76,175,80,0.2);
         border: 2px solid #4CAF50;
-        padding: 1rem;
-        margin: 1rem 0;
-        border-radius: 5px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 8px;
         text-align: center;
         font-weight: bold;
-        font-size: 1.1em;
+        font-size: 1.2em;
     }
     
     /* Input styling */
@@ -142,6 +169,7 @@ FORMATTING REQUIREMENTS:
 5. Explain the reasoning behind each step
 6. End with "**Final Answer:**" 
 7. Keep explanations clear and concise
+8. Add blank lines between steps for better readability
 
 FRACTION EXAMPLES:
 - Write dy/dx = (2x + 1)/(x^2 + 1) 
@@ -158,7 +186,8 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 - Clear physics principles and formulas
 - Units included in all calculations
 - Simple mathematical notation
-- Real-world context when helpful""",
+- Real-world context when helpful
+- Add blank lines between steps for readability""",
         "example": "A 2kg object falls from 10m height. Find velocity just before impact."
     },
     "Chemistry": {
@@ -168,7 +197,8 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 - Proper chemical equations and formulas
 - Balanced equations where needed
 - Clear explanations of chemical processes
-- Simple, readable notation""",
+- Simple, readable notation
+- Add blank lines between steps for readability""",
         "example": "Balance: Al + O₂ → Al₂O₃"
     },
     "Biology": {
@@ -178,7 +208,8 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 - Accurate biological terminology
 - Clear examples and analogies
 - Step-by-step processes where applicable
-- Real-world connections""",
+- Real-world connections
+- Add blank lines between sections for readability""",
         "example": "Explain the process of cellular respiration in detail."
     },
     "English Literature": {
@@ -188,7 +219,8 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 - Textual evidence and examples
 - Literary device explanations
 - Historical/cultural context
-- Well-organized arguments""",
+- Well-organized arguments
+- Add blank lines between points for readability""",
         "example": "Analyze the symbolism of light and darkness in Romeo and Juliet."
     },
     "History": {
@@ -198,7 +230,8 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 - Multiple perspectives and sources
 - Cause-and-effect relationships
 - Historical context and significance
-- Clear, factual explanations""",
+- Clear, factual explanations
+- Add blank lines between sections for readability""",
         "example": "Analyze the causes of World War I."
     },
     "Economics": {
@@ -208,7 +241,8 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 - Step-by-step calculations where needed
 - Real-world examples
 - Simple mathematical notation
-- Practical applications""",
+- Practical applications
+- Add blank lines between steps for readability""",
         "example": "Explain supply and demand equilibrium with a market example."
     },
     "Computer Science": {
@@ -218,7 +252,8 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 - Well-commented code examples
 - Complexity analysis when relevant
 - Best practices and optimization tips
-- Practical implementation details""",
+- Practical implementation details
+- Add blank lines between sections for readability""",
         "example": "Implement binary search algorithm in Python."
     }
 }
@@ -357,8 +392,32 @@ def get_api_response(question, subject):
         st.error(f"Network Error: {str(e)}")
         return None
 
+def format_powers(text):
+    """Convert ^2, ^3, etc. to proper superscript format"""
+    # Replace common powers with superscript
+    text = re.sub(r'\^2', '<span class="power">2</span>', text)
+    text = re.sub(r'\^3', '<span class="power">3</span>', text)
+    text = re.sub(r'\^4', '<span class="power">4</span>', text)
+    text = re.sub(r'\^(\d+)', r'<span class="power">\1</span>', text)
+    text = re.sub(r'\^(\([^)]+\))', r'<span class="power">\1</span>', text)
+    return text
+
+def format_fraction(numerator, denominator):
+    """Format a single fraction in its own container"""
+    num_clean = format_powers(numerator.strip())
+    den_clean = format_powers(denominator.strip())
+    
+    return f"""
+    <div class="fraction-container">
+        <div class="fraction-display">
+            <div class="fraction-numerator">{num_clean}</div>
+            <div class="fraction-denominator">{den_clean}</div>
+        </div>
+    </div>
+    """
+
 def format_response(response_text):
-    """Simple, clean formatting focused on readability with proper fraction display"""
+    """Improved formatting with better spacing and fraction display"""
     if not response_text:
         return ""
     
@@ -372,50 +431,61 @@ def format_response(response_text):
     for line in lines:
         line = line.strip()
         if not line:
+            # Add proper spacing between sections
+            formatted_content.append("<br>")
             continue
         
         # Step headers
         if re.match(r'^\*\*Step \d+:', line) or re.match(r'^###\s*Step \d+:', line):
             step_text = re.sub(r'\*\*|###', '', line).strip()
-            formatted_content.append(f"### {step_text}\n")
+            formatted_content.append(f"### {step_text}\n\n")
         
         # Final answer
         elif 'Final Answer' in line:
             clean_line = re.sub(r'\*\*', '', line)
-            formatted_content.append(f'<div class="final-answer">{clean_line}</div>\n')
+            formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n\n')
         
-        # Mathematical expressions - check for fractions first
-        elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', '(', ')'])):
-            # Check if line contains a fraction in format (numerator)/(denominator)
-            fraction_pattern = r'\(([^)]+)\)/\(([^)]+)\)'
-            if re.search(fraction_pattern, line):
-                # Format as proper fraction
-                formatted_line = re.sub(fraction_pattern, lambda m: format_fraction(m.group(1), m.group(2)), line)
-                formatted_content.append(f'<div class="fraction-display">{formatted_line}</div>\n')
+        # Check for standalone fractions first
+        elif re.match(r'^[^=]*\([^)]+\)/\([^)]+\)[^=]*$', line):
+            # This is a standalone fraction line
+            fraction_matches = re.findall(r'\(([^)]+)\)/\(([^)]+)\)', line)
+            if fraction_matches:
+                for num, den in fraction_matches:
+                    formatted_content.append(format_fraction(num, den))
             else:
-                # Simple mathematical expression
-                formatted_content.append(f'<div class="math-line">{line}</div>\n')
+                formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n\n')
+        
+        # Mathematical expressions with equations
+        elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', '(', ')'])):
+            # Check if the line contains fractions
+            if re.search(r'\([^)]+\)/\([^)]+\)', line):
+                # Handle equations with fractions
+                parts = line.split('=')
+                if len(parts) == 2:
+                    left_part = parts[0].strip()
+                    right_part = parts[1].strip()
+                    
+                    # Format the equation
+                    formatted_line = f"{format_powers(left_part)} = "
+                    
+                    # Check if right part is just a fraction
+                    fraction_match = re.match(r'^\s*\(([^)]+)\)/\(([^)]+)\)\s*$', right_part)
+                    if fraction_match:
+                        formatted_content.append(f'<div class="math-line">{formatted_line}</div>')
+                        formatted_content.append(format_fraction(fraction_match.group(1), fraction_match.group(2)))
+                    else:
+                        formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n\n')
+                else:
+                    formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n\n')
+            else:
+                # Simple mathematical expression without fractions
+                formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n\n')
         
         # Regular text
         else:
-            formatted_content.append(f"{line}\n\n")
+            formatted_content.append(f"{format_powers(line)}\n\n")
     
     return ''.join(formatted_content)
-
-def format_fraction(numerator, denominator):
-    """Format a fraction with numerator over denominator"""
-    # Clean up the numerator and denominator
-    num_clean = numerator.strip()
-    den_clean = denominator.strip()
-    
-    # Create stacked fraction display
-    fraction_html = f"""<div style="display: inline-block; text-align: center; margin: 0 8px;">
-        <div>{num_clean}</div>
-        <div class="fraction-bar"></div>
-        <div>{den_clean}</div>
-    </div>"""
-    
-    return fraction_html
 
 def main():
     # Header
@@ -464,7 +534,7 @@ def main():
                         st.markdown("---")
                         st.markdown(f"## 📚 {selected_subject} Solution")
                         
-                        # Simple formatting in a clean container
+                        # Improved formatting in a clean container
                         formatted_response = format_response(response)
                         st.markdown(f"""
                         <div class="solution-content">
