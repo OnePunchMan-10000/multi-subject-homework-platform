@@ -414,7 +414,7 @@ def format_math_response(response_text):
     
     formatted = response_text
     
-    # Convert nested fractions recursively
+    # Convert nested fractions recursively - multiple passes to catch all
     def replace_frac(match):
         numerator = match.group(1)
         denominator = match.group(2)
@@ -423,25 +423,32 @@ def format_math_response(response_text):
         denominator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, denominator)
         return f"({numerator_conv})/({denominator_conv})"
     
-    # Replace all \frac{...}{...} with (num)/(den)
-    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
+    # Multiple passes to ensure all fractions are converted
+    for _ in range(5):  # Up to 5 levels of nesting
+        if r'\frac{' not in formatted:
+            break
+        formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
+    
+    # Handle any remaining simple fractions with a basic pattern
+    formatted = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1)/(\2)', formatted)
     
     # Replace \sqrt{...} with sqrt(...)
     formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', formatted)
     
-    # Remove \( and \) used for inline math
+    # Remove various LaTeX delimiters
     formatted = re.sub(r'\\\(|\\\)', '', formatted)
-    
-    # Remove \[ and \] used for display math
     formatted = re.sub(r'\\\[|\\\]', '', formatted)
-    
-    # Additional LaTeX cleanup
     formatted = re.sub(r'\\left\(', '(', formatted)
     formatted = re.sub(r'\\right\)', ')', formatted)
+    
+    # Replace common LaTeX symbols
     formatted = re.sub(r'\\cdot', '*', formatted)
     formatted = re.sub(r'\\pm', '±', formatted)
     formatted = re.sub(r'\\times', '×', formatted)
     formatted = re.sub(r'\\div', '÷', formatted)
+    
+    # Clean up any remaining backslashes followed by letters (LaTeX commands)
+    formatted = re.sub(r'\\[a-zA-Z]+', '', formatted)
     
     # Format for HTML display
     lines = formatted.split('\n')
@@ -453,20 +460,28 @@ def format_math_response(response_text):
             processed_lines.append('<br>')
             continue
         
-        # Format step headers
-        if re.match(r'^Step \d+:', line):
-            processed_lines.append(f'<div class="step-box"><strong>{line}</strong></div>')
+        # Format step headers (including **Step patterns)
+        if re.match(r'^\*\*Step \d+:', line) or re.match(r'^Step \d+:', line):
+            # Remove markdown bold formatting
+            clean_line = re.sub(r'\*\*', '', line)
+            processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
+        
+        # Format section headers
+        elif line.startswith('**') and line.endswith('**'):
+            clean_line = line.replace('**', '')
+            processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
         
         # Format equations (lines with = and mathematical content)
         elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')']):
             processed_lines.append(f'<div class="math-step">{line}</div>')
         
         # Format final answers
-        elif line.startswith('Final Answer:') or line.startswith('Therefore') or line.startswith('Answer:'):
+        elif (line.startswith('Final Answer:') or line.startswith('Therefore') or 
+              line.startswith('Answer:') or 'solutions to the equation' in line):
             processed_lines.append(f'<div class="formula-box">{line}</div>')
         
         # Format solution headers
-        elif line.startswith('Solution:') or line.startswith('Given:'):
+        elif line.startswith('Solution:') or line.startswith('Given:') or line.startswith('To solve'):
             processed_lines.append(f'<div class="step-box"><strong>{line}</strong></div>')
         
         # Regular text
