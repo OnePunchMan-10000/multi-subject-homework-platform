@@ -714,93 +714,97 @@ def format_math_response(response_text):
             if step_num:
                 num = step_num.group(1)
                 content = clean_line.replace(f'Step {num}:', '').strip()
-                processed_lines.append(f'''
-                <div class="step-box" style="margin: 15px 0; padding: 15px; background: rgba(76, 175, 80, 0.15); border-left: 5px solid #4CAF50; border-radius: 5px;">
-                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <div style="background: #4CAF50; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px;">
-                            {num}
-                        </div>
-                        <h4 style="margin: 0; color: #4CAF50;">{content}</h4>
-                    </div>
-                </div>
-                ''')
+                processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #4CAF50; font-size: 1.3em;">Step {num}: {content}</h3>')
             else:
-                processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
+                processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #4CAF50; font-size: 1.3em;">{clean_line}</h3>')
         
         # Handle standalone step numbers (like "2" without "Step 2:")
         elif re.match(r'^\d+$', line):
-            processed_lines.append(f'''
-            <div class="step-box" style="margin: 15px 0; padding: 15px; background: rgba(76, 175, 80, 0.15); border-left: 5px solid #4CAF50; border-radius: 5px;">
-                <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                    <div style="background: #4CAF50; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px;">
-                        {line}
-                    </div>
-                    <h4 style="margin: 0; color: #4CAF50;">Step {line}</h4>
-                </div>
-            </div>
-            ''')
+            processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #4CAF50; font-size: 1.3em;">Step {line}:</h3>')
         
         # Format section headers
         elif line.startswith('**') and line.endswith('**'):
             clean_line = line.replace('**', '')
-            processed_lines.append(f'''
-            <div style="background: rgba(255, 193, 7, 0.2); border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
-                <h3 style="margin: 0; color: #ffc107; font-size: 1.3em;">{clean_line}</h3>
-            </div>
-            ''')
+            processed_lines.append(f'<h3 style="margin: 20px 0 10px 0; color: #ffc107; font-size: 1.3em; text-align: center;">{clean_line}</h3>')
         
-        # Format mathematical equations with special styling
+        # Format mathematical equations with simple styling
         elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷', 'y', 'dy', 'dx']):
-            # Highlight the equals sign and make it stand out
-            parts = line.split('=')
-            if len(parts) == 2:
-                left_side = parts[0].strip()
-                right_side = parts[1].strip()
-                processed_lines.append(f'''
-                <div style="background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px; padding: 15px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 1.1em;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-                        <span style="color: #2196F3; font-weight: bold;">{left_side}</span>
-                        <span style="color: #FF5722; font-size: 1.5em; font-weight: bold;">=</span>
-                        <span style="color: #4CAF50; font-weight: bold;">{right_side}</span>
-                    </div>
-                </div>
-                ''')
+            # Check if line contains fractions that need vertical formatting
+            if '/' in line and ('(' in line or 'dx' in line or 'dy' in line):
+                # Format fractions vertically
+                parts = line.split('=')
+                if len(parts) == 2:
+                    left_side = parts[0].strip()
+                    right_side = parts[1].strip()
+                    
+                    # Check for fraction patterns like (numerator)/(denominator) or dy/dx
+                    if re.search(r'\([^)]+\)/\([^)]+\)', right_side) or 'dy/dx' in right_side or 'dx/dy' in right_side:
+                        # Extract numerator and denominator
+                        if re.search(r'\([^)]+\)/\([^)]+\)', right_side):
+                            frac_match = re.search(r'\(([^)]+)\)/\(([^)]+)\)', right_side)
+                            if frac_match:
+                                numerator = frac_match.group(1)
+                                denominator = frac_match.group(2)
+                                processed_lines.append(f'''
+                                <div style="margin: 15px 0; text-align: center;">
+                                    <span style="color: #2196F3; font-weight: bold; font-family: monospace; font-size: 1.1em;">{left_side} =</span>
+                                    <div style="display: inline-block; text-align: center; vertical-align: middle; margin-left: 10px;">
+                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">{numerator}</div>
+                                        <div style="border-top: 1px solid #4CAF50; margin: 2px 0;"></div>
+                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">{denominator}</div>
+                                    </div>
+                                </div>
+                                ''')
+                            else:
+                                processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
+                        else:
+                            # Handle dy/dx or dx/dy
+                            if 'dy/dx' in right_side:
+                                processed_lines.append(f'''
+                                <div style="margin: 15px 0; text-align: center;">
+                                    <span style="color: #2196F3; font-weight: bold; font-family: monospace; font-size: 1.1em;">{left_side} =</span>
+                                    <div style="display: inline-block; text-align: center; vertical-align: middle; margin-left: 10px;">
+                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">dy</div>
+                                        <div style="border-top: 1px solid #4CAF50; margin: 2px 0;"></div>
+                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">dx</div>
+                                    </div>
+                                </div>
+                                ''')
+                            elif 'dx/dy' in right_side:
+                                processed_lines.append(f'''
+                                <div style="margin: 15px 0; text-align: center;">
+                                    <span style="color: #2196F3; font-weight: bold; font-family: monospace; font-size: 1.1em;">{left_side} =</span>
+                                    <div style="display: inline-block; text-align: center; vertical-align: middle; margin-left: 10px;">
+                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">dx</div>
+                                        <div style="border-top: 1px solid #4CAF50; margin: 2px 0;"></div>
+                                        <div style="color: #4CAF50; font-weight: bold; font-family: monospace; font-size: 1.1em;">dy</div>
+                                    </div>
+                                </div>
+                                ''')
+                            else:
+                                processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
+                    else:
+                        processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
+                else:
+                    processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
             else:
-                processed_lines.append(f'''
-                <div style="background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px; padding: 15px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 1.1em; text-align: center; color: #2196F3;">
-                    {line}
-                </div>
-                ''')
+                # Simple equation formatting - just clean text with line breaks
+                processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
         
-        # Format final answers with prominent styling
+        # Format final answers with simple styling
         elif (line.startswith('Final Answer:') or line.startswith('Therefore') or 
               line.startswith('Answer:') or 'solutions to the equation' in line or
               'x =' in line and ('±' in line or 'sqrt' in line) or
               'dy/dx' in line or '(dy)/(dx)' in line):
-            processed_lines.append(f'''
-            <div style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);">
-                <h3 style="margin: 0 0 15px 0; font-size: 1.4em;">🎯 Final Answer</h3>
-                <div style="font-family: 'Courier New', monospace; font-size: 1.3em; font-weight: bold; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px;">
-                    {line}
-                </div>
-            </div>
-            ''')
+            processed_lines.append(f'<p style="margin: 15px 0; color: #4CAF50; font-size: 1.2em; font-weight: bold; text-align: center;">{line}</p>')
         
         # Format solution headers and given information
         elif line.startswith('Solution:') or line.startswith('Given:') or line.startswith('To solve'):
-            processed_lines.append(f'''
-            <div style="background: rgba(156, 39, 176, 0.15); border-left: 5px solid #9C27B0; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                <h4 style="margin: 0; color: #9C27B0; font-size: 1.2em;">{line}</h4>
-            </div>
-            ''')
+            processed_lines.append(f'<h4 style="margin: 15px 0 8px 0; color: #9C27B0; font-size: 1.2em;">{line}</h4>')
         
         # Format mathematical formulas and expressions
         elif any(ch in line for ch in ['+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷', 'x^', 'dx', 'dy']):
-            processed_lines.append(f'''
-            <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 1.1em; text-align: center; color: #ffc107;">
-                {line}
-            </div>
-            ''')
+            processed_lines.append(f'<p style="margin: 8px 0; color: #ffc107; line-height: 1.6; font-size: 1.1em; font-family: monospace; text-align: center;">{line}</p>')
         
         # Regular text with proper spacing
         else:
@@ -874,18 +878,10 @@ def main():
                                     formatted_lines.append('<br>')
                                 elif line.startswith('**') and line.endswith('**'):
                                     clean_line = line.replace('**', '')
-                                    formatted_lines.append(f'''
-                                    <div style="background: rgba(156, 39, 176, 0.15); border-left: 5px solid #9C27B0; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                                        <h4 style="margin: 0; color: #9C27B0; font-size: 1.2em;">{clean_line}</h4>
-                                    </div>
-                                    ''')
+                                    formatted_lines.append(f'<h4 style="margin: 15px 0 8px 0; color: #9C27B0; font-size: 1.2em;">{clean_line}</h4>')
                                 elif line.startswith('- ') or line.startswith('• '):
                                     clean_line = line[2:].strip()
-                                    formatted_lines.append(f'''
-                                    <div style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid #ffc107; padding: 10px; margin: 8px 0; border-radius: 4px;">
-                                        <span style="color: #ffc107;">•</span> {clean_line}
-                                    </div>
-                                    ''')
+                                    formatted_lines.append(f'<p style="margin: 8px 0; color: #ffc107; line-height: 1.6;">• {clean_line}</p>')
                                 else:
                                     formatted_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.6;">{line}</p>')
                             formatted_response = ''.join(formatted_lines)
