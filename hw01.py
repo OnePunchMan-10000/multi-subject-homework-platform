@@ -209,100 +209,60 @@ SUBJECTS = {
 
 def should_show_diagram(question, subject):
     """
-    Intelligent diagram detection based on keywords and context
+    Improved diagram detection - more permissive and better logic
     """
     question_lower = question.lower()
     
-    # Define comprehensive keyword categories
-    diagram_keywords = {
-        'explicit_visual': [
-            'draw', 'sketch', 'plot', 'graph', 'construct', 'visualize', 
-            'diagram', 'figure', 'chart', 'show graphically', 'illustrate',
-            'represent visually', 'create diagram', 'make chart'
+    # Strong visual indicators - if any of these are present, show diagram
+    strong_visual_keywords = [
+        'draw', 'sketch', 'plot', 'graph', 'construct', 'visualize', 
+        'diagram', 'figure', 'chart', 'show graphically', 'illustrate',
+        'represent visually', 'create diagram', 'make chart', 'display'
+    ]
+    
+    # Check for strong visual indicators first
+    for keyword in strong_visual_keywords:
+        if keyword in question_lower:
+            return True
+    
+    # Subject-specific visual keywords
+    subject_keywords = {
+        'Mathematics': [
+            'parabola', 'quadratic', 'function', 'linear', 'curve', 'slope',
+            'triangle', 'circle', 'rectangle', 'angle', 'coordinate',
+            'sin', 'cos', 'tan', 'trigonometric', 'x²', 'x^2', 'y='
         ],
-        'geometry_shapes': [
-            'triangle', 'circle', 'rectangle', 'square', 'polygon', 'angle',
-            'line segment', 'parallel lines', 'perpendicular', 'coordinate plane',
-            'pentagon', 'hexagon', 'rhombus', 'trapezoid'
+        'Physics': [
+            'wave', 'frequency', 'amplitude', 'projectile', 'trajectory', 
+            'motion', 'force diagram', 'circuit', 'field', 'vector'
         ],
-        'function_graphing': [
-            'parabola', 'curve', 'slope', 'intercept', 'quadratic', 'linear function',
-            'exponential', 'logarithmic', 'sine', 'cosine', 'tangent', 'graph function',
-            'plot equation', 'coordinate system'
+        'Chemistry': [
+            'reaction rate', 'concentration', 'molecular structure', 
+            'lewis structure', 'phase diagram', 'orbital'
         ],
-        'statistics_visual': [
-            'histogram', 'bar chart', 'pie chart', 'scatter plot', 'box plot',
-            'distribution', 'frequency', 'data visualization', 'statistical graph'
+        'Biology': [
+            'population growth', 'cell cycle', 'dna structure', 'ecosystem',
+            'life cycle', 'growth curve', 'distribution'
         ],
-        'physics_diagrams': [
-            'force diagram', 'free body diagram', 'circuit diagram', 'wave pattern',
-            'magnetic field', 'electric field', 'trajectory', 'motion diagram',
-            'vector diagram', 'ray diagram'
-        ],
-        'chemistry_diagrams': [
-            'molecular structure', 'lewis structure', 'bond diagram', 'orbital',
-            'reaction mechanism', 'phase diagram', 'electron configuration'
-        ],
-        'biology_diagrams': [
-            'cell cycle', 'dna structure', 'population growth', 'ecosystem',
-            'life cycle', 'phylogenetic tree', 'anatomical diagram'
-        ],
-        'economics_graphs': [
-            'supply curve', 'demand curve', 'supply and demand', 'market equilibrium',
-            'production possibilities', 'cost curve', 'revenue graph'
+        'Economics': [
+            'supply', 'demand', 'curve', 'equilibrium', 'market',
+            'production possibilities', 'cost curve'
         ]
     }
     
-    # Keywords that suggest NO diagram needed (pure calculation/text)
-    no_diagram_keywords = [
-        'solve for', 'calculate', 'find the value', 'simplify', 'factorize',
-        'expand', 'substitute', 'evaluate', 'compute', 'what is the answer',
-        'how much', 'how many', 'prove that', 'show that', 'derive',
-        'explain why', 'define', 'list', 'enumerate'
-    ]
+    # Check subject-specific keywords
+    if subject in subject_keywords:
+        for keyword in subject_keywords[subject]:
+            if keyword in question_lower:
+                return True
     
-    # Check for explicit "no diagram" indicators first
-    no_diagram_count = sum(1 for keyword in no_diagram_keywords if keyword in question_lower)
-    
-    # If it's primarily a computational/theoretical question, likely no diagram needed
-    if no_diagram_count >= 2:
-        # But still check if there are strong visual keywords
-        strong_visual = any(keyword in question_lower for keyword in diagram_keywords['explicit_visual'])
-        if not strong_visual:
-            return False
-    
-    # Subject-specific relevance mapping
-    subject_relevance = {
-        'Mathematics': ['explicit_visual', 'geometry_shapes', 'function_graphing', 'statistics_visual'],
-        'Physics': ['explicit_visual', 'physics_diagrams', 'function_graphing'],
-        'Chemistry': ['explicit_visual', 'chemistry_diagrams'],
-        'Biology': ['explicit_visual', 'biology_diagrams', 'statistics_visual'],
-        'Economics': ['explicit_visual', 'economics_graphs', 'statistics_visual'],
-        'Computer Science': ['explicit_visual', 'function_graphing'],
-        'History': ['explicit_visual'],
-        'English Literature': ['explicit_visual']
-    }
-    
-    # Get relevant categories for the subject
-    relevant_categories = subject_relevance.get(subject, ['explicit_visual'])
-    
-    # Check for relevant keywords
-    for category in relevant_categories:
-        if category in diagram_keywords:
-            for keyword in diagram_keywords[category]:
-                if keyword in question_lower:
-                    return True
-    
-    # Special pattern matching for visual requests
+    # Pattern matching for visual requests
     visual_patterns = [
         r'graph.*function',
         r'plot.*points?',
-        r'draw.*line',
-        r'sketch.*curve',
         r'show.*relationship',
-        r'visualize.*data',
-        r'create.*chart',
-        r'make.*diagram'
+        r'y\s*=\s*.*x',  # equations like y = 2x + 3
+        r'f\(x\)\s*=',   # function notation
     ]
     
     for pattern in visual_patterns:
@@ -333,7 +293,7 @@ def create_smart_visualization(question, subject):
                 ax.set_title('Quadratic Function', fontsize=14, fontweight='bold')
                 ax.legend(fontsize=11)
                 
-            elif any(term in question_lower for term in ['linear', 'y=', 'slope', 'line']):
+            elif any(term in question_lower for term in ['linear', 'y=', 'slope', 'line', 'function']) and 'x' in question_lower:
                 x = np.linspace(-10, 10, 100)
                 y = 2*x + 3
                 ax.plot(x, y, 'r-', linewidth=2, label='y = 2x + 3')
@@ -373,9 +333,19 @@ def create_smart_visualization(question, subject):
                 ax.set_ylabel('y', fontsize=12)
                 ax.set_title('Circle', fontsize=14, fontweight='bold')
                 ax.legend(fontsize=11)
+                
             else:
-                plt.close(fig)
-                return None
+                # Default math visualization - coordinate plane
+                x = np.linspace(-5, 5, 100)
+                y = x**2 - 4
+                ax.plot(x, y, 'b-', linewidth=2, label='Example: y = x² - 4')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Mathematical Function', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
         
         # Physics visualizations
         elif subject == "Physics":
@@ -401,8 +371,15 @@ def create_smart_visualization(question, subject):
                 ax.set_title('Projectile Motion', fontsize=14, fontweight='bold')
                 ax.legend(fontsize=11)
             else:
-                plt.close(fig)
-                return None
+                # Default physics diagram
+                t = np.linspace(0, 2*np.pi, 100)
+                y = np.sin(t)
+                ax.plot(t, y, 'g-', linewidth=2, label='Physics Function')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlabel('Parameter', fontsize=12)
+                ax.set_ylabel('Value', fontsize=12)
+                ax.set_title('Physics Visualization', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
         
         # Chemistry visualizations
         elif subject == "Chemistry":
@@ -416,8 +393,15 @@ def create_smart_visualization(question, subject):
                 ax.set_title('Reaction Kinetics', fontsize=14, fontweight='bold')
                 ax.legend(fontsize=11)
             else:
-                plt.close(fig)
-                return None
+                # Default chemistry diagram
+                t = np.linspace(0, 10, 100)
+                conc = np.exp(-0.2 * t)
+                ax.plot(t, conc, 'orange', linewidth=2, label='Chemical Process')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlabel('Time', fontsize=12)
+                ax.set_ylabel('Concentration', fontsize=12)
+                ax.set_title('Chemical Process', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
         
         # Biology visualizations
         elif subject == "Biology":
@@ -438,22 +422,29 @@ def create_smart_visualization(question, subject):
                 ax.pie(sizes, labels=phases, colors=colors, autopct='%1.1f%%', startangle=90)
                 ax.set_title('Cell Cycle Phases', fontsize=14, fontweight='bold')
             else:
-                plt.close(fig)
-                return None
+                # Default biology diagram
+                t = np.linspace(0, 20, 100)
+                growth = 50 * (1 - np.exp(-0.3 * t))
+                ax.plot(t, growth, 'green', linewidth=2, label='Biological Growth')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlabel('Time', fontsize=12)
+                ax.set_ylabel('Growth', fontsize=12)
+                ax.set_title('Biological Process', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
         
         # Economics visualizations
         elif subject == "Economics":
             if any(term in question_lower for term in ['supply', 'demand', 'curve', 'equilibrium']):
-                price = np.linspace(1, 10, 100)
-                supply = 2 * price  # supply curve
-                demand = 20 - price  # demand curve
-                ax.plot(price, supply, 'b-', linewidth=2, label='Supply')
-                ax.plot(price, demand, 'r-', linewidth=2, label='Demand')
+                quantity = np.linspace(0, 10, 100)
+                supply = 2 * quantity  # supply curve
+                demand = 20 - quantity  # demand curve
+                ax.plot(quantity, supply, 'b-', linewidth=2, label='Supply')
+                ax.plot(quantity, demand, 'r-', linewidth=2, label='Demand')
                 
                 # Find equilibrium point
-                eq_price = 20/3
-                eq_quantity = 2 * eq_price
-                ax.plot(eq_price, eq_quantity, 'go', markersize=8, label='Equilibrium')
+                eq_quantity = 20/3
+                eq_price = 2 * eq_quantity
+                ax.plot(eq_quantity, eq_price, 'go', markersize=8, label='Equilibrium')
                 
                 ax.grid(True, alpha=0.3)
                 ax.set_xlabel('Quantity', fontsize=12)
@@ -461,13 +452,28 @@ def create_smart_visualization(question, subject):
                 ax.set_title('Supply and Demand', fontsize=14, fontweight='bold')
                 ax.legend(fontsize=11)
             else:
-                plt.close(fig)
-                return None
+                # Default economics diagram
+                x = np.linspace(0, 10, 100)
+                supply = x * 2
+                demand = 20 - x
+                ax.plot(x, supply, 'blue', linewidth=2, label='Economic Function 1')
+                ax.plot(x, demand, 'red', linewidth=2, label='Economic Function 2')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlabel('Quantity', fontsize=12)
+                ax.set_ylabel('Price', fontsize=12)
+                ax.set_title('Economic Analysis', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
         
-        # For other subjects, only show if explicitly requested
+        # For other subjects, create a generic visualization
         else:
-            plt.close(fig)
-            return None
+            x = np.linspace(-5, 5, 100)
+            y = np.sin(x)
+            ax.plot(x, y, 'purple', linewidth=2, label='General Function')
+            ax.grid(True, alpha=0.3)
+            ax.set_xlabel('X', fontsize=12)
+            ax.set_ylabel('Y', fontsize=12)
+            ax.set_title(f'{subject} Visualization', fontsize=14, fontweight='bold')
+            ax.legend(fontsize=11)
         
         # Save plot to bytes
         buf = BytesIO()
@@ -698,13 +704,23 @@ def main():
                             """, unsafe_allow_html=True)
                         
                         # Smart diagram detection and generation
-                        if should_show_diagram(question, selected_subject):
+                        st.markdown("### 🔍 Diagram Detection Debug")
+                        diagram_should_show = should_show_diagram(question, selected_subject)
+                        st.info(f"Should show diagram: **{diagram_should_show}**")
+                        st.info(f"Question: '{question}'")
+                        st.info(f"Subject: '{selected_subject}'")
+                        
+                        if diagram_should_show:
                             with st.spinner("Creating visualization..."):
                                 viz = create_smart_visualization(question, selected_subject)
                                 if viz:
                                     st.markdown("### 📊 Visual Representation")
                                     st.image(viz, use_container_width=True, caption=f"{selected_subject} Visualization")
-                                    st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
+                                    st.success("✅ Diagram generated successfully!")
+                                else:
+                                    st.warning("⚠️ Could not generate visualization for this question.")
+                        else:
+                            st.info("ℹ️ No diagram needed for this question type.")
                         
                         # Feedback section
                         st.markdown("### 📊 Rate this solution")
@@ -722,12 +738,72 @@ def main():
             else:
                 st.warning("⚠️ Please enter a question to get help.")
     
+    # Test cases section
+    st.markdown("---")
+    st.markdown("### 🧪 Test Diagram Detection")
+    st.markdown("Try these test cases to see diagram detection in action:")
+    
+    test_cases = {
+        "Mathematics": [
+            "Draw a parabola for y = x²",
+            "Graph the function y = 2x + 3",
+            "Sketch a circle with radius 5",
+            "Plot the sine function",
+            "Solve: 2x + 3 = 7"  # Should NOT show diagram
+        ],
+        "Physics": [
+            "Draw a wave with frequency 5Hz",
+            "Show projectile motion trajectory",
+            "Calculate the momentum"  # Should NOT show diagram
+        ],
+        "Economics": [
+            "Draw supply and demand curves",
+            "Show market equilibrium",
+            "What is inflation?"  # Should NOT show diagram
+        ]
+    }
+    
+    col_test1, col_test2, col_test3 = st.columns(3)
+    
+    with col_test1:
+        st.markdown("**Mathematics Tests:**")
+        for test in test_cases["Mathematics"]:
+            if st.button(f"Test: {test[:20]}...", key=f"math_{test}"):
+                st.text_area("Auto-filled question:", value=test, key=f"result_{test}")
+                should_show = should_show_diagram(test, "Mathematics")
+                if should_show:
+                    st.success(f"✅ Would show diagram")
+                else:
+                    st.info(f"ℹ️ Would NOT show diagram")
+    
+    with col_test2:
+        st.markdown("**Physics Tests:**")
+        for test in test_cases["Physics"]:
+            if st.button(f"Test: {test[:20]}...", key=f"phys_{test}"):
+                st.text_area("Auto-filled question:", value=test, key=f"result_{test}")
+                should_show = should_show_diagram(test, "Physics")
+                if should_show:
+                    st.success(f"✅ Would show diagram")
+                else:
+                    st.info(f"ℹ️ Would NOT show diagram")
+    
+    with col_test3:
+        st.markdown("**Economics Tests:**")
+        for test in test_cases["Economics"]:
+            if st.button(f"Test: {test[:20]}...", key=f"econ_{test}"):
+                st.text_area("Auto-filled question:", value=test, key=f"result_{test}")
+                should_show = should_show_diagram(test, "Economics")
+                if should_show:
+                    st.success(f"✅ Would show diagram")
+                else:
+                    st.info(f"ℹ️ Would NOT show diagram")
+    
     # Footer
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #666; padding: 1rem;">
         <p>🎓 Academic Assistant Pro - Powered by Advanced AI</p>
-        <p><small>Providing accurate, textbook-quality educational assistance</small></p>
+        <p><small>Providing accurate, textbook-quality educational assistance with smart diagram detection</small></p>
     </div>
     """, unsafe_allow_html=True)
 
