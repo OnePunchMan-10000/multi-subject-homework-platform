@@ -6,7 +6,6 @@ import numpy as np
 from io import BytesIO
 import re
 
-
 # Page configuration
 st.set_page_config(
     page_title="Academic Assistant Pro",
@@ -33,49 +32,75 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     
+    /* Fix visibility issues */
+    .stApp {
+        background-color: #0e1117;
+        color: white;
+    }
+    
     .subject-card {
-        background: #f8f9ff;
-        border: 1px solid #e1e5f2;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
         border-radius: 8px;
         padding: 1rem;
         margin: 0.5rem 0;
+        color: white;
     }
     
     .answer-container {
-        background: white;
-        border: 1px solid #e0e0e0;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
         border-radius: 8px;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        color: white;
     }
     
     .step-box {
-        background: #f5f7fa;
+        background: rgba(76, 175, 80, 0.1);
         border-left: 4px solid #4CAF50;
         padding: 12px;
         margin: 8px 0;
         border-radius: 4px;
+        color: white;
     }
     
     .formula-box {
-        background: #fff8e1;
+        background: rgba(255, 193, 7, 0.1);
         border: 1px solid #ffc107;
         padding: 10px;
         border-radius: 4px;
         text-align: center;
         font-family: 'Courier New', monospace;
         margin: 10px 0;
+        color: #ffc107;
     }
     
     .stSelectbox > div > div {
-        background-color: #f8f9ff;
+        background-color: rgba(255,255,255,0.1);
+        color: white;
     }
     
     .stTextArea textarea {
-        background-color: #fafafa;
-        border: 2px solid #e1e5f2;
-        border-radius: 8px;
+        background-color: rgba(255,255,255,0.1) !important;
+        border: 2px solid rgba(255,255,255,0.2) !important;
+        border-radius: 8px !important;
+        color: white !important;
+    }
+    
+    /* Fix text visibility */
+    .stSelectbox label, .stTextArea label {
+        color: white !important;
+    }
+    
+    .stMarkdown, .stText {
+        color: white;
+    }
+    
+    /* Fix dropdown text */
+    .stSelectbox > div > div > div {
+        color: white;
     }
     
     .stButton > button {
@@ -192,19 +217,17 @@ def get_api_response(question, subject):
     
     api_key = st.secrets['OPENROUTER_API_KEY']
     
-    # Enhanced system prompt
+    # Enhanced system prompt - more concise for cheaper usage
     system_prompt = f"""
-    {SUBJECTS[subject]['prompt']}
+    You are a {subject} expert. Provide clear, step-by-step solutions.
     
-    CRITICAL FORMATTING REQUIREMENTS:
-    1. Provide clean, academic-quality responses
-    2. Use clear step-by-step format when solving problems
-    3. Include proper mathematical/scientific notation
-    4. No unnecessary formatting or UI elements in the response
-    5. Focus on educational clarity and accuracy
-    6. Use standard academic conventions
+    Requirements:
+    - Be concise but complete
+    - Show all steps clearly  
+    - Use proper notation
+    - Focus on accuracy
     
-    Format your response professionally as if writing in a textbook or academic paper.
+    Subject: {subject}
     """
     
     headers = {
@@ -213,13 +236,13 @@ def get_api_response(question, subject):
     }
     
     data = {
-        "model": "openai/gpt-4-turbo-preview",  # Upgraded to GPT-4 for better accuracy
+        "model": "openai/gpt-3.5-turbo",  # Cheaper model to save credits
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question}
         ],
-        "temperature": 0.1,  # Lower temperature for more consistent, accurate responses
-        "max_tokens": 2000
+        "temperature": 0.1,
+        "max_tokens": 600  # Further reduced to maximize credit usage
     }
     
     try:
@@ -492,5 +515,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
