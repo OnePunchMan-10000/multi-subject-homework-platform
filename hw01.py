@@ -112,6 +112,28 @@ st.markdown("""
         margin-right: 15px;
     }
     
+    .math-expression {
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid #ffc107;
+        border-radius: 6px;
+        padding: 12px;
+        margin: 10px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 1.1em;
+        text-align: center;
+        color: #ffc107;
+    }
+    
+    .derivative-result {
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 25px 0;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
     .stSelectbox > div > div {
         background-color: rgba(255,255,255,0.1);
         color: white;
@@ -554,6 +576,8 @@ def get_api_response(question, subject):
     - Show intermediate calculations: 2x + 3 = 7 → 2x = 4 → x = 2
     - Use proper spacing and clear structure
     - Include verification steps when possible
+    - ALWAYS format steps as "Step 1:", "Step 2:", etc. (not just numbers)
+    - Put the final derivative/answer in a clear "Therefore" or "Final Answer" statement
     
     FORMATTING FOR OTHER SUBJECTS:
     - Use clear headings and subheadings
@@ -677,7 +701,7 @@ def format_math_response(response_text):
     lines = formatted.split('\n')
     processed_lines = []
     
-    for line in lines:
+    for i, line in enumerate(lines):
         line = line.strip()
         if not line:
             processed_lines.append('<br>')
@@ -703,6 +727,25 @@ def format_math_response(response_text):
             else:
                 processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
         
+        # Handle standalone step numbers (like "2" without "Step 2:")
+        elif re.match(r'^\d+$', line) and i > 0 and i < len(lines) - 1:
+            # Check if next line contains step content
+            next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
+            if next_line and not next_line.startswith('Step'):
+                # This is likely a step number followed by content
+                processed_lines.append(f'''
+                <div class="step-box" style="margin: 15px 0; padding: 15px; background: rgba(76, 175, 80, 0.15); border-left: 5px solid #4CAF50; border-radius: 5px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <div style="background: #4CAF50; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px;">
+                            {line}
+                        </div>
+                        <h4 style="margin: 0; color: #4CAF50;">Step {line}</h4>
+                    </div>
+                </div>
+                ''')
+            else:
+                processed_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.6; font-size: 1.05em;">{line}</p>')
+        
         # Format section headers
         elif line.startswith('**') and line.endswith('**'):
             clean_line = line.replace('**', '')
@@ -713,7 +756,7 @@ def format_math_response(response_text):
             ''')
         
         # Format mathematical equations with special styling
-        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷']):
+        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷', 'y', 'dy', 'dx']):
             # Highlight the equals sign and make it stand out
             parts = line.split('=')
             if len(parts) == 2:
@@ -738,7 +781,8 @@ def format_math_response(response_text):
         # Format final answers with prominent styling
         elif (line.startswith('Final Answer:') or line.startswith('Therefore') or 
               line.startswith('Answer:') or 'solutions to the equation' in line or
-              'x =' in line and ('±' in line or 'sqrt' in line)):
+              'x =' in line and ('±' in line or 'sqrt' in line) or
+              'dy/dx' in line or '(dy)/(dx)' in line):
             processed_lines.append(f'''
             <div style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);">
                 <h3 style="margin: 0 0 15px 0; font-size: 1.4em;">🎯 Final Answer</h3>
@@ -757,7 +801,7 @@ def format_math_response(response_text):
             ''')
         
         # Format mathematical formulas and expressions
-        elif any(ch in line for ch in ['+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷']):
+        elif any(ch in line for ch in ['+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷', 'x^', 'dx', 'dy']):
             processed_lines.append(f'''
             <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 1.1em; text-align: center; color: #ffc107;">
                 {line}
