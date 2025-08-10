@@ -217,15 +217,25 @@ def get_api_response(question, subject):
     
     api_key = st.secrets['OPENROUTER_API_KEY']
     
-    # Enhanced system prompt - more concise for cheaper usage
+    # Enhanced system prompt - more detailed for better answers
     system_prompt = f"""
-    You are a {subject} expert. Provide clear, step-by-step solutions.
+    You are an expert {subject} tutor providing comprehensive, step-by-step solutions.
     
-    Requirements:
-    - Be concise but complete
-    - Show all steps clearly  
-    - Use proper notation
-    - Focus on accuracy
+    CRITICAL REQUIREMENTS:
+    1. Provide DETAILED explanations with multiple steps
+    2. Show ALL mathematical work and intermediate calculations
+    3. Use clear mathematical notation (write fractions as 3/2, exponents as x^2, square roots as sqrt())
+    4. Explain WHY each step is taken
+    5. Include verification/checking of the final answer
+    6. For math problems: show the formula first, then substitute values, then calculate
+    7. Break complex problems into smaller, manageable steps
+    8. Be thorough and educational - students should understand the process completely
+    
+    FORMATTING:
+    - Use "Step 1:", "Step 2:", etc. for clear organization
+    - Put final answers in a separate "Final Answer:" section
+    - Use simple text formatting (no LaTeX symbols like \\frac or \\sqrt)
+    - Write equations clearly: x = (-b ± sqrt(b^2 - 4ac)) / (2a)
     
     Subject: {subject}
     """
@@ -242,7 +252,7 @@ def get_api_response(question, subject):
             {"role": "user", "content": question}
         ],
         "temperature": 0.1,
-        "max_tokens": 600  # Further reduced to maximize credit usage
+        "max_tokens": 1200  # Increased for more detailed responses
     }
     
     try:
@@ -400,15 +410,42 @@ def create_advanced_visualization(question, subject):
         return None
 
 def format_math_response(response_text):
-    """Format mathematical responses with proper styling"""
+    """Format mathematical responses with proper styling and symbol conversion"""
     formatted = response_text
     
-    # Highlight equations
-    equations = re.findall(r'([xy]\s*[=]\s*[^,\n]+)', formatted)
-    for eq in equations:
-        formatted = formatted.replace(eq, f'<div class="formula-box">{eq}</div>')
+    # Convert common mathematical expressions to readable format
+    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'\1/\2', formatted)
+    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', formatted)
+    formatted = re.sub(r'\\\(([^)]+)\\\)', r'\1', formatted)
+    formatted = re.sub(r'\\\[([^\]]+)\\\]', r'\1', formatted)
     
-    return formatted
+    # Highlight equations and steps
+    lines = formatted.split('\n')
+    processed_lines = []
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            processed_lines.append('<br>')
+            continue
+            
+        # Format step headers
+        if re.match(r'^Step \d+:', line):
+            processed_lines.append(f'<div class="step-box"><strong>{line}</strong></div>')
+        
+        # Format equations (lines with = sign)
+        elif '=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', 'sqrt']):
+            processed_lines.append(f'<div class="math-step">{line}</div>')
+        
+        # Format final answer
+        elif line.startswith('Final Answer:') or line.startswith('Therefore'):
+            processed_lines.append(f'<div class="formula-box">{line}</div>')
+        
+        # Regular text
+        else:
+            processed_lines.append(f'<p>{line}</p>')
+    
+    return ''.join(processed_lines)
 
 def main():
     # Header
@@ -473,7 +510,7 @@ def main():
                             st.markdown(f"""
                             <div class="answer-container">
                                 <h4>{SUBJECTS[selected_subject]['icon']} {selected_subject} Solution</h4>
-                                <div style="line-height: 1.8; font-size: 16px;">
+                                <div>
                                     {formatted_response}
                                 </div>
                             </div>
