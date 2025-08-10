@@ -581,6 +581,20 @@ def get_api_response(question, subject):
     - CRITICAL: Format EVERY step as **Step 1**, **Step 2**, etc. - never just numbers
     - Put the final derivative/answer in a clear "Therefore" or "Final Answer" statement
     
+    FRACTION FORMATTING (CRITICAL):
+    - When writing fractions, use this EXACT format:
+      numerator
+      ───────
+      denominator
+    - Example: for dy/dx = (u'v - uv')/v^2, write:
+      dy/dx = 
+      u'v - uv'
+      ───────
+      v^2
+    - Always put the fraction bar (──────) on its own line
+    - Always put numerator and denominator on separate lines
+    - Use simple dashes (─) for the fraction bar, not complex symbols
+    
     FORMATTING FOR OTHER SUBJECTS:
     - Use clear headings and subheadings
     - Provide structured explanations
