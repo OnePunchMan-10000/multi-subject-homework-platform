@@ -554,47 +554,30 @@ def get_api_response(question, subject):
         return None
 
 def format_math_response(response_text):
-    """Format mathematical responses with proper styling and beautiful fraction display."""
+    """Format mathematical responses with proper styling and convert LaTeX frac/sqrt to plain text."""
     
     formatted = response_text
     
-    def create_html_fraction(numerator, denominator):
-        """Create a beautiful HTML fraction with proper styling"""
-        return f"""
-        <div style="display: inline-block; text-align: center; vertical-align: middle; margin: 0 8px;">
-            <div style="border-bottom: 2px solid #fff; padding: 2px 8px; margin-bottom: 2px; font-size: 16px;">
-                {numerator}
-            </div>
-            <div style="padding: 2px 8px; font-size: 16px;">
-                {denominator}
-            </div>
-        </div>
-        """
-    
-    # Convert LaTeX fractions to HTML fractions
+    # Convert nested fractions recursively - multiple passes to catch all
     def replace_frac(match):
         numerator = match.group(1)
         denominator = match.group(2)
-        return create_html_fraction(numerator, denominator)
+        # Recursively convert numerator and denominator (to handle nested fracs)
+        numerator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, numerator)
+        denominator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, denominator)
+        return f"({numerator_conv})/({denominator_conv})"
     
-    # Handle LaTeX fractions
-    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
+    # Multiple passes to ensure all fractions are converted
+    for _ in range(5):  # Up to 5 levels of nesting
+        if r'\frac{' not in formatted:
+            break
+        formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
     
-    # Convert simple fractions in parentheses to HTML fractions
-    # Pattern: (numerator)/(denominator) where numerator and denominator can contain complex expressions
-    def replace_paren_fraction(match):
-        numerator = match.group(1)
-        denominator = match.group(2)
-        return create_html_fraction(numerator, denominator)
+    # Handle any remaining simple fractions with a basic pattern
+    formatted = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1)/(\2)', formatted)
     
-    # Match fractions like (2x^2 - 2x - x^2 - 1)/((x - 1)^2)
-    formatted = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', replace_paren_fraction, formatted)
-    
-    # Match simpler fractions like (x^2 - 2x - 1)/(x - 1)^2
-    formatted = re.sub(r'\(([^)]+)\)/([^)\s]+(?:\^[0-9]+)?)', replace_paren_fraction, formatted)
-    
-    # Replace \sqrt{...} with a better sqrt representation
-    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'√(\1)', formatted)
+    # Replace \sqrt{...} with sqrt(...)
+    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', formatted)
     
     # Remove various LaTeX delimiters
     formatted = re.sub(r'\\\(|\\\)', '', formatted)
@@ -602,19 +585,14 @@ def format_math_response(response_text):
     formatted = re.sub(r'\\left\(', '(', formatted)
     formatted = re.sub(r'\\right\)', ')', formatted)
     
-    # Replace common LaTeX symbols with better Unicode
-    formatted = re.sub(r'\\cdot', ' · ', formatted)
-    formatted = re.sub(r'\\pm', ' ± ', formatted)
-    formatted = re.sub(r'\\times', ' × ', formatted)
-    formatted = re.sub(r'\\div', ' ÷ ', formatted)
+    # Replace common LaTeX symbols
+    formatted = re.sub(r'\\cdot', '*', formatted)
+    formatted = re.sub(r'\\pm', '±', formatted)
+    formatted = re.sub(r'\\times', '×', formatted)
+    formatted = re.sub(r'\\div', '÷', formatted)
     
     # Clean up any remaining backslashes followed by letters (LaTeX commands)
     formatted = re.sub(r'\\[a-zA-Z]+', '', formatted)
-    
-    # Add better spacing around mathematical operators
-    formatted = re.sub(r'([^=\s])=([^=\s])', r'\1 = \2', formatted)  # Add space around =
-    formatted = re.sub(r'([^+\s])\+([^+\s])', r'\1 + \2', formatted)  # Add space around +
-    formatted = re.sub(r'([^-\s])-([^-\s])', r'\1 - \2', formatted)   # Add space around -
     
     # Format for HTML display
     lines = formatted.split('\n')
@@ -638,48 +616,21 @@ def format_math_response(response_text):
             processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
         
         # Format equations (lines with = and mathematical content)
-        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')', '√']):
-            # Add extra styling for mathematical equations
-            processed_lines.append(f'''
-            <div style="background: rgba(255,255,255,0.05); 
-                        border: 1px solid rgba(255,255,255,0.2); 
-                        border-radius: 8px; 
-                        padding: 15px; 
-                        margin: 10px 0; 
-                        text-align: center; 
-                        font-size: 18px; 
-                        font-family: 'Times New Roman', serif; 
-                        color: white;
-                        line-height: 1.6;">
-                {line}
-            </div>
-            ''')
+        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')']):
+            processed_lines.append(f'<div class="math-step">{line}</div>')
         
-        # Format final answers with special highlighting
+        # Format final answers
         elif (line.startswith('Final Answer:') or line.startswith('Therefore') or 
               line.startswith('Answer:') or 'solutions to the equation' in line):
-            processed_lines.append(f'''
-            <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
-                        border: 2px solid #4CAF50; 
-                        border-radius: 10px; 
-                        padding: 15px; 
-                        margin: 15px 0; 
-                        text-align: center; 
-                        font-size: 18px; 
-                        font-weight: bold; 
-                        color: white; 
-                        box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
-                {line}
-            </div>
-            ''')
+            processed_lines.append(f'<div class="formula-box">{line}</div>')
         
         # Format solution headers
         elif line.startswith('Solution:') or line.startswith('Given:') or line.startswith('To solve'):
             processed_lines.append(f'<div class="step-box"><strong>{line}</strong></div>')
         
-        # Regular text with better spacing
+        # Regular text
         else:
-            processed_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.5; font-size: 16px;">{line}</p>')
+            processed_lines.append(f'<p style="margin: 8px 0; color: white;">{line}</p>')
     
     return ''.join(processed_lines)
 
