@@ -5,6 +5,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 from io import BytesIO
 import re
+import pkg_resources
+
+# Version checker - remove after checking
+st.title("📦 Package Version Checker")
+
+packages_to_check = ['streamlit', 'requests', 'matplotlib', 'numpy', 'pillow']
+
+for package in packages_to_check:
+    try:
+        version = pkg_resources.get_distribution(package).version
+        st.success(f"✅ {package}: {version}")
+    except pkg_resources.DistributionNotFound:
+        st.error(f"❌ {package}: Not installed")
+    except Exception as e:
+        st.warning(f"⚠️ {package}: Error - {str(e)}")
+
+st.markdown("---")
+st.markdown("Copy these versions to your requirements.txt")
 
 # Page configuration
 st.set_page_config(
@@ -491,3 +509,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
