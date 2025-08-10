@@ -1,10 +1,9 @@
 import streamlit as st
 import requests
-import json
+import re
 import matplotlib.pyplot as plt
 import numpy as np
 from io import BytesIO
-import re
 
 # Page configuration
 st.set_page_config(
@@ -14,122 +13,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for clean, modern UI
+# Custom CSS for enhanced styling
 st.markdown("""
 <style>
-    /* Hide Streamlit default elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* Custom styling */
     .main-header {
-        text-align: center;
-        padding: 1rem 0;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 10px;
+        padding: 2rem;
+        border-radius: 15px;
         margin-bottom: 2rem;
-    }
-    
-    /* Fix visibility issues */
-    .stApp {
-        background-color: #0e1117;
-        color: white;
-    }
-    
-    .subject-card {
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        color: white;
-    }
-    
-    .answer-container {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        color: white;
-    }
-    
-    .step-box {
-        background: rgba(76, 175, 80, 0.1);
-        border-left: 4px solid #4CAF50;
-        padding: 12px;
-        margin: 8px 0;
-        border-radius: 4px;
-        color: white;
-    }
-    
-    .formula-box {
-        background: rgba(255, 193, 7, 0.1);
-        border: 1px solid #ffc107;
-        padding: 10px;
-        border-radius: 4px;
-        text-align: center;
-        font-family: 'Courier New', monospace;
-        margin: 10px 0;
-        color: #ffc107;
-    }
-    
-    .math-step {
-        background: rgba(33, 150, 243, 0.1);
-        border: 2px solid #2196F3;
-        border-radius: 8px;
-        padding: 15px;
-        margin: 15px 0;
-        font-family: 'Courier New', monospace;
-        font-size: 1.1em;
-        text-align: center;
-        color: #2196F3;
-    }
-    
-    .equation-highlight {
-        background: rgba(76, 175, 80, 0.1);
-        border: 2px solid #4CAF50;
-        border-radius: 8px;
-        padding: 15px;
-        margin: 15px 0;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
-    }
-    
-    .step-number {
-        background: #4CAF50;
-        color: white;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 15px;
-    }
-    
-    .math-expression {
-        background: rgba(255, 193, 7, 0.1);
-        border: 1px solid #ffc107;
-        border-radius: 6px;
-        padding: 12px;
-        margin: 10px 0;
-        font-family: 'Courier New', monospace;
-        font-size: 1.1em;
-        text-align: center;
-        color: #ffc107;
-    }
-    
-    .derivative-result {
-        background: linear-gradient(135deg, #4CAF50, #45a049);
-        color: white;
-        border-radius: 12px;
-        padding: 20px;
-        margin: 25px 0;
         text-align: center;
         box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     }
@@ -929,15 +820,3 @@ def main():
                     st.success(f"✅ Would show diagram")
                 else:
                     st.info(f"ℹ️ Would NOT show diagram")
-    
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align: center; color: #666; padding: 1rem;">
-        <p>🎓 Academic Assistant Pro - Powered by Advanced AI</p>
-        <p><small>Providing accurate, textbook-quality educational assistance with smart diagram detection</small></p>
-    </div>
-    """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
