@@ -569,14 +569,16 @@ def get_api_response(question, subject):
     8. Be thorough and educational - students should understand the process completely
     
     FORMATTING FOR MATHEMATICS:
-    - Use "Step 1:", "Step 2:", etc. for clear organization
-    - Put final answers in a separate "Final Answer:" section
-    - Use simple text formatting (no LaTeX symbols like \\frac or \\sqrt)
-    - Write equations clearly: x = (-b ± sqrt(b^2 - 4ac)) / (2a)
-    - Show intermediate calculations: 2x + 3 = 7 → 2x = 4 → x = 2
+    - Use bold headings like **Step 1**, **Step 2**, etc. for clear organization
+    - Put the heading on one line
+    - Leave a blank line after each heading
+    - On the next line, give a clear explanation
+    - Put math equations centered using $$...$$
+    - Do NOT use \\frac or \\cdot. Use plain math
+    - End with **Final Answer**
     - Use proper spacing and clear structure
     - Include verification steps when possible
-    - CRITICAL: Format EVERY step as "Step 1:", "Step 2:", etc. - never just numbers
+    - CRITICAL: Format EVERY step as **Step 1**, **Step 2**, etc. - never just numbers
     - Put the final derivative/answer in a clear "Therefore" or "Final Answer" statement
     
     FORMATTING FOR OTHER SUBJECTS:
@@ -731,39 +733,8 @@ def format_math_response(response_text):
         elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')', '·', '±', '×', '÷', 'y', 'dy', 'dx']):
             # Check if line contains fractions that need vertical formatting
             if '/' in line and ('(' in line or 'dx' in line or 'dy' in line):
-                # Format fractions vertically
-                parts = line.split('=')
-                if len(parts) == 2:
-                    left_side = parts[0].strip()
-                    right_side = parts[1].strip()
-                    
-                    # Check for fraction patterns like (numerator)/(denominator) or dy/dx
-                    if re.search(r'\([^)]+\)/\([^)]+\)', right_side) or 'dy/dx' in right_side or 'dx/dy' in right_side:
-                        # Extract numerator and denominator
-                        if re.search(r'\([^)]+\)/\([^)]+\)', right_side):
-                            frac_match = re.search(r'\(([^)]+)\)/\(([^)]+)\)', right_side)
-                            if frac_match:
-                                numerator = frac_match.group(1)
-                                denominator = frac_match.group(2)
-                                # Create simple text-based fraction
-                                frac_text = f"{left_side} =\n\n{numerator}\n─────\n{denominator}"
-                                processed_lines.append(f'<pre style="margin: 15px 0; text-align: center; color: #4CAF50; font-family: monospace; font-size: 1.1em; background: transparent; border: none; white-space: pre;">{frac_text}</pre>')
-                            else:
-                                processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
-                        else:
-                            # Handle dy/dx or dx/dy
-                            if 'dy/dx' in right_side:
-                                frac_text = f"{left_side} =\n\ndy\n──\ndx"
-                                processed_lines.append(f'<pre style="margin: 15px 0; text-align: center; color: #4CAF50; font-family: monospace; font-size: 1.1em; background: transparent; border: none; white-space: pre;">{frac_text}</pre>')
-                            elif 'dx/dy' in right_side:
-                                frac_text = f"{left_side} =\n\ndx\n──\ndy"
-                                processed_lines.append(f'<pre style="margin: 15px 0; text-align: center; color: #4CAF50; font-family: monospace; font-size: 1.1em; background: transparent; border: none; white-space: pre;">{frac_text}</pre>')
-                            else:
-                                processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
-                    else:
-                        processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
-                else:
-                    processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
+                # Just display the line as-is, let the AI handle formatting
+                processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
             else:
                 # Simple equation formatting - just clean text with line breaks
                 processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
@@ -839,39 +810,16 @@ def main():
                     response = get_api_response(question, selected_subject)
                     
                     if response:
-                        # Display clean answer
-                        st.markdown("### 📝 Solution")
-                        
-                        # Format response based on subject
+                        # Display response based on subject
                         if selected_subject == "Mathematics":
-                            formatted_response = format_math_response(response)
+                            # For Mathematics, use simple markdown display like trii.py
+                            st.markdown("### 📐 Mathematics Solution")
+                            st.markdown(response.replace("\n", "<br/>"), unsafe_allow_html=True)
                         else:
-                            # For non-math subjects, format with better structure
-                            lines = response.split('\n')
-                            formatted_lines = []
-                            for line in lines:
-                                line = line.strip()
-                                if not line:
-                                    formatted_lines.append('<br>')
-                                elif line.startswith('**') and line.endswith('**'):
-                                    clean_line = line.replace('**', '')
-                                    formatted_lines.append(f'<h4 style="margin: 15px 0 8px 0; color: #9C27B0; font-size: 1.2em;">{clean_line}</h4>')
-                                elif line.startswith('- ') or line.startswith('• '):
-                                    clean_line = line[2:].strip()
-                                    formatted_lines.append(f'<p style="margin: 8px 0; color: #ffc107; line-height: 1.6;">• {clean_line}</p>')
-                                else:
-                                    formatted_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.6;">{line}</p>')
-                            formatted_response = ''.join(formatted_lines)
-                        
-                        with st.container():
-                            st.markdown(f"""
-                            <div class="answer-container">
-                                <h4>{SUBJECTS[selected_subject]['icon']} {selected_subject} Solution</h4>
-                                <div>
-                                    {formatted_response}
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
+                            # For other subjects, use the existing formatting
+                            st.markdown("### 📚 Solution")
+                            formatted_response = format_math_response(response)
+                            st.markdown(formatted_response, unsafe_allow_html=True)
                         
                         # Smart diagram detection and generation
                         st.markdown("### 🔍 Diagram Detection Debug")
