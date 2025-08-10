@@ -76,35 +76,18 @@ st.markdown("""
         border: 1px solid rgba(255,193,7,0.3);
     }
     
-    /* Improved fraction display - each fraction in its own container */
-    .fraction-container {
-        font-family: 'Courier New', monospace;
-        background-color: rgba(255,193,7,0.15);
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border-radius: 6px;
-        color: #ffc107;
-        text-align: center;
-        font-size: 1.1em;
-        border: 1px solid rgba(255,193,7,0.3);
-    }
-    
+    /* Fraction display within math-line - like the original */
     .fraction-display {
         display: inline-block;
         text-align: center;
-        margin: 0.5rem;
-        font-size: 1.2em;
+        margin: 0 8px;
+        vertical-align: middle;
     }
     
-    .fraction-numerator {
-        padding: 0.3rem 0.8rem;
+    .fraction-bar {
         border-bottom: 2px solid #ffc107;
-        margin-bottom: 2px;
-    }
-    
-    .fraction-denominator {
-        padding: 0.3rem 0.8rem;
-        margin-top: 2px;
+        margin: 2px 0;
+        line-height: 1;
     }
     
     /* Superscript styling for powers */
@@ -403,18 +386,15 @@ def format_powers(text):
     return text
 
 def format_fraction(numerator, denominator):
-    """Format a single fraction in its own container"""
+    """Format a fraction with numerator over denominator in inline style"""
     num_clean = format_powers(numerator.strip())
     den_clean = format_powers(denominator.strip())
     
-    return f"""
-    <div class="fraction-container">
-        <div class="fraction-display">
-            <div class="fraction-numerator">{num_clean}</div>
-            <div class="fraction-denominator">{den_clean}</div>
-        </div>
-    </div>
-    """
+    return f"""<div class="fraction-display">
+        <div>{num_clean}</div>
+        <div class="fraction-bar"></div>
+        <div>{den_clean}</div>
+    </div>"""
 
 def format_response(response_text):
     """Improved formatting with better spacing and fraction display"""
@@ -446,40 +426,110 @@ def format_response(response_text):
             formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n\n')
         
         # Check for standalone fractions first
-        elif re.match(r'^[^=]*\([^)]+\)/\([^)]+\)[^=]*$', line):
-            # This is a standalone fraction line
-            fraction_matches = re.findall(r'\(([^)]+)\)/\(([^)]+)\)', line)
-            if fraction_matches:
-                for num, den in fraction_matches:
-                    formatted_content.append(format_fraction(num, den))
+        elif re.match(r'^[^=]*\([^)]+\)/\([^)]+\)[^=]*
+        
+        # Regular text
+        else:
+            formatted_content.append(f"{format_powers(line)}\n\n")
+    
+    return ''.join(formatted_content)
+
+def main():
+    # Header
+    st.markdown("""
+    <div class="main-header">
+        <h1>🎓 Academic Assistant Pro</h1>
+        <p>Clear, step-by-step homework solutions</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Main interface
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.markdown("### 📖 Select Subject")
+        
+        subject_options = [f"{info['icon']} {subject}" for subject, info in SUBJECTS.items()]
+        selected_subject_display = st.selectbox(
+            "Choose your subject:",
+            subject_options,
+            help="Select the academic subject for your question"
+        )
+        
+        selected_subject = selected_subject_display.split(' ', 1)[1]
+        
+        # Show example
+        st.markdown("### 💡 Example")
+        st.info(f"**{selected_subject}**: {SUBJECTS[selected_subject]['example']}")
+    
+    with col2:
+        st.markdown("### ❓ Your Question")
+        
+        question = st.text_area(
+            "Enter your homework question:",
+            height=120,
+            placeholder=f"Ask your {selected_subject} question here...",
+            help="Be specific and include all relevant details"
+        )
+        
+        if st.button("🎯 Get Solution", type="primary"):
+            if question.strip():
+                with st.spinner("Getting solution..."):
+                    response = get_api_response(question, selected_subject)
+                    
+                    if response:
+                        st.markdown("---")
+                        st.markdown(f"## 📚 {selected_subject} Solution")
+                        
+                        # Improved formatting in a clean container
+                        formatted_response = format_response(response)
+                        st.markdown(f"""
+                        <div class="solution-content">
+                            {formatted_response}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Show diagram if needed
+                        if should_show_diagram(question, selected_subject):
+                            st.markdown("### 📊 Visualization")
+                            viz = create_smart_visualization(question, selected_subject)
+                            if viz:
+                                st.image(viz, use_container_width=True)
+                        
+                        # Simple feedback
+                        st.markdown("### Rate this solution")
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            if st.button("👍 Helpful"):
+                                st.success("Thanks!")
+                        with col_b:
+                            if st.button("👎 Needs work"):
+                                st.info("We'll improve!")
+                        with col_c:
+                            if st.button("🔄 Try again"):
+                                st.rerun()
             else:
-                formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n\n')
+                st.warning("Please enter a question.")
+    
+    # Simple footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; color: #666; padding: 1rem;">
+        <p>🎓 Academic Assistant Pro - Focus on Learning</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main(), line):
+            # This is a standalone fraction line - treat as math expression
+            formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
+            formatted_content.append(f'<div class="math-line">{formatted_line}</div>\n\n')
         
         # Mathematical expressions with equations
         elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', '(', ')'])):
-            # Check if the line contains fractions
-            if re.search(r'\([^)]+\)/\([^)]+\)', line):
-                # Handle equations with fractions
-                parts = line.split('=')
-                if len(parts) == 2:
-                    left_part = parts[0].strip()
-                    right_part = parts[1].strip()
-                    
-                    # Format the equation
-                    formatted_line = f"{format_powers(left_part)} = "
-                    
-                    # Check if right part is just a fraction
-                    fraction_match = re.match(r'^\s*\(([^)]+)\)/\(([^)]+)\)\s*$', right_part)
-                    if fraction_match:
-                        formatted_content.append(f'<div class="math-line">{formatted_line}</div>')
-                        formatted_content.append(format_fraction(fraction_match.group(1), fraction_match.group(2)))
-                    else:
-                        formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n\n')
-                else:
-                    formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n\n')
-            else:
-                # Simple mathematical expression without fractions
-                formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n\n')
+            # Replace all fractions in the line with inline fraction display
+            formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
+            formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n\n')
         
         # Regular text
         else:
