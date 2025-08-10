@@ -576,7 +576,7 @@ def get_api_response(question, subject):
     - Show intermediate calculations: 2x + 3 = 7 → 2x = 4 → x = 2
     - Use proper spacing and clear structure
     - Include verification steps when possible
-    - ALWAYS format steps as "Step 1:", "Step 2:", etc. (not just numbers)
+    - CRITICAL: Format EVERY step as "Step 1:", "Step 2:", etc. - never just numbers
     - Put the final derivative/answer in a clear "Therefore" or "Final Answer" statement
     
     FORMATTING FOR OTHER SUBJECTS:
@@ -728,23 +728,17 @@ def format_math_response(response_text):
                 processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
         
         # Handle standalone step numbers (like "2" without "Step 2:")
-        elif re.match(r'^\d+$', line) and i > 0 and i < len(lines) - 1:
-            # Check if next line contains step content
-            next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
-            if next_line and not next_line.startswith('Step'):
-                # This is likely a step number followed by content
-                processed_lines.append(f'''
-                <div class="step-box" style="margin: 15px 0; padding: 15px; background: rgba(76, 175, 80, 0.15); border-left: 5px solid #4CAF50; border-radius: 5px;">
-                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <div style="background: #4CAF50; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px;">
-                            {line}
-                        </div>
-                        <h4 style="margin: 0; color: #4CAF50;">Step {line}</h4>
+        elif re.match(r'^\d+$', line):
+            processed_lines.append(f'''
+            <div class="step-box" style="margin: 15px 0; padding: 15px; background: rgba(76, 175, 80, 0.15); border-left: 5px solid #4CAF50; border-radius: 5px;">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <div style="background: #4CAF50; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px;">
+                        {line}
                     </div>
+                    <h4 style="margin: 0; color: #4CAF50;">Step {line}</h4>
                 </div>
-                ''')
-            else:
-                processed_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.6; font-size: 1.05em;">{line}</p>')
+            </div>
+            ''')
         
         # Format section headers
         elif line.startswith('**') and line.endswith('**'):
