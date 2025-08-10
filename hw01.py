@@ -255,7 +255,9 @@ def should_show_diagram(question: str, subject: str) -> bool:
         'draw', 'sketch', 'plot', 'graph', 'construct', 'visualize',
         'diagram', 'figure', 'chart', 'show graphically', 'illustrate',
         # geometry specific
-        'triangle', 'perpendicular bisector', 'bisector', 'abc', 'geometry'
+        'triangle', 'perpendicular bisector', 'bisector', 'abc', 'geometry',
+        'square', 'rectangle', 'circle', 'semicircle', 'pentagon', 'hexagon',
+        'heptagon', 'octagon', 'polygon', 'median', 'altitude', 'angle bisector'
     ]
 
     if any(keyword in question_lower for keyword in visual_keywords):
@@ -290,10 +292,11 @@ def create_smart_visualization(question: str, subject: str):
         fig.patch.set_facecolor('white')
 
         if subject == "Mathematics":
-            # Lightweight geometry engine
+            # Lightweight geometry engine (shapes + graphs)
             if any(k in question_lower for k in [
                 'triangle', 'abc', 'perpendicular bisector', 'bisector', 'median', 'altitude',
-                'angle bisector', 'parallel', 'perpendicular', 'circle', 'circumcircle', 'incenter', 'circumcenter'
+                'angle bisector', 'parallel', 'perpendicular', 'circle', 'circumcircle', 'incenter', 'circumcenter',
+                'square', 'rectangle', 'polygon', 'semicircle', 'pentagon', 'hexagon', 'heptagon', 'octagon'
             ]):
                 # ---------- Helpers ----------
                 def find_len(name: str):
@@ -345,14 +348,15 @@ def create_smart_visualization(question: str, subject: str):
                     A = (x_a, y_a)
                     points.update({'A': A, 'B': B, 'C': C})
 
-                    # Draw triangle
-                    draw_line(B, C, color='white', linewidth=2)
-                    draw_line(C, A, color='white', linewidth=2)
-                    draw_line(A, B, color='white', linewidth=2)
+                    # Draw triangle with dark lines for white background
+                    dark = '#1f2937'
+                    draw_line(B, C, color=dark, linewidth=2)
+                    draw_line(C, A, color=dark, linewidth=2)
+                    draw_line(A, B, color=dark, linewidth=2)
                     ax.scatter([A[0], B[0], C[0]], [A[1], B[1], C[1]], color='#ffc107', zorder=3)
-                    ax.text(B[0], B[1] - 0.2, 'B', ha='center', va='top', color='white')
-                    ax.text(C[0], C[1] - 0.2, 'C', ha='center', va='top', color='white')
-                    ax.text(A[0], A[1] + 0.2, 'A', ha='center', va='bottom', color='white')
+                    ax.text(B[0], B[1] - 0.2, 'B', ha='center', va='top', color=dark)
+                    ax.text(C[0], C[1] - 0.2, 'C', ha='center', va='top', color=dark)
+                    ax.text(A[0], A[1] + 0.2, 'A', ha='center', va='bottom', color=dark)
 
                 # ---------- Constructions ----------
                 # Perpendicular bisector of a segment XY (e.g., BC)
@@ -431,6 +435,40 @@ def create_smart_visualization(question: str, subject: str):
                     ax.add_patch(circle)
                     ax.scatter([center[0]], [center[1]], color='#00E676')
                     ax.text(center[0], center[1]+0.2, c, color='white', ha='center')
+
+                # Regular shapes when requested without triangle context
+                if not points and any(k in question_lower for k in ['square', 'rectangle', 'polygon', 'circle', 'semicircle']):
+                    dark = '#1f2937'
+                    if 'square' in question_lower:
+                        s = 4.0
+                        X = np.array([0, s, s, 0, 0]); Y = np.array([0, 0, s, s, 0])
+                        ax.plot(X, Y, color=dark, linewidth=2)
+                        ax.set_title('Square')
+                    elif 'rectangle' in question_lower:
+                        a, b = 6.0, 4.0
+                        X = np.array([0, a, a, 0, 0]); Y = np.array([0, 0, b, b, 0])
+                        ax.plot(X, Y, color=dark, linewidth=2)
+                        ax.set_title('Rectangle')
+                    elif 'semicircle' in question_lower:
+                        r = 3.0
+                        t = np.linspace(0, np.pi, 200)
+                        ax.plot(r*np.cos(t), r*np.sin(t), color=dark, linewidth=2)
+                        ax.plot([-r, r], [0, 0], color=dark, linewidth=2)
+                        ax.set_aspect('equal')
+                        ax.set_title('Semicircle')
+                    elif 'circle' in question_lower:
+                        r = 3.0
+                        circ = plt.Circle((0, 0), r, fill=False, color=dark, linewidth=2)
+                        ax.add_patch(circ)
+                        ax.set_aspect('equal')
+                        ax.set_title('Circle')
+                    elif 'polygon' in question_lower:
+                        # default to regular hexagon
+                        n = 6
+                        t = np.linspace(0, 2*np.pi, n+1)
+                        ax.plot(np.cos(t), np.sin(t), color=dark, linewidth=2)
+                        ax.set_aspect('equal')
+                        ax.set_title('Regular Polygon (hexagon)')
 
                 # Final styling and bounds
                 ax.set_aspect('equal', adjustable='datalim')
