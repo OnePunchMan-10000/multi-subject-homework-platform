@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for clean, modern UI with improved spacing
+# Minimal, clean CSS focusing on readability
 st.markdown("""
 <style>
     /* Hide Streamlit default elements */
@@ -22,115 +22,63 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Custom styling */
-    .main-header {
-        text-align: center;
-        padding: 1.5rem 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    
-    /* Fix visibility issues */
+    /* Clean, simple styling */
     .stApp {
         background-color: #0e1117;
         color: white;
     }
     
-    /* Solution container with proper spacing */
-    .solution-container {
-        background: linear-gradient(145deg, #1a1a2e, #16213e);
-        border: 2px solid #4CAF50;
-        border-radius: 12px;
-        padding: 2rem;
-        margin: 2rem 0;
-        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
-    }
-    
-    /* Step headers with consistent styling */
-    .step-header {
-        background: linear-gradient(90deg, #4CAF50, #45a049);
+    .main-header {
+        text-align: center;
+        padding: 1.5rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        margin: 25px 0 15px 0;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    /* Simple, clean text styling */
+    .solution-content {
+        background-color: rgba(255,255,255,0.05);
+        border-left: 4px solid #4CAF50;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-radius: 5px;
+    }
+    
+    .solution-content h3 {
+        color: #4CAF50;
+        margin: 1.5rem 0 0.5rem 0;
         font-size: 1.2em;
-        font-weight: bold;
-        box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+        border-bottom: 2px solid #4CAF50;
+        padding-bottom: 0.3rem;
     }
     
-    /* Mathematical expressions */
-    .math-expression {
-        background: rgba(255, 193, 7, 0.15);
-        border: 2px solid #ffc107;
-        border-radius: 8px;
-        padding: 20px;
-        margin: 20px 0;
-        font-family: 'Courier New', monospace;
-        font-size: 1.3em;
-        text-align: center;
-        color: #ffc107;
-        line-height: 1.8;
-        box-shadow: 0 3px 10px rgba(255, 193, 7, 0.2);
-    }
-    
-    /* Final answer highlighting */
-    .final-answer {
-        background: linear-gradient(135deg, #4CAF50, #45a049);
-        color: white;
-        border-radius: 12px;
-        padding: 25px;
-        margin: 30px 0;
-        text-align: center;
-        font-size: 1.4em;
-        font-weight: bold;
-        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        border: 3px solid #66bb6a;
-    }
-    
-    /* Regular text with proper spacing */
-    .explanation-text {
-        color: #e0e0e0;
-        font-size: 1.1em;
-        line-height: 1.7;
-        margin: 15px 0;
-        padding: 0 10px;
-    }
-    
-    /* Formula box */
-    .formula-box {
-        background: rgba(156, 39, 176, 0.15);
-        border: 2px solid #9C27B0;
-        border-radius: 8px;
-        padding: 20px;
-        margin: 20px 0;
-        font-family: 'Courier New', monospace;
-        font-size: 1.2em;
-        text-align: center;
-        color: #CE93D8;
+    .solution-content p {
+        margin: 0.8rem 0;
         line-height: 1.6;
-        box-shadow: 0 3px 10px rgba(156, 39, 176, 0.2);
+        color: #e0e0e0;
     }
     
-    /* Fraction styling */
-    .fraction {
-        display: inline-block;
+    .math-line {
+        font-family: 'Courier New', monospace;
+        background-color: rgba(255,193,7,0.1);
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        border-radius: 3px;
+        color: #ffc107;
         text-align: center;
-        vertical-align: middle;
-        margin: 0 5px;
     }
     
-    .fraction-numerator {
-        border-bottom: 2px solid #ffc107;
-        padding-bottom: 2px;
-        display: block;
-    }
-    
-    .fraction-denominator {
-        padding-top: 2px;
-        display: block;
+    .final-answer {
+        background-color: rgba(76,175,80,0.2);
+        border: 2px solid #4CAF50;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 5px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.1em;
     }
     
     /* Input styling */
@@ -139,311 +87,202 @@ st.markdown("""
         border: 2px solid rgba(255,255,255,0.3) !important;
         border-radius: 8px !important;
         color: white !important;
-        font-size: 1.1em !important;
     }
     
     .stSelectbox > div > div {
         background-color: rgba(255,255,255,0.1);
         color: white;
-        border-radius: 8px;
     }
     
-    /* Button styling */
     .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        border-radius: 10px;
-        padding: 12px 2rem;
+        border-radius: 8px;
+        padding: 0.5rem 2rem;
         font-weight: 600;
-        font-size: 1.1em;
         width: 100%;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
     
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-    
-    /* Labels */
     .stSelectbox label, .stTextArea label {
         color: white !important;
         font-weight: 600 !important;
-        font-size: 1.1em !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Enhanced subject configurations
+# Enhanced subject configurations with better prompts
 SUBJECTS = {
     "Mathematics": {
         "icon": "📐",
-        "prompt": """You are an expert mathematics tutor with PhD-level knowledge. Provide step-by-step solutions that are:
-- Mathematically rigorous and textbook-accurate
-- Clearly explained with proper mathematical notation
-- Include all intermediate steps with clear explanations
-- Show work verification when applicable
-- Use proper mathematical terminology
-- Format equations clearly using standard notation
+        "prompt": """You are an expert mathematics tutor. Provide clear, step-by-step solutions:
 
-CRITICAL FORMATTING REQUIREMENTS:
-1. Start each step with "**Step X:**" followed by a clear description
-2. Put mathematical expressions on separate lines
-3. Use simple notation: fractions as a/b, exponents as x^2, square roots as sqrt(x)
-4. End with "**Final Answer:**" in bold
-5. Include a brief verification when possible
-6. Use clear spacing between steps""",
+FORMATTING REQUIREMENTS:
+1. Use "**Step 1:**", "**Step 2:**" etc. for each step
+2. Write mathematical expressions in plain text: use x^2 for x², a/b for fractions, sqrt(x) for square roots
+3. Put each mathematical equation on its own line
+4. Explain the reasoning behind each step
+5. End with "**Final Answer:**" 
+6. Keep explanations clear and concise
+7. Use simple mathematical notation that's easy to read
+
+Provide detailed explanations but keep the formatting clean and readable.""",
         "example": "Solve: 3x² - 12x + 9 = 0"
     },
     "Physics": {
         "icon": "⚡",
-        "prompt": """You are a physics professor with expertise in all physics domains. Provide solutions that:
-- Use correct physics principles and formulas
-- Show dimensional analysis where applicable
-- Include proper units throughout calculations
-- Explain the physics concepts involved
-- Draw connections to real-world applications
-- Follow standard physics problem-solving methodology
-
-Format with clear steps, mathematical expressions on separate lines, and bold headers.""",
+        "prompt": """You are a physics expert. Provide clear solutions with:
+- Step-by-step approach using "**Step X:**" format
+- Clear physics principles and formulas
+- Units included in all calculations
+- Simple mathematical notation
+- Real-world context when helpful""",
         "example": "A 2kg object falls from 10m height. Find velocity just before impact."
     },
     "Chemistry": {
         "icon": "🧪",
-        "prompt": """You are a chemistry expert with advanced knowledge. Provide solutions that:
-- Use accurate chemical formulas and equations
-- Balance chemical equations properly
-- Include proper chemical nomenclature
-- Show stoichiometric calculations step-by-step
-- Explain molecular behavior and mechanisms
-- Use standard chemistry notation and units
-
-Format with clear step headers and proper spacing between calculations.""",
+        "prompt": """You are a chemistry expert. Provide solutions with:
+- Clear step-by-step format
+- Proper chemical equations and formulas
+- Balanced equations where needed
+- Clear explanations of chemical processes
+- Simple, readable notation""",
         "example": "Balance: Al + O₂ → Al₂O₃"
     },
     "Biology": {
         "icon": "🧬",
-        "prompt": """You are a biology expert with comprehensive knowledge. Provide explanations that:
-- Use accurate biological terminology
-- Explain biological processes clearly
-- Include relevant examples and analogies
-- Connect concepts to real biological systems
-- Use proper scientific classification
-- Reference current biological understanding
-
-Format with clear section headers and well-organized explanations.""",
+        "prompt": """You are a biology expert. Provide clear explanations with:
+- Well-organized structure
+- Accurate biological terminology
+- Clear examples and analogies
+- Step-by-step processes where applicable
+- Real-world connections""",
         "example": "Explain the process of cellular respiration in detail."
     },
     "English Literature": {
         "icon": "📚",
-        "prompt": """You are an English literature scholar with deep analytical skills. Provide analysis that:
-- Uses proper literary terminology and concepts
-- Includes textual evidence and citations
-- Analyzes themes, symbols, and literary devices
-- Considers historical and cultural context
-- Follows academic writing standards
-- Provides insightful interpretations
-
-Format with clear analytical sections and supporting evidence.""",
+        "prompt": """You are an English literature expert. Provide analysis with:
+- Clear analytical structure
+- Textual evidence and examples
+- Literary device explanations
+- Historical/cultural context
+- Well-organized arguments""",
         "example": "Analyze the symbolism of light and darkness in Romeo and Juliet."
     },
     "History": {
         "icon": "🏛️",
-        "prompt": """You are a history professor with expertise across time periods. Provide analysis that:
-- Uses accurate historical facts and dates
-- Considers multiple perspectives and sources
-- Analyzes cause-and-effect relationships
-- Includes relevant historical context
-- Uses proper historical methodology
-- Maintains objectivity while explaining significance
-
-Format with chronological or thematic organization and clear explanations.""",
+        "prompt": """You are a history expert. Provide analysis with:
+- Chronological or thematic organization
+- Multiple perspectives and sources
+- Cause-and-effect relationships
+- Historical context and significance
+- Clear, factual explanations""",
         "example": "Analyze the causes of World War I."
     },
     "Economics": {
         "icon": "💰",
-        "prompt": """You are an economics expert with theoretical and practical knowledge. Provide explanations that:
-- Use correct economic terminology and principles
-- Include relevant graphs and models where applicable
-- Explain both micro and macroeconomic concepts
-- Use real-world examples and applications
-- Show mathematical calculations for economic problems
-- Connect theory to current economic conditions
-
-Format with clear economic analysis and step-by-step calculations.""",
+        "prompt": """You are an economics expert. Provide explanations with:
+- Clear economic principles
+- Step-by-step calculations where needed
+- Real-world examples
+- Simple mathematical notation
+- Practical applications""",
         "example": "Explain supply and demand equilibrium with a market example."
     },
     "Computer Science": {
         "icon": "💻",
-        "prompt": """You are a computer science expert with programming and theoretical knowledge. Provide solutions that:
-- Use correct programming syntax and best practices
-- Explain algorithms clearly with complexity analysis
-- Include working code examples when relevant
-- Explain computer science concepts thoroughly
-- Use proper technical terminology
-- Consider efficiency and optimization
-
-Format with clear code blocks and step-by-step explanations.""",
+        "prompt": """You are a computer science expert. Provide solutions with:
+- Clear algorithmic steps
+- Well-commented code examples
+- Complexity analysis when relevant
+- Best practices and optimization tips
+- Practical implementation details""",
         "example": "Implement binary search algorithm in Python."
     }
 }
 
 def should_show_diagram(question, subject):
-    """Improved diagram detection"""
+    """Simple diagram detection"""
     question_lower = question.lower()
     
-    # Strong visual indicators
-    strong_visual_keywords = [
+    visual_keywords = [
         'draw', 'sketch', 'plot', 'graph', 'construct', 'visualize', 
-        'diagram', 'figure', 'chart', 'show graphically', 'illustrate',
-        'represent visually', 'create diagram', 'make chart', 'display'
+        'diagram', 'figure', 'chart', 'show graphically', 'illustrate'
     ]
     
-    for keyword in strong_visual_keywords:
+    for keyword in visual_keywords:
         if keyword in question_lower:
             return True
     
-    # Subject-specific visual keywords
-    subject_keywords = {
-        'Mathematics': [
-            'parabola', 'quadratic', 'function', 'linear', 'curve', 'slope',
-            'triangle', 'circle', 'rectangle', 'angle', 'coordinate',
-            'sin', 'cos', 'tan', 'trigonometric', 'x²', 'x^2', 'y='
-        ],
-        'Physics': [
-            'wave', 'frequency', 'amplitude', 'projectile', 'trajectory', 
-            'motion', 'force diagram', 'circuit', 'field', 'vector'
-        ],
-        'Chemistry': [
-            'reaction rate', 'concentration', 'molecular structure', 
-            'lewis structure', 'phase diagram', 'orbital'
-        ],
-        'Biology': [
-            'population growth', 'cell cycle', 'dna structure', 'ecosystem',
-            'life cycle', 'growth curve', 'distribution'
-        ],
-        'Economics': [
-            'supply', 'demand', 'curve', 'equilibrium', 'market',
-            'production possibilities', 'cost curve'
-        ]
-    }
+    # Subject-specific keywords
+    if subject == "Mathematics" and any(term in question_lower for term in 
+        ['parabola', 'quadratic', 'function', 'linear', 'curve', 'y=', 'sin', 'cos']):
+        return True
     
-    if subject in subject_keywords:
-        for keyword in subject_keywords[subject]:
-            if keyword in question_lower:
-                return True
+    if subject == "Physics" and any(term in question_lower for term in 
+        ['wave', 'trajectory', 'motion', 'circuit']):
+        return True
+    
+    if subject == "Economics" and any(term in question_lower for term in 
+        ['supply', 'demand', 'curve', 'equilibrium']):
+        return True
     
     return False
 
 def create_smart_visualization(question, subject):
-    """Create intelligent visualizations"""
+    """Create simple, clean visualizations"""
     question_lower = question.lower()
     
     try:
         plt.style.use('default')
         fig, ax = plt.subplots(figsize=(10, 6))
         fig.patch.set_facecolor('white')
-        ax.set_facecolor('white')
         
         if subject == "Mathematics":
-            if any(term in question_lower for term in ['x²', 'x^2', 'quadratic', 'parabola']):
-                x = np.linspace(-10, 10, 400)
-                y = x**2
-                ax.plot(x, y, 'b-', linewidth=3, label='y = x²')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.8)
-                ax.axvline(x=0, color='k', linewidth=0.8)
-                ax.set_xlabel('x', fontsize=14, fontweight='bold')
-                ax.set_ylabel('y', fontsize=14, fontweight='bold')
-                ax.set_title('Quadratic Function', fontsize=16, fontweight='bold')
-                ax.legend(fontsize=12)
-                
-            elif any(term in question_lower for term in ['linear', 'y=', 'slope', 'line']) and 'x' in question_lower:
-                x = np.linspace(-10, 10, 100)
-                y = 2*x + 3
-                ax.plot(x, y, 'r-', linewidth=3, label='y = 2x + 3')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.8)
-                ax.axvline(x=0, color='k', linewidth=0.8)
-                ax.set_xlabel('x', fontsize=14, fontweight='bold')
-                ax.set_ylabel('y', fontsize=14, fontweight='bold')
-                ax.set_title('Linear Function', fontsize=16, fontweight='bold')
-                ax.legend(fontsize=12)
-                
-            elif any(term in question_lower for term in ['sin', 'cos', 'trigonometric']):
-                x = np.linspace(-2*np.pi, 2*np.pi, 400)
-                y1 = np.sin(x)
-                y2 = np.cos(x)
-                ax.plot(x, y1, 'b-', linewidth=3, label='sin(x)')
-                ax.plot(x, y2, 'r-', linewidth=3, label='cos(x)')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.8)
-                ax.axvline(x=0, color='k', linewidth=0.8)
-                ax.set_xlabel('x (radians)', fontsize=14, fontweight='bold')
-                ax.set_ylabel('y', fontsize=14, fontweight='bold')
-                ax.set_title('Trigonometric Functions', fontsize=16, fontweight='bold')
-                ax.legend(fontsize=12)
-                
-            else:
+            if any(term in question_lower for term in ['quadratic', 'parabola', 'x²', 'x^2']):
                 x = np.linspace(-5, 5, 100)
-                y = x**2 - 4
-                ax.plot(x, y, 'b-', linewidth=3, label='y = x² - 4')
-                ax.grid(True, alpha=0.3)
-                ax.axhline(y=0, color='k', linewidth=0.8)
-                ax.axvline(x=0, color='k', linewidth=0.8)
-                ax.set_xlabel('x', fontsize=14, fontweight='bold')
-                ax.set_ylabel('y', fontsize=14, fontweight='bold')
-                ax.set_title('Mathematical Function', fontsize=16, fontweight='bold')
-                ax.legend(fontsize=12)
+                y = x**2
+                ax.plot(x, y, 'b-', linewidth=2, label='y = x²')
+                ax.set_title('Quadratic Function')
+            elif any(term in question_lower for term in ['linear', 'y=', 'slope']):
+                x = np.linspace(-5, 5, 100)
+                y = 2*x + 1
+                ax.plot(x, y, 'r-', linewidth=2, label='Linear Function')
+                ax.set_title('Linear Function')
+            elif any(term in question_lower for term in ['sin', 'cos']):
+                x = np.linspace(-2*np.pi, 2*np.pi, 100)
+                ax.plot(x, np.sin(x), 'b-', linewidth=2, label='sin(x)')
+                ax.plot(x, np.cos(x), 'r-', linewidth=2, label='cos(x)')
+                ax.set_title('Trigonometric Functions')
+            
+            ax.grid(True, alpha=0.3)
+            ax.axhline(y=0, color='k', linewidth=0.5)
+            ax.axvline(x=0, color='k', linewidth=0.5)
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+            ax.legend()
         
         elif subject == "Physics":
-            if any(term in question_lower for term in ['wave', 'frequency', 'amplitude']):
-                t = np.linspace(0, 4*np.pi, 400)
-                y = np.sin(t)
-                ax.plot(t, y, 'b-', linewidth=3, label='Wave Function')
-                ax.grid(True, alpha=0.3)
-                ax.set_xlabel('Time/Position', fontsize=14, fontweight='bold')
-                ax.set_ylabel('Amplitude', fontsize=14, fontweight='bold')
-                ax.set_title('Wave Pattern', fontsize=16, fontweight='bold')
-                ax.legend(fontsize=12)
-            else:
-                t = np.linspace(0, 2*np.pi, 100)
-                y = np.sin(t)
-                ax.plot(t, y, 'g-', linewidth=3, label='Physics Function')
-                ax.grid(True, alpha=0.3)
-                ax.set_xlabel('Parameter', fontsize=14, fontweight='bold')
-                ax.set_ylabel('Value', fontsize=14, fontweight='bold')
-                ax.set_title('Physics Visualization', fontsize=16, fontweight='bold')
-                ax.legend(fontsize=12)
+            t = np.linspace(0, 4*np.pi, 100)
+            y = np.sin(t)
+            ax.plot(t, y, 'b-', linewidth=2, label='Wave')
+            ax.set_title('Wave Function')
+            ax.set_xlabel('Time/Position')
+            ax.set_ylabel('Amplitude')
+            ax.grid(True, alpha=0.3)
+            ax.legend()
         
         elif subject == "Economics":
-            quantity = np.linspace(0, 10, 100)
-            supply = 2 * quantity
-            demand = 20 - quantity
-            ax.plot(quantity, supply, 'b-', linewidth=3, label='Supply')
-            ax.plot(quantity, demand, 'r-', linewidth=3, label='Demand')
-            
-            eq_quantity = 20/3
-            eq_price = 2 * eq_quantity
-            ax.plot(eq_quantity, eq_price, 'go', markersize=10, label='Equilibrium')
-            
+            x = np.linspace(0, 10, 100)
+            supply = 2 * x
+            demand = 20 - x
+            ax.plot(x, supply, 'b-', linewidth=2, label='Supply')
+            ax.plot(x, demand, 'r-', linewidth=2, label='Demand')
+            ax.set_title('Supply and Demand')
+            ax.set_xlabel('Quantity')
+            ax.set_ylabel('Price')
             ax.grid(True, alpha=0.3)
-            ax.set_xlabel('Quantity', fontsize=14, fontweight='bold')
-            ax.set_ylabel('Price', fontsize=14, fontweight='bold')
-            ax.set_title('Supply and Demand', fontsize=16, fontweight='bold')
-            ax.legend(fontsize=12)
-        
-        else:
-            x = np.linspace(-5, 5, 100)
-            y = np.sin(x)
-            ax.plot(x, y, 'purple', linewidth=3, label='Function')
-            ax.grid(True, alpha=0.3)
-            ax.set_xlabel('X', fontsize=14, fontweight='bold')
-            ax.set_ylabel('Y', fontsize=14, fontweight='bold')
-            ax.set_title(f'{subject} Visualization', fontsize=16, fontweight='bold')
-            ax.legend(fontsize=12)
+            ax.legend()
         
         buf = BytesIO()
         plt.savefig(buf, format='png', bbox_inches='tight', dpi=150, facecolor='white')
@@ -451,7 +290,7 @@ def create_smart_visualization(question, subject):
         plt.close(fig)
         return buf
         
-    except Exception as e:
+    except Exception:
         plt.close('all')
         return None
 
@@ -496,55 +335,50 @@ def get_api_response(question, subject):
         st.error(f"Network Error: {str(e)}")
         return None
 
-def format_solution_response(response_text):
-    """Format solution with consistent spacing and styling"""
+def format_response(response_text):
+    """Simple, clean formatting focused on readability"""
     if not response_text:
         return ""
     
-    # Clean up the response
+    # Clean up LaTeX notation to simple text
+    response_text = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1)/(\2)', response_text)
+    response_text = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', response_text)
+    response_text = re.sub(r'\\[a-zA-Z]+\{?([^}]*)\}?', r'\1', response_text)
+    
     lines = response_text.strip().split('\n')
-    formatted_html = []
+    formatted_content = []
     
     for line in lines:
         line = line.strip()
-        
-        # Skip empty lines but add spacing
         if not line:
-            formatted_html.append('<div style="height: 15px;"></div>')
             continue
         
         # Step headers
-        if re.match(r'^\*\*Step \d+:', line) or re.match(r'^Step \d+:', line):
+        if re.match(r'^\*\*Step \d+:', line):
+            step_text = re.sub(r'\*\*', '', line)
+            formatted_content.append(f"### {step_text}\n")
+        
+        # Final answer
+        elif 'Final Answer' in line:
             clean_line = re.sub(r'\*\*', '', line)
-            formatted_html.append(f'<div class="step-header">{clean_line}</div>')
+            formatted_content.append(f'<div class="final-answer">{clean_line}</div>\n')
         
-        # Final Answer
-        elif line.startswith('**Final Answer') or line.startswith('Final Answer'):
-            clean_line = re.sub(r'\*\*', '', line)
-            formatted_html.append(f'<div class="final-answer">{clean_line}</div>')
+        # Mathematical expressions
+        elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', '(', ')'])):
+            formatted_content.append(f'<div class="math-line">{line}</div>\n')
         
-        # Mathematical expressions (containing =, +, -, *, /, etc.)
-        elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', '(', ')'])) or \
-             (any(term in line.lower() for term in ['dx', 'dy', 'sqrt', 'sin', 'cos', 'tan'])):
-            formatted_html.append(f'<div class="math-expression">{line}</div>')
-        
-        # Section headers with **
-        elif line.startswith('**') and line.endswith('**'):
-            clean_line = line.replace('**', '')
-            formatted_html.append(f'<div class="formula-box">{clean_line}</div>')
-        
-        # Regular explanatory text
+        # Regular text
         else:
-            formatted_html.append(f'<div class="explanation-text">{line}</div>')
+            formatted_content.append(f"{line}\n\n")
     
-    return ''.join(formatted_html)
+    return ''.join(formatted_content)
 
 def main():
     # Header
     st.markdown("""
     <div class="main-header">
         <h1>🎓 Academic Assistant Pro</h1>
-        <p style="font-size: 1.2em; margin-top: 10px;">Expert-level homework assistance with professional formatting</p>
+        <p>Clear, step-by-step homework solutions</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -564,7 +398,7 @@ def main():
         selected_subject = selected_subject_display.split(' ', 1)[1]
         
         # Show example
-        st.markdown("### 💡 Example Question")
+        st.markdown("### 💡 Example")
         st.info(f"**{selected_subject}**: {SUBJECTS[selected_subject]['example']}")
     
     with col2:
@@ -579,51 +413,48 @@ def main():
         
         if st.button("🎯 Get Solution", type="primary"):
             if question.strip():
-                with st.spinner(f"Analyzing your {selected_subject} question..."):
+                with st.spinner("Getting solution..."):
                     response = get_api_response(question, selected_subject)
                     
                     if response:
                         st.markdown("---")
-                        st.markdown(f"## 📐 {selected_subject} Solution")
+                        st.markdown(f"## 📚 {selected_subject} Solution")
                         
-                        # Use the solution container styling
-                        formatted_response = format_solution_response(response)
+                        # Simple formatting in a clean container
+                        formatted_response = format_response(response)
                         st.markdown(f"""
-                        <div class="solution-container">
+                        <div class="solution-content">
                             {formatted_response}
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Check for diagrams
+                        # Show diagram if needed
                         if should_show_diagram(question, selected_subject):
-                            st.markdown("### 📊 Visual Representation")
-                            with st.spinner("Creating visualization..."):
-                                viz = create_smart_visualization(question, selected_subject)
-                                if viz:
-                                    st.image(viz, use_container_width=True, 
-                                           caption=f"{selected_subject} Visualization")
+                            st.markdown("### 📊 Visualization")
+                            viz = create_smart_visualization(question, selected_subject)
+                            if viz:
+                                st.image(viz, use_container_width=True)
                         
-                        # Feedback
-                        st.markdown("### 📊 Rate this solution")
+                        # Simple feedback
+                        st.markdown("### Rate this solution")
                         col_a, col_b, col_c = st.columns(3)
                         with col_a:
                             if st.button("👍 Helpful"):
-                                st.success("Thank you for your feedback!")
+                                st.success("Thanks!")
                         with col_b:
-                            if st.button("👎 Needs improvement"):
-                                st.info("We'll work on improving our responses!")
+                            if st.button("👎 Needs work"):
+                                st.info("We'll improve!")
                         with col_c:
                             if st.button("🔄 Try again"):
                                 st.rerun()
             else:
-                st.warning("⚠️ Please enter a question to get help.")
+                st.warning("Please enter a question.")
     
-    # Footer
+    # Simple footer
     st.markdown("---")
     st.markdown("""
-    <div style="text-align: center; color: #888; padding: 2rem;">
-        <p style="font-size: 1.1em;">🎓 Academic Assistant Pro - Powered by Advanced AI</p>
-        <p><small>Providing accurate, well-formatted educational assistance across all subjects</small></p>
+    <div style="text-align: center; color: #666; padding: 1rem;">
+        <p>🎓 Academic Assistant Pro - Focus on Learning</p>
     </div>
     """, unsafe_allow_html=True)
 
