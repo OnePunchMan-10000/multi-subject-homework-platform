@@ -37,57 +37,59 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     
-    /* Improved solution content styling with better spacing */
+    /* Improved solution content styling with tighter spacing */
     .solution-content {
         background-color: rgba(255,255,255,0.05);
         border-left: 4px solid #4CAF50;
-        padding: 2rem;
-        margin: 1.5rem 0;
+        padding: 1.5rem;
+        margin: 1rem 0;
         border-radius: 8px;
-        line-height: 1.8;
+        line-height: 1.6;
     }
     
     .solution-content h3 {
         color: #4CAF50;
-        margin: 2rem 0 1rem 0;
+        margin: 1.5rem 0 0.8rem 0;
         font-size: 1.3em;
         border-bottom: 2px solid #4CAF50;
         padding-bottom: 0.5rem;
     }
     
     .solution-content p {
-        margin: 1.2rem 0;
-        line-height: 1.8;
+        margin: 0.8rem 0;
+        line-height: 1.6;
         color: #e0e0e0;
         font-size: 1.05em;
     }
     
-    /* Better mathematical expression styling */
+    /* Better mathematical expression styling with tighter spacing */
     .math-line {
         font-family: 'Courier New', monospace;
         background-color: rgba(255,193,7,0.15);
-        padding: 1rem 1.5rem;
-        margin: 1rem 0;
+        padding: 0.8rem 1.2rem;
+        margin: 0.6rem 0;
         border-radius: 6px;
         color: #ffc107;
         text-align: center;
         font-size: 1.1em;
-        line-height: 1.6;
+        line-height: 1.4;
         border: 1px solid rgba(255,193,7,0.3);
     }
     
-    /* Fraction display within math-line - like the original */
+    /* Improved fraction display - always vertical */
     .fraction-display {
-        display: inline-block;
+        display: block;
         text-align: center;
-        margin: 0 8px;
+        margin: 0.5rem auto;
         vertical-align: middle;
+        line-height: 1.2;
     }
     
     .fraction-bar {
         border-bottom: 2px solid #ffc107;
-        margin: 2px 0;
+        margin: 3px 0;
         line-height: 1;
+        width: 100%;
     }
     
     /* Superscript styling for powers */
@@ -386,18 +388,18 @@ def format_powers(text):
     return text
 
 def format_fraction(numerator, denominator):
-    """Format a fraction with numerator over denominator in inline style"""
+    """Format a fraction with numerator over denominator in vertical style"""
     num_clean = format_powers(numerator.strip())
     den_clean = format_powers(denominator.strip())
     
     return f"""<div class="fraction-display">
-        <div>{num_clean}</div>
+        <div style="font-size: 1.1em; margin-bottom: 2px;">{num_clean}</div>
         <div class="fraction-bar"></div>
-        <div>{den_clean}</div>
+        <div style="font-size: 1.1em; margin-top: 2px;">{den_clean}</div>
     </div>"""
 
 def format_response(response_text):
-    """Improved formatting with better spacing and fraction display"""
+    """Improved formatting with consistent vertical fractions and tighter spacing"""
     if not response_text:
         return ""
     
@@ -411,35 +413,33 @@ def format_response(response_text):
     for line in lines:
         line = line.strip()
         if not line:
-            # Add proper spacing between sections
+            # Add minimal spacing between sections
             formatted_content.append("<br>")
             continue
         
         # Step headers
         if re.match(r'^\*\*Step \d+:', line) or re.match(r'^###\s*Step \d+:', line):
             step_text = re.sub(r'\*\*|###', '', line).strip()
-            formatted_content.append(f"### {step_text}\n\n")
+            formatted_content.append(f"### {step_text}\n")
         
         # Final answer
         elif 'Final Answer' in line:
             clean_line = re.sub(r'\*\*', '', line)
-            formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n\n')
+            formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n')
         
-        # Check for standalone fractions first
-        elif re.match(r'^[^=]*\([^)]+\)/\([^)]+\)[^=]*$', line):
-            # This is a standalone fraction line - treat as math expression
+        # Check for any line containing fractions - convert ALL to vertical display
+        elif '/' in line and ('(' in line or any(char in line for char in ['x', 'y', 'dx', 'dy', 'du', 'dv'])):
+            # Convert all fractions in the line to vertical display
             formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
-            formatted_content.append(f'<div class="math-line">{formatted_line}</div>\n\n')
+            formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
         
-        # Mathematical expressions with equations
-        elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', '(', ')'])):
-            # Replace all fractions in the line with inline fraction display
-            formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
-            formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n\n')
+        # Mathematical expressions with equations (no fractions)
+        elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '^', '(', ')'])):
+            formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n')
         
         # Regular text
         else:
-            formatted_content.append(f"{format_powers(line)}\n\n")
+            formatted_content.append(f"{format_powers(line)}\n")
     
     return ''.join(formatted_content)
 
