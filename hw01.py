@@ -745,42 +745,19 @@ def format_math_response(response_text):
                             if frac_match:
                                 numerator = frac_match.group(1)
                                 denominator = frac_match.group(2)
-                                processed_lines.append(f'''
-                                <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
-                                    <span style="color: #2196F3;">{left_side} =</span>
-                                    <div style="display: inline-block; margin-left: 10px;">
-                                        <div style="color: #4CAF50; font-weight: bold;">{numerator}</div>
-                                        <div style="color: #4CAF50; font-weight: bold;">─────</div>
-                                        <div style="color: #4CAF50; font-weight: bold;">{denominator}</div>
-                                    </div>
-                                </p>
-                                ''')
+                                # Create simple text-based fraction
+                                frac_text = f"{left_side} =\n\n{numerator}\n─────\n{denominator}"
+                                processed_lines.append(f'<pre style="margin: 15px 0; text-align: center; color: #4CAF50; font-family: monospace; font-size: 1.1em; background: transparent; border: none; white-space: pre;">{frac_text}</pre>')
                             else:
                                 processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
                         else:
                             # Handle dy/dx or dx/dy
                             if 'dy/dx' in right_side:
-                                processed_lines.append(f'''
-                                <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
-                                    <span style="color: #2196F3;">{left_side} =</span>
-                                    <div style="display: inline-block; margin-left: 10px;">
-                                        <div style="color: #4CAF50; font-weight: bold;">dy</div>
-                                        <div style="color: #4CAF50; font-weight: bold;">──</div>
-                                        <div style="color: #4CAF50; font-weight: bold;">dx</div>
-                                    </div>
-                                </p>
-                                ''')
+                                frac_text = f"{left_side} =\n\ndy\n──\ndx"
+                                processed_lines.append(f'<pre style="margin: 15px 0; text-align: center; color: #4CAF50; font-family: monospace; font-size: 1.1em; background: transparent; border: none; white-space: pre;">{frac_text}</pre>')
                             elif 'dx/dy' in right_side:
-                                processed_lines.append(f'''
-                                <p style="margin: 15px 0; text-align: center; color: white; font-family: monospace; font-size: 1.1em;">
-                                    <span style="color: #2196F3;">{left_side} =</span>
-                                    <div style="display: inline-block; margin-left: 10px;">
-                                        <div style="color: #4CAF50; font-weight: bold;">dx</div>
-                                        <div style="color: #4CAF50; font-weight: bold;">──</div>
-                                        <div style="color: #4CAF50; font-weight: bold;">dy</div>
-                                    </div>
-                                </p>
-                                ''')
+                                frac_text = f"{left_side} =\n\ndx\n──\ndy"
+                                processed_lines.append(f'<pre style="margin: 15px 0; text-align: center; color: #4CAF50; font-family: monospace; font-size: 1.1em; background: transparent; border: none; white-space: pre;">{frac_text}</pre>')
                             else:
                                 processed_lines.append(f'<p style="margin: 8px 0; color: white; line-height: 1.6; font-size: 1.1em; font-family: monospace;">{line}</p>')
                     else:
