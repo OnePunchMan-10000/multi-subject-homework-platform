@@ -358,6 +358,14 @@ def create_smart_visualization(question: str, subject: str):
                     ax.text(C[0], C[1] - 0.2, 'C', ha='center', va='top', color=dark)
                     ax.text(A[0], A[1] + 0.2, 'A', ha='center', va='bottom', color=dark)
 
+                    # Side length labels
+                    def put_len(p, q, label):
+                        mx, my = (p[0]+q[0])/2.0, (p[1]+q[1])/2.0
+                        ax.text(mx, my + 0.15, label, color=dark, ha='center', va='bottom')
+                    put_len(B, C, f'{bc} cm')
+                    put_len(A, B, f'{ab} cm')
+                    put_len(A, C, f'{ac} cm')
+
                 # ---------- Constructions ----------
                 # Perpendicular bisector of a segment XY (e.g., BC)
                 seg_match = re.search(r'perpendicular\s+bisector\s+of\s+([A-Z])([A-Z])', question, flags=re.IGNORECASE)
@@ -624,10 +632,16 @@ def format_response(response_text):
             formatted_content.append("<br>")
             continue
         
+        # Skip stray closing tags that may appear in the model text
+        if re.match(r'^</(div|span|p)>$', line):
+            continue
+
         # Step headers
         if re.match(r'^\*\*Step \d+:', line) or re.match(r'^###\s*Step \d+:', line):
             step_text = re.sub(r'\*\*|###', '', line).strip()
-            formatted_content.append(f"### {step_text}\n")
+            formatted_content.append(f'<h3 style="color:#4CAF50;margin:1rem 0 0.5rem 0;">{step_text}</h3>')
+            # extra space after each step header for readability
+            formatted_content.append('<div style="height:6px"></div>')
         
         # Final answer
         elif 'Final Answer' in line:
