@@ -410,16 +410,40 @@ def create_advanced_visualization(question, subject):
         return None
 
 def format_math_response(response_text):
-    """Format mathematical responses with proper styling and symbol conversion"""
+    """Format mathematical responses with proper styling and convert LaTeX frac/sqrt to plain text."""
+    
     formatted = response_text
     
-    # Convert common mathematical expressions to readable format
-    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'\1/\2', formatted)
-    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', formatted)
-    formatted = re.sub(r'\\\(([^)]+)\\\)', r'\1', formatted)
-    formatted = re.sub(r'\\\[([^\]]+)\\\]', r'\1', formatted)
+    # Convert nested fractions recursively
+    def replace_frac(match):
+        numerator = match.group(1)
+        denominator = match.group(2)
+        # Recursively convert numerator and denominator (to handle nested fracs)
+        numerator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, numerator)
+        denominator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, denominator)
+        return f"({numerator_conv})/({denominator_conv})"
     
-    # Highlight equations and steps
+    # Replace all \frac{...}{...} with (num)/(den)
+    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
+    
+    # Replace \sqrt{...} with sqrt(...)
+    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', formatted)
+    
+    # Remove \( and \) used for inline math
+    formatted = re.sub(r'\\\(|\\\)', '', formatted)
+    
+    # Remove \[ and \] used for display math
+    formatted = re.sub(r'\\\[|\\\]', '', formatted)
+    
+    # Additional LaTeX cleanup
+    formatted = re.sub(r'\\left\(', '(', formatted)
+    formatted = re.sub(r'\\right\)', ')', formatted)
+    formatted = re.sub(r'\\cdot', '*', formatted)
+    formatted = re.sub(r'\\pm', '±', formatted)
+    formatted = re.sub(r'\\times', '×', formatted)
+    formatted = re.sub(r'\\div', '÷', formatted)
+    
+    # Format for HTML display
     lines = formatted.split('\n')
     processed_lines = []
     
@@ -428,22 +452,26 @@ def format_math_response(response_text):
         if not line:
             processed_lines.append('<br>')
             continue
-            
+        
         # Format step headers
         if re.match(r'^Step \d+:', line):
             processed_lines.append(f'<div class="step-box"><strong>{line}</strong></div>')
         
-        # Format equations (lines with = sign)
-        elif '=' in line and any(char in line for char in ['x', '+', '-', '*', '/', '^', 'sqrt']):
+        # Format equations (lines with = and mathematical content)
+        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')']):
             processed_lines.append(f'<div class="math-step">{line}</div>')
         
-        # Format final answer
-        elif line.startswith('Final Answer:') or line.startswith('Therefore'):
+        # Format final answers
+        elif line.startswith('Final Answer:') or line.startswith('Therefore') or line.startswith('Answer:'):
             processed_lines.append(f'<div class="formula-box">{line}</div>')
+        
+        # Format solution headers
+        elif line.startswith('Solution:') or line.startswith('Given:'):
+            processed_lines.append(f'<div class="step-box"><strong>{line}</strong></div>')
         
         # Regular text
         else:
-            processed_lines.append(f'<p>{line}</p>')
+            processed_lines.append(f'<p style="margin: 8px 0; color: white;">{line}</p>')
     
     return ''.join(processed_lines)
 
