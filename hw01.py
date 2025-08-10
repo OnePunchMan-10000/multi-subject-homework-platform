@@ -428,7 +428,10 @@ def format_response(response_text):
         # Check for any line containing fractions - convert ALL to vertical display
         elif '/' in line and ('(' in line or any(char in line for char in ['x', 'y', 'dx', 'dy', 'du', 'dv'])):
             # Convert all fractions in the line to vertical display
+            # First handle complex fractions like (numerator)/(denominator)
             formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
+            # Then handle simple fractions like du/dx, dv/dx, dy/dx
+            formatted_line = re.sub(r'([a-zA-Z]+)/([a-zA-Z]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
             formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
         
         # Mathematical expressions with equations (no fractions)
