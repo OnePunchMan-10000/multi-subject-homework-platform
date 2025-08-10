@@ -389,14 +389,23 @@ def format_powers(text):
 
 def format_fraction(numerator, denominator):
     """Format a fraction with numerator over denominator in vertical style"""
+    # Clean up the numerator and denominator
     num_clean = format_powers(numerator.strip())
     den_clean = format_powers(denominator.strip())
     
-    return f"""<div class="fraction-display">
-        <div style="font-size: 1.1em; margin-bottom: 2px;">{num_clean}</div>
-        <div class="fraction-bar"></div>
-        <div style="font-size: 1.1em; margin-top: 2px;">{den_clean}</div>
-    </div>"""
+    # Handle special cases like dy/dx, du/dx, dv/dx
+    if num_clean in ['dy', 'du', 'dv'] and den_clean in ['dx']:
+        return f"""<div class="fraction-display">
+            <div style="font-size: 1.1em; margin-bottom: 2px;">{num_clean}</div>
+            <div class="fraction-bar"></div>
+            <div style="font-size: 1.1em; margin-top: 2px;">{den_clean}</div>
+        </div>"""
+    else:
+        return f"""<div class="fraction-display">
+            <div style="font-size: 1.1em; margin-bottom: 2px;">{num_clean}</div>
+            <div class="fraction-bar"></div>
+            <div style="font-size: 1.1em; margin-top: 2px;">{den_clean}</div>
+        </div>"""
 
 def format_response(response_text):
     """Improved formatting with consistent vertical fractions and tighter spacing"""
@@ -427,10 +436,23 @@ def format_response(response_text):
             clean_line = re.sub(r'\*\*', '', line)
             formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n')
         
-        # Check for any line containing fractions - convert ALL to vertical display
-        elif '/' in line and ('(' in line or any(char in line for char in ['x', 'y', 'dx', 'dy', 'du', 'dv'])):
-            # Convert all fractions in the line to vertical display
-            formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
+        # Check for ANY line containing fractions - convert ALL to vertical display
+        elif '/' in line:
+            # Convert ALL fraction patterns to vertical display
+            formatted_line = line
+            
+            # Handle (numerator)/(denominator) pattern first
+            if re.search(r'\([^)]+\)/\([^)]+\)', line):
+                formatted_line = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
+            
+            # Handle simple numerator/denominator pattern (like dy/dx, du/dx, etc.)
+            if re.search(r'([a-zA-Z]+)/([a-zA-Z]+)', line):
+                formatted_line = re.sub(r'([a-zA-Z]+)/([a-zA-Z]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
+            
+            # Handle other fraction patterns
+            if re.search(r'([^/\s]+)/([^/\s]+)', line):
+                formatted_line = re.sub(r'([^/\s]+)/([^/\s]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
+            
             formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
         
         # Mathematical expressions with equations (no fractions)
