@@ -4,7 +4,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 from io import BytesIO
-import base64
+import re
 
 # Page configuration
 st.set_page_config(
@@ -239,33 +239,152 @@ def get_api_response(question, subject):
         st.error(f"Network Error: {str(e)}")
         return None
 
-def create_math_visualization(equation_text):
-    """Create mathematical visualizations for geometry and functions"""
+def create_advanced_visualization(question, subject):
+    """Create subject-specific visualizations and diagrams"""
+    question_lower = question.lower()
+    
     try:
-        # Simple function plotting for demonstration
-        if any(term in equation_text.lower() for term in ['x²', 'x^2', 'quadratic', 'parabola']):
-            x = np.linspace(-10, 10, 100)
-            y = x**2  # Simple quadratic
+        plt.style.use('default')
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        if subject == "Mathematics":
+            # Quadratic functions
+            if any(term in question_lower for term in ['x²', 'x^2', 'quadratic', 'parabola']):
+                x = np.linspace(-10, 10, 400)
+                y = x**2
+                ax.plot(x, y, 'b-', linewidth=2, label='y = x²')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Quadratic Function', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+            # Linear equations
+            elif any(term in question_lower for term in ['linear', 'y=', 'slope']):
+                x = np.linspace(-10, 10, 100)
+                y = 2*x + 3  # Example linear function
+                ax.plot(x, y, 'r-', linewidth=2, label='y = 2x + 3')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Linear Function', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+            # Trigonometric functions
+            elif any(term in question_lower for term in ['sin', 'cos', 'tan', 'trigonometric']):
+                x = np.linspace(-2*np.pi, 2*np.pi, 400)
+                y1 = np.sin(x)
+                y2 = np.cos(x)
+                ax.plot(x, y1, 'b-', linewidth=2, label='sin(x)')
+                ax.plot(x, y2, 'r-', linewidth=2, label='cos(x)')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x (radians)', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Trigonometric Functions', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+            # Circle/geometry
+            elif any(term in question_lower for term in ['circle', 'radius', 'circumference']):
+                theta = np.linspace(0, 2*np.pi, 100)
+                r = 5  # radius
+                x = r * np.cos(theta)
+                y = r * np.sin(theta)
+                ax.plot(x, y, 'b-', linewidth=2, label=f'Circle (r={r})')
+                ax.set_aspect('equal')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x', fontsize=12)
+                ax.set_ylabel('y', fontsize=12)
+                ax.set_title('Circle', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+        elif subject == "Physics":
+            # Motion graphs
+            if any(term in question_lower for term in ['motion', 'velocity', 'acceleration', 'displacement']):
+                t = np.linspace(0, 10, 100)
+                # Example: uniformly accelerated motion
+                v = 5 + 2*t  # v = u + at
+                s = 5*t + t**2  # s = ut + 0.5*at²
+                
+                fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+                
+                ax1.plot(t, v, 'r-', linewidth=2, label='Velocity')
+                ax1.set_xlabel('Time (s)', fontsize=12)
+                ax1.set_ylabel('Velocity (m/s)', fontsize=12)
+                ax1.set_title('Velocity vs Time', fontsize=14, fontweight='bold')
+                ax1.grid(True, alpha=0.3)
+                ax1.legend(fontsize=11)
+                
+                ax2.plot(t, s, 'b-', linewidth=2, label='Displacement')
+                ax2.set_xlabel('Time (s)', fontsize=12)
+                ax2.set_ylabel('Displacement (m)', fontsize=12)
+                ax2.set_title('Displacement vs Time', fontsize=14, fontweight='bold')
+                ax2.grid(True, alpha=0.3)
+                ax2.legend(fontsize=11)
+                
+                plt.tight_layout()
+                
+            # Wave functions
+            elif any(term in question_lower for term in ['wave', 'frequency', 'amplitude']):
+                x = np.linspace(0, 4*np.pi, 400)
+                y = 2 * np.sin(x)  # Amplitude = 2
+                ax.plot(x, y, 'g-', linewidth=2, label='Wave function')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.set_xlabel('Distance (m)', fontsize=12)
+                ax.set_ylabel('Amplitude', fontsize=12)
+                ax.set_title('Wave Function', fontsize=14, fontweight='bold')
+                ax.legend(fontsize=11)
+                
+        elif subject == "Chemistry":
+            # Molecular structures (simplified)
+            if any(term in question_lower for term in ['molecule', 'bond', 'structure']):
+                # Simple molecule representation
+                ax.scatter([0, 1, 2], [0, 1, 0], s=200, c=['red', 'blue', 'red'], alpha=0.7)
+                ax.plot([0, 1, 2], [0, 1, 0], 'k-', linewidth=2)
+                ax.text(0, -0.2, 'O', ha='center', fontsize=14, fontweight='bold')
+                ax.text(1, 1.2, 'C', ha='center', fontsize=14, fontweight='bold')
+                ax.text(2, -0.2, 'O', ha='center', fontsize=14, fontweight='bold')
+                ax.set_title('Molecular Structure Example', fontsize=14, fontweight='bold')
+                ax.set_xlim(-0.5, 2.5)
+                ax.set_ylim(-0.5, 1.5)
+                ax.set_aspect('equal')
+                ax.grid(True, alpha=0.3)
+                
+        # If no specific visualization created, return None
+        else:
+            plt.close(fig)
+            return None
             
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.plot(x, y, 'b-', linewidth=2, label='y = x²')
-            ax.grid(True, alpha=0.3)
-            ax.axhline(y=0, color='k', linewidth=0.5)
-            ax.axvline(x=0, color='k', linewidth=0.5)
-            ax.set_xlabel('x')
-            ax.set_ylabel('y')
-            ax.set_title('Quadratic Function Visualization')
-            ax.legend()
-            
-            buf = BytesIO()
-            plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
-            buf.seek(0)
-            plt.close()
-            
-            return buf
-    except:
-        pass
-    return None
+        # Save plot to bytes
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150, facecolor='white')
+        buf.seek(0)
+        plt.close(fig)
+        
+        return buf
+        
+    except Exception as e:
+        plt.close('all')
+        return None
+
+def format_math_response(response_text):
+    """Format mathematical responses with proper styling"""
+    formatted = response_text
+    
+    # Highlight equations
+    equations = re.findall(r'([xy]\s*[=]\s*[^,\n]+)', formatted)
+    for eq in equations:
+        formatted = formatted.replace(eq, f'<div class="formula-box">{eq}</div>')
+    
+    return formatted
 
 def main():
     # Header
@@ -320,22 +439,30 @@ def main():
                         # Display clean answer
                         st.markdown("### 📝 Solution")
                         
+                        # Format response based on subject
+                        if selected_subject == "Mathematics":
+                            formatted_response = format_math_response(response)
+                        else:
+                            formatted_response = response.replace('\n\n', '<br><br>')
+                        
                         with st.container():
                             st.markdown(f"""
                             <div class="answer-container">
                                 <h4>{SUBJECTS[selected_subject]['icon']} {selected_subject} Solution</h4>
-                                <div style="line-height: 1.6; font-size: 16px;">
-                                    {response.replace('**', '<strong>').replace('**', '</strong>')}
+                                <div style="line-height: 1.8; font-size: 16px;">
+                                    {formatted_response}
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
                         
-                        # Add visualization for math problems
-                        if selected_subject == "Mathematics":
-                            viz = create_math_visualization(question)
-                            if viz:
-                                st.markdown("### 📊 Visualization")
-                                st.image(viz, use_column_width=True)
+                        # Add visualizations for applicable subjects
+                        if selected_subject in ["Mathematics", "Physics", "Chemistry"]:
+                            with st.spinner("Creating visualization..."):
+                                viz = create_advanced_visualization(question, selected_subject)
+                                if viz:
+                                    st.markdown("### 📊 Visual Representation")
+                                    st.image(viz, use_column_width=True, caption=f"{selected_subject} Visualization")
+                                    st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
                         
                         # Feedback section
                         st.markdown("### 📊 Rate this solution")
