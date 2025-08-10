@@ -554,30 +554,66 @@ def get_api_response(question, subject):
         return None
 
 def format_math_response(response_text):
-    """Format mathematical responses with proper styling and convert LaTeX frac/sqrt to plain text."""
+    """Format mathematical responses with proper styling and beautiful fraction display like textbooks."""
     
     formatted = response_text
     
-    # Convert nested fractions recursively - multiple passes to catch all
+    def create_html_fraction(numerator, denominator):
+        """Create a beautiful HTML fraction with proper mathematical styling"""
+        return f"""
+        <div style="display: inline-block; text-align: center; vertical-align: middle; margin: 0 4px; font-family: 'Times New Roman', serif;">
+            <div style="padding: 4px 8px; font-size: 16px; border-bottom: 1.5px solid #ffffff; margin-bottom: 2px;">
+                {numerator.strip()}
+            </div>
+            <div style="padding: 4px 8px; font-size: 16px;">
+                {denominator.strip()}
+            </div>
+        </div>
+        """
+    
+    # Convert LaTeX fractions to HTML fractions
     def replace_frac(match):
         numerator = match.group(1)
         denominator = match.group(2)
-        # Recursively convert numerator and denominator (to handle nested fracs)
-        numerator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, numerator)
-        denominator_conv = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, denominator)
-        return f"({numerator_conv})/({denominator_conv})"
+        return create_html_fraction(numerator, denominator)
     
-    # Multiple passes to ensure all fractions are converted
-    for _ in range(5):  # Up to 5 levels of nesting
-        if r'\frac{' not in formatted:
-            break
-        formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
+    # Handle LaTeX fractions first
+    formatted = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', replace_frac, formatted)
     
-    # Handle any remaining simple fractions with a basic pattern
-    formatted = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1)/(\2)', formatted)
+    # Convert parenthesized fractions to HTML fractions
+    def replace_paren_fraction(match):
+        numerator = match.group(1)
+        denominator = match.group(2)
+        return create_html_fraction(numerator, denominator)
     
-    # Replace \sqrt{...} with sqrt(...)
-    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', formatted)
+    # Match complex fractions like (2x^2 - 2x - x^2 - 1)/((x - 1)^2)
+    formatted = re.sub(r'\(([^)]+)\)/\(\(([^)]+)\)\)', replace_paren_fraction, formatted)
+    
+    # Match fractions like (numerator)/(denominator)
+    formatted = re.sub(r'\(([^)]+)\)/\(([^)]+)\)', replace_paren_fraction, formatted)
+    
+    # Match simple fractions like x^2/(x-1) or (x^2-1)/(x-1)^2
+    formatted = re.sub(r'([^/\s]+)/\(([^)]+)\)', replace_paren_fraction, formatted)
+    formatted = re.sub(r'\(([^)]+)\)/([^/\s\)]+)', replace_paren_fraction, formatted)
+    
+    # Handle fractions with exponents like 1/x^2 → x^(-2)
+    def handle_simple_fraction(match):
+        numerator = match.group(1)
+        denominator = match.group(2)
+        return create_html_fraction(numerator, denominator)
+    
+    # Match patterns like 1/x^2, -1/x^2, etc.
+    formatted = re.sub(r'(-?\d+)/([a-zA-Z]\^?\d*)', handle_simple_fraction, formatted)
+    
+    # Replace common mathematical expressions with better formatting
+    formatted = re.sub(r'x\^2', 'x²', formatted)
+    formatted = re.sub(r'x\^3', 'x³', formatted)
+    formatted = re.sub(r'x\^(\d+)', r'x<sup>\1</sup>', formatted)
+    formatted = re.sub(r'\^(\d+)', r'<sup>\1</sup>', formatted)
+    formatted = re.sub(r'\^(-\d+)', r'<sup>\1</sup>', formatted)
+    
+    # Replace \sqrt{...} with a better sqrt representation
+    formatted = re.sub(r'\\sqrt\{([^}]+)\}', r'√(\1)', formatted)
     
     # Remove various LaTeX delimiters
     formatted = re.sub(r'\\\(|\\\)', '', formatted)
@@ -585,14 +621,19 @@ def format_math_response(response_text):
     formatted = re.sub(r'\\left\(', '(', formatted)
     formatted = re.sub(r'\\right\)', ')', formatted)
     
-    # Replace common LaTeX symbols
-    formatted = re.sub(r'\\cdot', '*', formatted)
-    formatted = re.sub(r'\\pm', '±', formatted)
-    formatted = re.sub(r'\\times', '×', formatted)
-    formatted = re.sub(r'\\div', '÷', formatted)
+    # Replace common LaTeX symbols with better Unicode
+    formatted = re.sub(r'\\cdot', ' · ', formatted)
+    formatted = re.sub(r'\\pm', ' ± ', formatted)
+    formatted = re.sub(r'\\times', ' × ', formatted)
+    formatted = re.sub(r'\\div', ' ÷ ', formatted)
     
     # Clean up any remaining backslashes followed by letters (LaTeX commands)
     formatted = re.sub(r'\\[a-zA-Z]+', '', formatted)
+    
+    # Add better spacing around mathematical operators
+    formatted = re.sub(r'([^=\s])=([^=\s])', r'\1 = \2', formatted)  # Add space around =
+    formatted = re.sub(r'([^+\s])\+([^+\s])', r'\1 + \2', formatted)  # Add space around +
+    formatted = re.sub(r'([a-zA-Z0-9\)])\s*-\s*([a-zA-Z0-9\(])', r'\1 - \2', formatted)   # Add space around -
     
     # Format for HTML display
     lines = formatted.split('\n')
@@ -616,21 +657,50 @@ def format_math_response(response_text):
             processed_lines.append(f'<div class="step-box"><strong>{clean_line}</strong></div>')
         
         # Format equations (lines with = and mathematical content)
-        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')']):
-            processed_lines.append(f'<div class="math-step">{line}</div>')
+        elif '=' in line and any(ch in line for ch in ['x', '+', '-', '*', '/', '^', 'sqrt', '(', ')', '√', '²', '³']) or 'dy/dx' in line:
+            # Add extra styling for mathematical equations with beautiful centering
+            processed_lines.append(f'''
+            <div style="background: rgba(40,40,40,0.8); 
+                        border: 1px solid rgba(255,255,255,0.3); 
+                        border-radius: 12px; 
+                        padding: 20px; 
+                        margin: 15px 0; 
+                        text-align: center; 
+                        font-size: 20px; 
+                        font-family: 'Times New Roman', serif; 
+                        color: white;
+                        line-height: 1.8;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                {line}
+            </div>
+            ''')
         
-        # Format final answers
+        # Format final answers with special highlighting
         elif (line.startswith('Final Answer:') or line.startswith('Therefore') or 
               line.startswith('Answer:') or 'solutions to the equation' in line):
-            processed_lines.append(f'<div class="formula-box">{line}</div>')
+            processed_lines.append(f'''
+            <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+                        border: 2px solid #4CAF50; 
+                        border-radius: 12px; 
+                        padding: 18px; 
+                        margin: 20px 0; 
+                        text-align: center; 
+                        font-size: 20px; 
+                        font-weight: bold; 
+                        color: white; 
+                        box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+                        font-family: 'Times New Roman', serif;">
+                {line}
+            </div>
+            ''')
         
         # Format solution headers
         elif line.startswith('Solution:') or line.startswith('Given:') or line.startswith('To solve'):
             processed_lines.append(f'<div class="step-box"><strong>{line}</strong></div>')
         
-        # Regular text
+        # Regular text with better spacing
         else:
-            processed_lines.append(f'<p style="margin: 8px 0; color: white;">{line}</p>')
+            processed_lines.append(f'<p style="margin: 12px 0; color: white; line-height: 1.6; font-size: 16px;">{line}</p>')
     
     return ''.join(processed_lines)
 
