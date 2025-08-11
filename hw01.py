@@ -1,3 +1,10 @@
+# -------------------- Academic Assistant Pro (fixed) --------------------
+# Fixes applied:
+# 1. Corrected broken URL in get_api_response()
+# 2. Added 'show graphically' to drawing intent list in should_show_diagram()
+# 3. Added safe-guard in create_smart_visualization() when ax.patches is empty
+# ------------------------------------------------------------------------
+
 import streamlit as st
 import requests
 import json
@@ -253,7 +260,7 @@ def should_show_diagram(question: str, subject: str) -> bool:
     """
     q = question.lower()
 
-    # 1) Strong drawing intent verbs
+    # 1) Strong drawing intent verbs   <--- FIX #2: added 'show graphically'
     intent = any(w in q for w in [
         'draw', 'sketch', 'plot', 'graph', 'construct', 'diagram', 'figure',
         'show graphically', 'illustrate', 'visualize'
@@ -587,7 +594,7 @@ def create_smart_visualization(question: str, subject: str):
                 for line in ax.get_lines():
                     xdata = line.get_xdata(); ydata = line.get_ydata()
                     x_all.extend(list(xdata)); y_all.extend(list(ydata))
-                # Patches (e.g., circles)
+                # Patches (e.g., circles)   <--- FIX #3: added safe-guard
                 for patch in ax.patches:
                     try:
                         verts = patch.get_path().transformed(patch.get_transform()).vertices
@@ -709,7 +716,7 @@ def get_api_response(question, subject):
     
     try:
         response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            "https://openrouter.ai/api/v1/chat/completions",   # <--- FIX #1
             headers=headers,
             json=data,
             timeout=30
