@@ -613,6 +613,18 @@ def create_smart_visualization(question: str, subject: str):
                     pad_y = max((y_max - y_min) * 0.15, 1.0)
                     ax.set_xlim(x_min - pad_x, x_max + pad_x)
                     ax.set_ylim(y_min - pad_y, y_max + pad_y)
+                else:
+                    # Fallback: if a circle exists, frame around its center and radius
+                    circ = next((p for p in ax.patches if isinstance(p, plt.Circle)), None)
+                    if circ is not None:
+                        c = circ.get_center(); r = circ.get_radius()
+                        pad = max(0.5*r, 1.0)
+                        ax.set_xlim(c[0] - r - pad, c[0] + r + pad)
+                        ax.set_ylim(c[1] - r - pad, c[1] + r + pad)
+                    else:
+                        # Safe default frame
+                        ax.set_xlim(-5, 5)
+                        ax.set_ylim(-5, 5)
                 ax.axis('off')
                 ax.legend(loc='upper right')
             else:
@@ -663,7 +675,7 @@ def create_smart_visualization(question: str, subject: str):
             ax.legend()
 
         buf = BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150, facecolor='white')
+        plt.savefig(buf, format='png', dpi=180, facecolor='white')
         buf.seek(0)
         plt.close(fig)
         return buf
