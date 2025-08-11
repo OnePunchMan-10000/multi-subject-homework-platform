@@ -244,38 +244,59 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 }
 
 def should_show_diagram(question: str, subject: str) -> bool:
-    """Decide whether to render a diagram for the given question.
-
-    Adds light-weight geometry detection so prompts like
-    "Construct triangle ABC ... draw the perpendicular bisector of BC" trigger a plot.
-    """
+    """Decide whether to render a diagram for the given question - more precise detection."""
     question_lower = question.lower()
 
-    visual_keywords = [
+    # Explicit visual request keywords - only show when clearly requested
+    explicit_visual_keywords = [
         'draw', 'sketch', 'plot', 'graph', 'construct', 'visualize',
-        'diagram', 'figure', 'chart', 'show graphically', 'illustrate',
-        # geometry specific
-        'triangle', 'perpendicular bisector', 'bisector', 'abc', 'geometry',
-        'square', 'rectangle', 'circle', 'semicircle', 'pentagon', 'hexagon',
-        'heptagon', 'octagon', 'polygon', 'median', 'altitude', 'angle bisector'
+        'diagram', 'figure', 'chart', 'show graphically', 'illustrate'
     ]
-
-    if any(keyword in question_lower for keyword in visual_keywords):
+    
+    # Check for explicit visual requests first
+    has_explicit_visual = any(keyword in question_lower for keyword in explicit_visual_keywords)
+    
+    if has_explicit_visual:
         return True
-
-    # Subject-specific keywords
-    if subject == "Mathematics" and any(term in question_lower for term in
-        ['parabola', 'quadratic', 'function', 'linear', 'curve', 'y=', 'sin', 'cos']):
+    
+    # Only show for specific geometric constructions (not just mentioning shapes)
+    geometry_construction_keywords = [
+        'perpendicular bisector', 'angle bisector', 'construct triangle',
+        'median of triangle', 'altitude of triangle', 'circumcenter', 'incenter',
+        'construct perpendicular', 'construct parallel'
+    ]
+    
+    if any(keyword in question_lower for keyword in geometry_construction_keywords):
         return True
-
-    if subject == "Physics" and any(term in question_lower for term in
-        ['wave', 'trajectory', 'motion', 'circuit']):
-        return True
-
-    if subject == "Economics" and any(term in question_lower for term in
-        ['supply', 'demand', 'curve', 'equilibrium']):
-        return True
-
+    
+    # Function graphing - only when explicitly about graphing functions
+    if subject == "Mathematics":
+        function_graphing = [
+            'graph the function', 'plot the function', 'sketch the graph',
+            'draw the parabola', 'graph y=', 'plot y='
+        ]
+        if any(term in question_lower for term in function_graphing):
+            return True
+    
+    # Physics - only for wave/motion diagrams when explicitly requested
+    if subject == "Physics":
+        physics_visual = [
+            'draw the wave', 'sketch the trajectory', 'plot the motion',
+            'diagram of circuit', 'free body diagram'
+        ]
+        if any(term in question_lower for term in physics_visual):
+            return True
+    
+    # Economics - only for explicit curve requests
+    if subject == "Economics":
+        economics_visual = [
+            'draw supply curve', 'sketch demand curve', 'plot equilibrium',
+            'graph supply and demand'
+        ]
+        if any(term in question_lower for term in economics_visual):
+            return True
+    
+    # Default: don't show visualization
     return False
 
 def create_smart_visualization(question: str, subject: str):
@@ -633,7 +654,7 @@ def format_response(response_text):
             continue
         
         # Skip stray closing tags that may appear in the model text
-        if re.match(r'^</(div|span|p)>$', line):
+        if re.match(r'^</(div|span|p)>, line):
             continue
 
         # Step headers
