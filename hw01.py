@@ -244,39 +244,57 @@ Provide detailed explanations but keep the formatting clean and readable.""",
 }
 
 def should_show_diagram(question: str, subject: str) -> bool:
-    """Decide whether to render a diagram for the given question.
+    """Return True only when the question explicitly asks for a visual/graph/geometry construction.
 
-    Adds light-weight geometry detection so prompts like
-    "Construct triangle ABC ... draw the perpendicular bisector of BC" trigger a plot.
+    Policy:
+    - Require an explicit drawing intent for algebra/calculus/trig (draw/plot/graph/sketch/construct/diagram/illustrate/visualize)
+    - Always allow geometry constructions when common geometry terms appear
+    - Keep other subjects conservative
     """
-    question_lower = question.lower()
+    q = question.lower()
 
-    visual_keywords = [
-        'draw', 'sketch', 'plot', 'graph', 'construct', 'visualize',
-        'diagram', 'figure', 'chart', 'show graphically', 'illustrate',
-        # geometry specific
-        'triangle', 'perpendicular bisector', 'bisector', 'abc', 'geometry',
-        'square', 'rectangle', 'circle', 'semicircle', 'pentagon', 'hexagon',
-        'heptagon', 'octagon', 'polygon', 'median', 'altitude', 'angle bisector'
+    # 1) Strong drawing intent verbs
+    intent = any(w in q for w in [
+        'draw', 'sketch', 'plot', 'graph', 'construct', 'diagram', 'figure',
+        'show graphically', 'illustrate', 'visualize'
+    ])
+
+    # 2) Geometry keywords that justify a diagram regardless of verb
+    geometry_terms = [
+        'triangle', ' abc', 'abc ', 'perpendicular bisector', 'angle bisector',
+        'median', 'altitude', 'parallel', 'perpendicular', 'circumcircle',
+        'incenter', 'circumcenter', 'square', 'rectangle', 'circle',
+        'semicircle', 'polygon', 'pentagon', 'hexagon', 'heptagon', 'octagon',
+        'geometry'
     ]
-
-    if any(keyword in question_lower for keyword in visual_keywords):
+    if any(t in q for t in geometry_terms):
         return True
 
-    # Subject-specific keywords
-    if subject == "Mathematics" and any(term in question_lower for term in
-        ['parabola', 'quadratic', 'function', 'linear', 'curve', 'y=', 'sin', 'cos']):
-        return True
+    # 3) Mathematics graphs: require intent + an equation/function pattern
+    if subject == 'Mathematics':
+        if intent and (
+            re.search(r'\by\s*=\s*', q) or  # y = ...
+            re.search(r'\bf\(x\)\s*=\s*', q) or  # f(x) = ...
+            'parabola' in q or  # often implies graphing when paired with intent
+            'sin' in q or 'cos' in q or 'tan' in q  # trig plots when intent present
+        ):
+            return True
+        return False
 
-    if subject == "Physics" and any(term in question_lower for term in
-        ['wave', 'trajectory', 'motion', 'circuit']):
-        return True
+    # 4) Physics: show only for waves/trajectories when intent present
+    if subject == 'Physics':
+        if intent and any(k in q for k in ['wave', 'trajectory', 'motion', 'circuit']):
+            return True
+        return False
 
-    if subject == "Economics" and any(term in question_lower for term in
-        ['supply', 'demand', 'curve', 'equilibrium']):
-        return True
+    # 5) Economics: show only when intent present with supply/demand
+    if subject == 'Economics':
+        if intent and any(k in q for k in ['supply', 'demand', 'equilibrium', 'curve']):
+            return True
+        return False
 
-    return False
+    # Default: require explicit intent
+    return intent
 
 def create_smart_visualization(question: str, subject: str):
     """Create simple, clean visualizations.
