@@ -265,7 +265,7 @@ def should_show_diagram(question: str, subject: str) -> bool:
         'median', 'altitude', 'parallel', 'perpendicular', 'circumcircle',
         'incenter', 'circumcenter', 'square', 'rectangle', 'circle',
         'semicircle', 'polygon', 'pentagon', 'hexagon', 'heptagon', 'octagon',
-        'geometry'
+        'geometry', 'tangent', 'tangents'
     ]
     if any(t in q for t in geometry_terms):
         return True
@@ -452,11 +452,13 @@ def create_smart_visualization(question: str, subject: str):
                         direction = perp(base) if kind == 'perpendicular' else base
                         draw_infinite_line_through(points[p], direction, linestyle='--', color='#4CAF50' if kind=='perpendicular' else '#90CAF9', linewidth=2, label=f'{kind.title()} to {x}{y} through {p}')
 
-                # Circle with center O and radius r cm
-                circ_match = re.search(r'circle\s+with\s+center\s+([A-Z])\s*(?:and)?\s*radius\s*(\d+(?:\.\d+)?)\s*cm', question, flags=re.IGNORECASE)
+                # Circle with center O and radius r cm OR generic circle radius r
+                circ_match = re.search(r'(?:circle\s+with\s+center\s+([A-Z])\s*(?:and)?\s*)?radius\s*(\d+(?:\.\d+)?)\s*cm', question, flags=re.IGNORECASE)
                 if circ_match:
-                    c = circ_match.group(1).upper(); r = float(circ_match.group(2))
-                    center = points.get(c, (0.0, 0.0))
+                    cg = circ_match.group(1)
+                    r = float(circ_match.group(2))
+                    c = cg.upper() if cg else 'O'
+                    center = points.get(c, (0.0, 0.0)) if cg else (0.0, 0.0)
                     circle = plt.Circle(center, r, fill=False, edgecolor='#000000', linewidth=2)
                     ax.add_patch(circle)
                     ax.scatter([center[0]], [center[1]], color='#000000')
@@ -464,6 +466,49 @@ def create_smart_visualization(question: str, subject: str):
                     # radius marker
                     ax.plot([center[0], center[0]+r], [center[1], center[1]], color='#000000', linestyle='--')
                     ax.text(center[0]+r/2, center[1]+0.15, f'{r} cm', color='#000000', ha='center')
+
+                # Pair of tangents to a circle with given angle between them
+                tan_match = re.search(r'tangents?\s+to\s+a?\s*circle.*angle\s+of\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+                if tan_match:
+                    angle = float(tan_match.group(1))  # degrees between tangents
+                    # Ensure a circle exists; if not, create default with r=3cm at O
+                    if not any(isinstance(p, plt.Circle) for p in ax.patches):
+                        r = 3.0
+                        circle = plt.Circle((0.0, 0.0), r, fill=False, edgecolor='#000000', linewidth=2)
+                        ax.add_patch(circle)
+                        ax.scatter([0],[0], color='#000000'); ax.text(0, 0.2, 'O', color='#000000', ha='center')
+                    # Determine circle radius and center from first circle patch
+                    circ = next((p for p in ax.patches if isinstance(p, plt.Circle)), None)
+                    if circ is not None:
+                        center = circ.get_center(); r = circ.get_radius()
+                        # Angle between tangents is 2*theta where theta is angle between radius to point of contact and internal angle bisector
+                        theta = np.deg2rad(angle/2.0)
+                        # Choose two points of contact symmetrically about x-axis
+                        t1 = np.array([center[0] + r*np.cos(theta), center[1] + r*np.sin(theta)])
+                        t2 = np.array([center[0] + r*np.cos(theta), center[1] - r*np.sin(theta)])
+                        # Tangent directions are perpendicular to radius vectors
+                        r1 = t1 - np.array(center); r2 = t2 - np.array(center)
+                        dir1 = np.array([-r1[1], r1[0]])
+                        dir2 = np.array([-r2[1], r2[0]])
+                        # Draw tangents
+                        def draw_tan(point, direction, label):
+                            d = direction/np.linalg.norm(direction)
+                            p1 = point - d*5*r; p2 = point + d*5*r
+                            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color='#000000', linewidth=2)
+                            ax.text(point[0], point[1]+0.2*np.sign(d[1] if d[1]!=0 else 1), label, color='#000000', ha='center')
+                        draw_tan(t1, dir1, 't₁')
+                        draw_tan(t2, dir2, 't₂')
+                        # Mark angle between tangents at their intersection
+                        # Find intersection by solving for lines p = t + s*d
+                        def line_intersection(p1, d1, p2, d2):
+                            # Solve p1 + s*d1 = p2 + t*d2
+                            A = np.array([d1, -d2]).T
+                            b = p2 - p1
+                            sol = np.linalg.lstsq(A, b, rcond=None)[0]
+                            return p1 + sol[0]*d1
+                        inter = line_intersection(t1, dir1, t2, dir2)
+                        ax.scatter([inter[0]],[inter[1]], color='#000000')
+                        ax.text(inter[0], inter[1]-0.25, f'{int(angle)}°', color='#000000', ha='center')
 
                 # Regular shapes when requested without triangle context
                 if not points and any(k in question_lower for k in ['square', 'rectangle', 'polygon', 'circle', 'semicircle']):
