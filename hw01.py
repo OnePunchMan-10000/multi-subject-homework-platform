@@ -509,8 +509,10 @@ def create_smart_visualization(question: str, subject: str):
                         ax.set_title('Semicircle')
                     elif 'circle' in question_lower:
                         r = 3.0
-                        circ = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=2)
-                        ax.add_patch(circ)
+                        # Draw full circle using parameterization so bounding works reliably
+                        t = np.linspace(0, 2*np.pi, 400)
+                        X = r*np.cos(t); Y = r*np.sin(t)
+                        ax.plot(X, Y, color=stroke, linewidth=2)
                         O = (0,0)
                         ax.scatter([O[0]],[O[1]], color=stroke)
                         ax.text(0, 0.2, 'O', color=stroke, ha='center')
@@ -535,16 +537,36 @@ def create_smart_visualization(question: str, subject: str):
 
                 # Final styling and bounds
                 ax.set_aspect('equal', adjustable='datalim')
-                # Determine bounds from plotted data
+                # Determine bounds from all artists (lines, patches, scatter collections)
                 x_all, y_all = [], []
+                # Lines
                 for line in ax.get_lines():
                     xdata = line.get_xdata(); ydata = line.get_ydata()
                     x_all.extend(list(xdata)); y_all.extend(list(ydata))
+                # Patches (e.g., circles)
+                for patch in ax.patches:
+                    try:
+                        verts = patch.get_path().transformed(patch.get_transform()).vertices
+                        if verts is not None and len(verts) > 0:
+                            x_all.extend(list(verts[:,0])); y_all.extend(list(verts[:,1]))
+                    except Exception:
+                        pass
+                # Collections (e.g., scatter points)
+                for coll in ax.collections:
+                    try:
+                        offs = coll.get_offsets()
+                        if offs is not None and len(offs) > 0:
+                            arr = np.array(offs)
+                            if arr.ndim == 2 and arr.shape[1] == 2:
+                                x_all.extend(list(arr[:,0])); y_all.extend(list(arr[:,1]))
+                    except Exception:
+                        pass
                 if x_all and y_all:
                     x_min, x_max = min(x_all), max(x_all)
                     y_min, y_max = min(y_all), max(y_all)
-                    pad_x = (x_max - x_min) * 0.2 + 1
-                    pad_y = (y_max - y_min) * 0.2 + 1
+                    # Ensure non-zero padding
+                    pad_x = max((x_max - x_min) * 0.15, 1.0)
+                    pad_y = max((y_max - y_min) * 0.15, 1.0)
                     ax.set_xlim(x_min - pad_x, x_max + pad_x)
                     ax.set_ylim(y_min - pad_y, y_max + pad_y)
                 ax.axis('off')
