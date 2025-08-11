@@ -463,9 +463,10 @@ def create_smart_visualization(question: str, subject: str):
                     ax.add_patch(circle)
                     ax.scatter([center[0]], [center[1]], color='#000000')
                     ax.text(center[0], center[1]+0.2, c, color='#000000', ha='center')
-                    # radius marker
-                    ax.plot([center[0], center[0]+r], [center[1], center[1]], color='#000000', linestyle='--')
-                    ax.text(center[0]+r/2, center[1]+0.15, f'{r} cm', color='#000000', ha='center')
+                    # radius marker only when not a tangent construction
+                    if 'tangent' not in question_lower and 'tangents' not in question_lower:
+                        ax.plot([center[0], center[0]+r], [center[1], center[1]], color='#000000', linestyle='--')
+                        ax.text(center[0]+r/2, center[1]+0.15, f'{r} cm', color='#000000', ha='center')
 
                 # Pair of tangents to a circle with given angle between them
                 tan_match = re.search(r'tangents?\s+to\s+a?\s*circle.*angle\s+of\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
@@ -561,8 +562,6 @@ def create_smart_visualization(question: str, subject: str):
                         O = (0,0)
                         ax.scatter([O[0]],[O[1]], color=stroke)
                         ax.text(0, 0.2, 'O', color=stroke, ha='center')
-                        ax.plot([0,r],[0,0], color=stroke, linestyle='--')
-                        ax.text(r/2, 0.15, f'{r} cm', color=stroke, ha='center')
                         ax.set_aspect('equal')
                         ax.set_title('Circle')
                     elif 'polygon' in question_lower:
