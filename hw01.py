@@ -366,20 +366,20 @@ def create_smart_visualization(question: str, subject: str):
                     A = (x_a, y_a)
                     points.update({'A': A, 'B': B, 'C': C})
 
-                    # Draw triangle with dark lines for white background
-                    dark = '#1f2937'
-                    draw_line(B, C, color=dark, linewidth=2)
-                    draw_line(C, A, color=dark, linewidth=2)
-                    draw_line(A, B, color=dark, linewidth=2)
-                    ax.scatter([A[0], B[0], C[0]], [A[1], B[1], C[1]], color='#ffc107', zorder=3)
-                    ax.text(B[0], B[1] - 0.2, 'B', ha='center', va='top', color=dark)
-                    ax.text(C[0], C[1] - 0.2, 'C', ha='center', va='top', color=dark)
-                    ax.text(A[0], A[1] + 0.2, 'A', ha='center', va='bottom', color=dark)
+                    # Draw triangle with black outlines for white background
+                    stroke = '#000000'
+                    draw_line(B, C, color=stroke, linewidth=2)
+                    draw_line(C, A, color=stroke, linewidth=2)
+                    draw_line(A, B, color=stroke, linewidth=2)
+                    ax.scatter([A[0], B[0], C[0]], [A[1], B[1], C[1]], color='#000000', zorder=3)
+                    ax.text(B[0], B[1] - 0.2, 'B', ha='center', va='top', color=stroke)
+                    ax.text(C[0], C[1] - 0.2, 'C', ha='center', va='top', color=stroke)
+                    ax.text(A[0], A[1] + 0.2, 'A', ha='center', va='bottom', color=stroke)
 
                     # Side length labels
                     def put_len(p, q, label):
                         mx, my = (p[0]+q[0])/2.0, (p[1]+q[1])/2.0
-                        ax.text(mx, my + 0.15, label, color=dark, ha='center', va='bottom')
+                        ax.text(mx, my + 0.15, label, color=stroke, ha='center', va='bottom')
                     put_len(B, C, f'{bc} cm')
                     put_len(A, B, f'{ab} cm')
                     put_len(A, C, f'{ac} cm')
@@ -457,42 +457,79 @@ def create_smart_visualization(question: str, subject: str):
                 if circ_match:
                     c = circ_match.group(1).upper(); r = float(circ_match.group(2))
                     center = points.get(c, (0.0, 0.0))
-                    circle = plt.Circle(center, r, fill=False, color='#00E676', linewidth=2)
+                    circle = plt.Circle(center, r, fill=False, edgecolor='#000000', linewidth=2)
                     ax.add_patch(circle)
-                    ax.scatter([center[0]], [center[1]], color='#00E676')
-                    ax.text(center[0], center[1]+0.2, c, color='white', ha='center')
+                    ax.scatter([center[0]], [center[1]], color='#000000')
+                    ax.text(center[0], center[1]+0.2, c, color='#000000', ha='center')
+                    # radius marker
+                    ax.plot([center[0], center[0]+r], [center[1], center[1]], color='#000000', linestyle='--')
+                    ax.text(center[0]+r/2, center[1]+0.15, f'{r} cm', color='#000000', ha='center')
 
                 # Regular shapes when requested without triangle context
                 if not points and any(k in question_lower for k in ['square', 'rectangle', 'polygon', 'circle', 'semicircle']):
-                    dark = '#1f2937'
+                    stroke = '#000000'
                     if 'square' in question_lower:
                         s = 4.0
                         X = np.array([0, s, s, 0, 0]); Y = np.array([0, 0, s, s, 0])
-                        ax.plot(X, Y, color=dark, linewidth=2)
+                        ax.plot(X, Y, color=stroke, linewidth=2)
+                        # mark vertices and lengths
+                        V = [(0,0), (s,0), (s,s), (0,s)]
+                        labels = ['A','B','C','D']
+                        ax.scatter([p[0] for p in V], [p[1] for p in V], color=stroke)
+                        for (px,py),lab in zip(V,labels):
+                            ax.text(px, py-0.2 if py==0 else py+0.2, lab, color=stroke, ha='center', va='center')
+                        ax.text(s/2, -0.3, f'{s} cm', color=stroke, ha='center')
+                        ax.text(s+0.3, s/2, f'{s} cm', color=stroke, va='center')
                         ax.set_title('Square')
                     elif 'rectangle' in question_lower:
                         a, b = 6.0, 4.0
                         X = np.array([0, a, a, 0, 0]); Y = np.array([0, 0, b, b, 0])
-                        ax.plot(X, Y, color=dark, linewidth=2)
+                        ax.plot(X, Y, color=stroke, linewidth=2)
+                        V = [(0,0), (a,0), (a,b), (0,b)]
+                        labels = ['A','B','C','D']
+                        ax.scatter([p[0] for p in V], [p[1] for p in V], color=stroke)
+                        for (px,py),lab in zip(V,labels):
+                            ax.text(px, py-0.2 if py==0 else py+0.2, lab, color=stroke, ha='center', va='center')
+                        ax.text(a/2, -0.3, f'{a} cm', color=stroke, ha='center')
+                        ax.text(a+0.3, b/2, f'{b} cm', color=stroke, va='center')
                         ax.set_title('Rectangle')
                     elif 'semicircle' in question_lower:
                         r = 3.0
                         t = np.linspace(0, np.pi, 200)
-                        ax.plot(r*np.cos(t), r*np.sin(t), color=dark, linewidth=2)
-                        ax.plot([-r, r], [0, 0], color=dark, linewidth=2)
+                        ax.plot(r*np.cos(t), r*np.sin(t), color=stroke, linewidth=2)
+                        ax.plot([-r, r], [0, 0], color=stroke, linewidth=2)
+                        # points and labels
+                        A = (-r,0); B = (r,0); O = (0,0)
+                        ax.scatter([A[0],B[0],O[0]],[A[1],B[1],O[1]], color=stroke)
+                        ax.text(A[0], A[1]-0.2, 'A', color=stroke, ha='center')
+                        ax.text(B[0], B[1]-0.2, 'B', color=stroke, ha='center')
+                        ax.text(O[0], O[1]+0.2, 'O', color=stroke, ha='center')
+                        ax.text(0, -0.3, f'{2*r} cm', color=stroke, ha='center')
                         ax.set_aspect('equal')
                         ax.set_title('Semicircle')
                     elif 'circle' in question_lower:
                         r = 3.0
-                        circ = plt.Circle((0, 0), r, fill=False, color=dark, linewidth=2)
+                        circ = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=2)
                         ax.add_patch(circ)
+                        O = (0,0)
+                        ax.scatter([O[0]],[O[1]], color=stroke)
+                        ax.text(0, 0.2, 'O', color=stroke, ha='center')
+                        ax.plot([0,r],[0,0], color=stroke, linestyle='--')
+                        ax.text(r/2, 0.15, f'{r} cm', color=stroke, ha='center')
                         ax.set_aspect('equal')
                         ax.set_title('Circle')
                     elif 'polygon' in question_lower:
                         # default to regular hexagon
                         n = 6
                         t = np.linspace(0, 2*np.pi, n+1)
-                        ax.plot(np.cos(t), np.sin(t), color=dark, linewidth=2)
+                        X = np.cos(t); Y = np.sin(t)
+                        ax.plot(X, Y, color=stroke, linewidth=2)
+                        # label vertices
+                        verts = list(zip(X[:-1], Y[:-1]))
+                        labels = ['A','B','C','D','E','F','G','H']
+                        for i,(px,py) in enumerate(verts):
+                            ax.scatter([px],[py], color=stroke)
+                            ax.text(px, py+0.15, labels[i], color=stroke, ha='center')
                         ax.set_aspect('equal')
                         ax.set_title('Regular Polygon (hexagon)')
 
