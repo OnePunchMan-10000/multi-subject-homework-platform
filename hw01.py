@@ -654,7 +654,128 @@ def format_response(response_text):
             continue
         
         # Skip stray closing tags that may appear in the model text
-        if re.match(r'^</(div|span|p)>, line):
+        if re.match(r'^</(div|span|p)>
+
+        # Step headers
+        if re.match(r'^\*\*Step \d+:', line) or re.match(r'^###\s*Step \d+:', line):
+            step_text = re.sub(r'\*\*|###', '', line).strip()
+            formatted_content.append(f'<h3 style="color:#4CAF50;margin:1rem 0 0.5rem 0;">{step_text}</h3>')
+            # extra space after each step header for readability
+            formatted_content.append('<div style="height:6px"></div>')
+        
+        # Final answer
+        elif 'Final Answer' in line:
+            clean_line = re.sub(r'\*\*', '', line)
+            formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n')
+        
+        # Check for any line containing fractions - convert ALL to vertical display
+        elif '/' in line and ('(' in line or any(char in line for char in ['x', 'y', 'dx', 'dy', 'du', 'dv'])):
+            # Convert all fractions in the line to vertical display
+            # First handle complex fractions like (numerator)/(denominator) - more comprehensive pattern
+            formatted_line = re.sub(r'\(([^)]+)\)\s*/\s*\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
+            # Then handle simple fractions like du/dx, dv/dx, dy/dx
+            formatted_line = re.sub(r'\b([a-zA-Z]+)/([a-zA-Z]+)\b', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
+            # Handle any remaining fractions with parentheses - catch cases like (2x + 1) / (x² + 1)²
+            formatted_line = re.sub(r'\(([^)]+)\)\s*/\s*([^/\s]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
+            formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
+        
+        # Mathematical expressions with equations (no fractions)
+        elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '^', '(', ')'])):
+            formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n')
+        
+        # Regular text
+        else:
+            formatted_content.append(f"{format_powers(line)}\n")
+    
+    return ''.join(formatted_content)
+
+def main():
+    # Header
+    st.markdown("""
+    <div class="main-header">
+        <h1>🎓 Academic Assistant Pro</h1>
+        <p>Clear, step-by-step homework solutions</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Main interface
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.markdown("### 📖 Select Subject")
+        
+        subject_options = [f"{info['icon']} {subject}" for subject, info in SUBJECTS.items()]
+        selected_subject_display = st.selectbox(
+            "Choose your subject:",
+            subject_options,
+            help="Select the academic subject for your question"
+        )
+        
+        selected_subject = selected_subject_display.split(' ', 1)[1]
+        
+        # Show example
+        st.markdown("### 💡 Example")
+        st.info(f"**{selected_subject}**: {SUBJECTS[selected_subject]['example']}")
+    
+    with col2:
+        st.markdown("### ❓ Your Question")
+        
+        question = st.text_area(
+            "Enter your homework question:",
+            height=120,
+            placeholder=f"Ask your {selected_subject} question here...",
+            help="Be specific and include all relevant details"
+        )
+        
+        if st.button("🎯 Get Solution", type="primary"):
+            if question.strip():
+                with st.spinner("Getting solution..."):
+                    response = get_api_response(question, selected_subject)
+                    
+                    if response:
+                        st.markdown("---")
+                        st.markdown(f"## 📚 {selected_subject} Solution")
+                        
+                        # Improved formatting in a clean container
+                        formatted_response = format_response(response)
+                        st.markdown(f"""
+                        <div class="solution-content">
+                            {formatted_response}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Show diagram if needed
+                        if should_show_diagram(question, selected_subject):
+                            st.markdown("### 📊 Visualization")
+                            viz = create_smart_visualization(question, selected_subject)
+                            if viz:
+                                st.image(viz, use_container_width=True)
+                        
+                        # Simple feedback
+                        st.markdown("### Rate this solution")
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            if st.button("👍 Helpful"):
+                                st.success("Thanks!")
+                        with col_b:
+                            if st.button("👎 Needs work"):
+                                st.info("We'll improve!")
+                        with col_c:
+                            if st.button("🔄 Try again"):
+                                st.rerun()
+            else:
+                st.warning("Please enter a question.")
+    
+    # Simple footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; color: #666; padding: 1rem;">
+        <p>🎓 Academic Assistant Pro - Focus on Learning</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main(), line):
             continue
 
         # Step headers
