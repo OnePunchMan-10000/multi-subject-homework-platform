@@ -992,7 +992,10 @@ def format_response(response_text):
                 # push back by modifying line variable, but simpler: treat as step on next iteration by appending a token
                 formatted_content.append('<!--REPLAY_LINE-->')
                 continue
-            final_answer_lines.append(line)
+            # Strip any accidental HTML tags from model output so markup is not broken
+            sanitized = re.sub(r'<[^>]*>', '', line).strip()
+            if sanitized:
+                final_answer_lines.append(sanitized)
             continue
 
         # If we previously saw a step header, wrap this first following line in step-code box
@@ -1010,8 +1013,9 @@ def format_response(response_text):
     
     # Flush pending final answer if any
     if final_answer_pending:
+        sanitized_join = " ".join([re.sub(r'<[^>]*>', '', ln).strip() for ln in final_answer_lines if ln.strip()])
         formatted_content.append(
-            f'<div class="final-answer">Final Answer: {format_powers(" ".join(final_answer_lines))}</div>\n'
+            f'<div class="final-answer">Final Answer: {format_powers(sanitized_join)}</div>\n'
         )
 
     # Remove any replay tokens accidentally left
