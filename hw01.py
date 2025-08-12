@@ -268,20 +268,35 @@ Provide detailed explanations but keep the formatting clean and readable.""",
         "prompt": """You are a computer science expert. Provide solutions using the EXACT format below.
 
 FORMATTING REQUIREMENTS:
-1. Use "**Step 1:**", "**Step 2:**" etc. for each step (short, crisp lines)
-2. For any math-like expressions, keep them as plain text (no LaTeX)
-3. Include time and space complexity where relevant
-4. Keep bullets short and focused; add blank lines between steps for readability
-5. End with "**Complete Code**" followed by ONE consolidated, executable code block fenced with language (e.g., ```python)
-6. Do not put any extra commentary after the final code block
+1. Use "**Step 1:**", "**Step 2:**" etc. for each step as a SINGLE LINE
+2. Follow each step with explanatory text on the NEXT LINE
+3. Then show relevant syntax/code snippet on SEPARATE LINES (not horizontal)
+4. Add blank lines between steps for readability
+5. Include time and space complexity where relevant
+6. End with "**Complete Code**" followed by ONE consolidated, executable code block fenced with language (e.g., ```python)
 
-EXAMPLE OF THE FINAL SECTION:
+EXAMPLE FORMAT:
+**Step 1:** Initialize two pointers
+Set left pointer to start and right pointer to end of array.
+```
+left = 0
+right = len(array) - 1
+```
+
+**Step 2:** Compare middle element
+Find middle index and compare with target value.
+```
+mid = (left + right) // 2
+if array[mid] == target:
+    return mid
+```
+
 **Complete Code**
 ```python
 # full, runnable program here
 ```
 
-Keep explanations clean and readable, mirroring the math section’s clarity.""",
+Keep explanations clean and readable with proper vertical separation.""",
         "example": "Implement binary search algorithm in Python."
     }
 }
