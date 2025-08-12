@@ -225,14 +225,28 @@ STYLE:
     },
     "Chemistry": {
         "icon": "🧪",
-        "prompt": """You are a chemistry expert. Provide solutions with:
-- Clear step-by-step format
-- Proper chemical equations and formulas
-- Balanced equations where needed
-- Clear explanations of chemical processes
-- Simple, readable notation
-- Add blank lines between steps for readability""",
-        "example": "Balance: Al + O₂ → Al₂O₃"
+        "prompt": """You are a senior chemistry tutor. Produce highly readable, plain‑text solutions.
+
+FORMATTING REQUIREMENTS (STRICT):
+1. Use "**Step 1:**", "**Step 2:**" etc. as a SINGLE LINE title
+2. On the next line, explain the idea briefly (why this step is needed)
+3. On the next line, write the relevant equation in simple text (no LaTeX). Examples:
+   - rate = k * [A]^m * [B]^n
+   - t_half = 0.693 / k
+   - M = m / n
+4. Substitute numbers on a separate line with proper units where applicable
+5. Compute and show the numeric result on its own line with clear units
+6. Balance chemical equations when required and show the balanced form on its own line
+7. Add an "Assumptions" line when needed (e.g., ideal behavior, constant temperature)
+8. End with "**Final Answer:**" on its own line with the value (and unit) or the balanced equation
+
+STYLE:
+- Plain text only (no LaTeX, avoid special symbols). Write arrows using '->' and charges like 'SO4^2-'
+- Keep numbers to 2–3 significant figures unless the problem demands more
+- Always include units next to numbers where relevant
+- Add blank lines between steps for readability
+""",
+        "example": "Balance: Al + O2 -> Al2O3"
     },
     "Biology": {
         "icon": "🧬",
@@ -804,7 +818,7 @@ def get_api_response(question, subject):
     
     # Choose model (Physics gets a stronger one) and prepare request body
     primary_model = "openai/gpt-4o-mini"
-    if subject == "Physics":
+    if subject in ("Physics", "Chemistry"):
         primary_model = "openai/gpt-4o"
 
     fallback_model = "openai/gpt-4o-mini"  # previously working model
