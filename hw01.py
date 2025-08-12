@@ -306,7 +306,7 @@ def create_smart_visualization(question: str, subject: str):
 
     try:
         plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(12, 8))  # larger figure for better visibility
+        fig, ax = plt.subplots(figsize=(10, 6))
         fig.patch.set_facecolor('white')
 
         if subject == "Mathematics":
@@ -452,116 +452,31 @@ def create_smart_visualization(question: str, subject: str):
                         direction = perp(base) if kind == 'perpendicular' else base
                         draw_infinite_line_through(points[p], direction, linestyle='--', color='#4CAF50' if kind=='perpendicular' else '#90CAF9', linewidth=2, label=f'{kind.title()} to {x}{y} through {p}')
 
-                # COMPLETELY REDESIGNED Circle Generation System
-                def create_clean_circle():
-                    """Create a clean, professional circle diagram with no overlapping text"""
+                # Simple Circle Generation (like triangle approach)
+                circle_match = re.search(r'circle.*?radius\s*(\d+(?:\.\d+)?)|radius\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+                if circle_match or 'circle' in question_lower:
+                    # Extract radius simply
+                    radius = 4.0  # good default size
+                    if circle_match:
+                        radius = float(circle_match.group(1) or circle_match.group(2))
                     
-                    # Smart pattern detection for circles
-                    patterns = [
-                        r'circle.*?radius\s*(?:=|of|is)?\s*(\d+(?:\.\d+)?)',
-                        r'radius\s*(?:=|of|is)?\s*(\d+(?:\.\d+)?)',
-                        r'r\s*=\s*(\d+(?:\.\d+)?)',
-                        r'(\d+(?:\.\d+)?)\s*(?:cm|units?|m)\s*radius',
-                        r'draw.*circle.*?(\d+(?:\.\d+)?)',
-                    ]
-                    
-                    # Extract radius and scale for full canvas utilization
-                    original_radius = 5.0  # store original value for labels
-                    radius = 20.0  # much larger default to fill canvas
-                    for pattern in patterns:
-                        match = re.search(pattern, question, flags=re.IGNORECASE)
-                        if match:
-                            original_radius = float(match.group(1))
-                            radius = max(original_radius * 4, 10.0)  # scale up user input, minimum 10
-                            break
-                    
-                    # Extract center if specified
-                    center_match = re.search(r'center\s+([A-Z])|centered\s+at\s+([A-Z])', question, flags=re.IGNORECASE)
-                    center_name = 'O'
-                    if center_match:
-                        center_name = (center_match.group(1) or center_match.group(2)).upper()
-                    
-                    # Set center coordinates
-                    center = points.get(center_name, (0.0, 0.0))
-                    
-                    # Create circle with enhanced visibility
-                    circle = plt.Circle(center, radius, fill=False, edgecolor='black', linewidth=4)  # thicker line
+                    # Simple circle at origin
+                    stroke = '#000000'
+                    circle = plt.Circle((0, 0), radius, fill=False, edgecolor=stroke, linewidth=2)
                     ax.add_patch(circle)
                     
-                    # Mark center with larger, more visible dot
-                    ax.plot(center[0], center[1], 'ko', markersize=10, zorder=10)
+                    # Center point
+                    ax.scatter([0], [0], color=stroke, s=30, zorder=3)
+                    ax.text(0, 0.3, 'O', ha='center', va='bottom', color=stroke, fontweight='bold')
                     
-                    # Position labels proportional to circle size
-                    offset = max(radius * 0.08, 1.0)  # smaller relative offset for large circles
+                    # Radius line
+                    ax.plot([0, radius], [0, 0], color=stroke, linestyle='--', linewidth=1.5)
+                    ax.text(radius/2, 0.2, f'r = {radius}', ha='center', va='bottom', color=stroke)
                     
-                    # Center label - positioned above center
-                    ax.text(center[0], center[1] + offset, center_name, 
-                           ha='center', va='bottom', fontweight='bold', fontsize=14)  # larger font
-                    
-                    # Radius line and label - positioned at 0 degrees (right)
-                    radius_end = (center[0] + radius, center[1])
-                    ax.plot([center[0], radius_end[0]], [center[1], radius_end[1]], 
-                           'k--', linewidth=3, alpha=0.9)  # thicker, more visible radius line
-                    
-                    # Radius label - positioned at midpoint, slightly above line
-                    mid_x = center[0] + radius * 0.5
-                    ax.text(mid_x, center[1] + offset*0.8, f'r = {original_radius}', 
-                           ha='center', va='bottom', fontsize=12, fontweight='bold',
-                           bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9))
-                    
-                    # Additional information positioned strategically
-                    info_y_start = center[1] - radius - offset * 4
-                    
-                    # Title above circle
-                    title_text = f'Circle (radius = {original_radius})'
-                    if 'unit circle' in question_lower:
-                        title_text = 'Unit Circle'
-                    elif 'inscribed' in question_lower:
-                        title_text = 'Inscribed Circle'
-                    elif 'circumscribed' in question_lower:
-                        title_text = 'Circumscribed Circle'
-                    
-                    ax.text(center[0], center[1] + radius + offset * 3, title_text,
-                           ha='center', va='bottom', fontweight='bold', fontsize=16)  # larger title
-                    
-                    # Mathematical properties below circle using original radius
-                    circumference = 2 * np.pi * original_radius
-                    area = np.pi * original_radius**2
-                    
-                    # Only show measurements if not a tangent construction
-                    if 'tangent' not in question_lower:
-                        ax.text(center[0], info_y_start, f'Circumference = 2πr ≈ {circumference:.1f}',
-                               ha='center', va='top', fontsize=9, style='italic')
-                        ax.text(center[0], info_y_start - offset*2, f'Area = πr² ≈ {area:.1f}',
-                               ha='center', va='top', fontsize=9, style='italic')
-                    
-                    # Diameter line if mentioned
-                    if 'diameter' in question_lower:
-                        ax.plot([center[0] - radius, center[0] + radius], [center[1], center[1]], 
-                               'k-', linewidth=2, alpha=0.7)
-                        ax.text(center[0], center[1] - offset*2, f'd = {2*original_radius}',
-                               ha='center', va='top', fontsize=10,
-                               bbox=dict(boxstyle='round,pad=0.2', facecolor='lightblue', alpha=0.8))
-                    
-                    # Optimize canvas usage - minimal padding for maximum circle size
-                    padding = radius * 0.2  # much smaller padding to utilize more space
-                    ax.set_xlim(center[0] - radius - padding, center[0] + radius + padding)
-                    ax.set_ylim(center[1] - radius - padding, center[1] + radius + padding)
+                    # Simple bounds like triangle
+                    ax.set_xlim(-radius-1, radius+1)
+                    ax.set_ylim(-radius-1, radius+1)
                     ax.set_aspect('equal')
-                    
-                    # Clean background
-                    ax.set_facecolor('white')
-                    ax.grid(False)
-                    ax.set_xticks([])
-                    ax.set_yticks([])
-                    
-                    # Add subtle border
-                    for spine in ax.spines.values():
-                        spine.set_visible(False)
-                
-                # Detect if we need a circle
-                if any(term in question_lower for term in ['circle', 'radius', 'circumference', 'diameter']):
-                    create_clean_circle()
 
                 # Improved pair of tangents to a circle with given angle between them
                 tan_match = re.search(r'tangents?\s+to\s+a?\s*circle.*?(?:inclined.*?at|angle.*?of)\s*(\d+(?:\.\d+)?)\s*degrees?', question, flags=re.IGNORECASE)
@@ -661,97 +576,22 @@ def create_smart_visualization(question: str, subject: str):
                         ax.set_aspect('equal')
                         ax.set_title('Semicircle')
                     elif 'circle' in question_lower:
-                        # Use the same clean circle generation as above
-                        def create_standalone_circle():
-                            """Clean standalone circle for shape demonstrations"""
-                            
-                            # Extract radius and scale for proper canvas usage
-                            original_r = 5.0  # store original for labels
-                            r = 20.0  # much larger default to fill canvas
-                            patterns = [
-                                r'radius\s*(?:=|of|is)?\s*(\d+(?:\.\d+)?)',
-                                r'r\s*=\s*(\d+(?:\.\d+)?)',
-                                r'circle.*?(\d+(?:\.\d+)?)',
-                            ]
-                            
-                            for pattern in patterns:
-                                match = re.search(pattern, question, flags=re.IGNORECASE)
-                                if match:
-                                    original_r = float(match.group(1))
-                                    r = max(original_r * 4, 10.0)  # scale up, minimum 10
-                                    break
-                            
-                            # Special case for unit circle - but scale for visibility
-                            if 'unit circle' in question_lower:
-                                original_r = 1.0
-                                r = 15.0  # scaled unit circle for better visibility
-                            
-                            # Create highly visible circle
-                            circle = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=4)  # thicker
-                            ax.add_patch(circle)
-                            
-                            # Larger, more visible center point
-                            ax.plot(0, 0, 'ko', markersize=10, zorder=10)
-                            
-                            # Strategic text positioning proportional to circle size
-                            offset = max(r * 0.08, 1.0)  # better scaling for large circles
-                            
-                            # Center label above center
-                            ax.text(0, offset*1.2, 'O', ha='center', va='bottom', 
-                                   fontweight='bold', fontsize=11, color=stroke)
-                            
-                            # Radius line at 0 degrees - more visible
-                            ax.plot([0, r], [0, 0], 'k--', linewidth=3, alpha=0.9)
-                            
-                            # Radius label with background box showing original value
-                            ax.text(r*0.5, offset*0.8, f'r = {original_r}', ha='center', va='bottom',
-                                   fontsize=10, color=stroke,
-                                   bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.9, edgecolor='none'))
-                            
-                            # Title above circle
-                            title = 'Unit Circle' if 'unit' in question_lower else f'Circle (r = {original_r})'
-                            ax.text(0, r + offset*4, title, ha='center', va='bottom',
-                                   fontweight='bold', fontsize=12, color=stroke)
-                            
-                            # Mathematical info below circle using original radius
-                            if 'tangent' not in question_lower:
-                                info_y = -r - offset*3
-                                circumference = 2 * np.pi * original_r
-                                area = np.pi * original_r**2
-                                
-                                ax.text(0, info_y, f'C = 2πr ≈ {circumference:.1f}',
-                                       ha='center', va='top', fontsize=9, style='italic', color=stroke)
-                                ax.text(0, info_y - offset*2, f'A = πr² ≈ {area:.1f}',
-                                       ha='center', va='top', fontsize=9, style='italic', color=stroke)
-                            
-                            # Diameter if mentioned
-                            if 'diameter' in question_lower:
-                                ax.plot([-r, r], [0, 0], color=stroke, linewidth=2, alpha=0.7)
-                                ax.text(0, -offset*1.5, f'd = {2*original_r}', ha='center', va='top',
-                                       fontsize=10, color=stroke,
-                                       bbox=dict(boxstyle='round,pad=0.2', facecolor='lightblue', alpha=0.8))
-                            
-                            # Optimize layout for maximum circle visibility
-                            padding = r * 0.2  # minimal padding for better space usage
-                            ax.set_xlim(-r - padding, r + padding)
-                            ax.set_ylim(-r - padding, r + padding)
-                            ax.set_aspect('equal')
-                            
-                            # Remove clutter
-                            ax.set_facecolor('white')
-                            ax.grid(False)
-                            ax.set_xticks([])
-                            ax.set_yticks([])
-                            for spine in ax.spines.values():
-                                spine.set_visible(False)
-                            
-                            # Optional coordinate grid
-                            if 'coordinate' in question_lower or 'graph' in question_lower:
-                                ax.grid(True, alpha=0.2)
-                                ax.axhline(y=0, color='gray', linewidth=0.5, alpha=0.5)
-                                ax.axvline(x=0, color='gray', linewidth=0.5, alpha=0.5)
+                        # Simple circle like triangle approach
+                        r = 4.0  # default radius
+                        radius_match = re.search(r'radius\s*(\d+(?:\.\d+)?)', question_lower)
+                        if radius_match:
+                            r = float(radius_match.group(1))
                         
-                        create_standalone_circle()
+                        # Simple circle
+                        circle = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=2)
+                        ax.add_patch(circle)
+                        ax.scatter([0], [0], color=stroke, s=30, zorder=3)
+                        ax.text(0, 0.3, 'O', ha='center', va='bottom', color=stroke, fontweight='bold')
+                        ax.plot([0, r], [0, 0], color=stroke, linestyle='--', linewidth=1.5)
+                        ax.text(r/2, 0.2, f'r = {r}', ha='center', va='bottom', color=stroke)
+                        ax.set_xlim(-r-1, r+1)
+                        ax.set_ylim(-r-1, r+1)
+                        ax.set_aspect('equal')
                     elif 'polygon' in question_lower:
                         # default to regular hexagon
                         n = 6
@@ -863,7 +703,7 @@ def create_smart_visualization(question: str, subject: str):
             ax.legend()
 
         buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=200, facecolor='white', bbox_inches='tight')  # higher DPI and tight bbox
+        plt.savefig(buf, format='png', dpi=180, facecolor='white')
         buf.seek(0)
         plt.close(fig)
         return buf
