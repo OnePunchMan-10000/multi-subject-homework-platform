@@ -272,7 +272,7 @@ FORMATTING REQUIREMENTS:
 2. Follow each step with explanatory text on the NEXT LINE
 3. Then show relevant syntax/code snippet on SEPARATE LINES (not horizontal)
 4. Add blank lines between steps for readability
-5. Include time and space complexity where relevant
+5. ALWAYS include "**Time Complexity:**" and "**Space Complexity:**" sections before the final code
 6. End with "**Complete Code**" followed by ONE consolidated, executable code block fenced with language (e.g., ```python)
 
 EXAMPLE FORMAT:
@@ -290,6 +290,9 @@ mid = (left + right) // 2
 if array[mid] == target:
     return mid
 ```
+
+**Time Complexity:** O(log n) where n is the size of the array
+**Space Complexity:** O(1) constant space usage
 
 **Complete Code**
 ```python
