@@ -1041,9 +1041,7 @@ def main():
         
         selected_subject = selected_subject_display.split(' ', 1)[1]
         
-        # Show example
-        st.markdown("### 💡 Example")
-        st.info(f"**{selected_subject}**: {SUBJECTS[selected_subject]['example']}")
+        # Example section removed per user request
     
     with col2:
         st.markdown("### ❓ Your Question")
