@@ -199,14 +199,29 @@ Provide detailed explanations but keep the formatting clean and readable.""",
     },
     "Physics": {
         "icon": "⚡",
-        "prompt": """You are a physics expert. Provide clear solutions with:
-- Step-by-step approach using "**Step X:**" format
-- Clear physics principles and formulas
-- Units included in all calculations
-- Simple mathematical notation
-- Real-world context when helpful
-- Add blank lines between steps for readability""",
-        "example": "A 2kg object falls from 10m height. Find velocity just before impact."
+        "prompt": """You are a senior physics tutor. Produce highly readable, plain‑text solutions.
+
+FORMATTING REQUIREMENTS (STRICT):
+1. Use "**Step 1:**", "**Step 2:**" etc. for each step (short title on one line)
+2. On the next line, briefly explain the idea (why we do this step)
+3. On the next line, put the equation with quantities and units in simple text (no LaTeX, no \\(...\\) or symbols). Examples:
+   - v = u + a*t
+   - F = m*a
+   - v = sqrt(2*g*h)
+4. Substitute numbers on a separate line, with SI units:
+   - v = sqrt(2*9.8 m/s^2*10 m)
+5. Compute and show the numeric result on its own line with the unit:
+   - v = 14.0 m/s
+6. Include a short "Assumptions" line when needed (e.g., ignore air resistance).
+7. End with "**Final Answer:**" on its own line with the value and the unit.
+
+STYLE:
+- Plain text only (no LaTeX, no Greek letters, write "mu" not μ)
+- Keep numbers with 2–3 significant figures unless the question demands otherwise
+- Always show units in every formula line and result line
+- Add blank lines between steps for readability
+""",
+        "example": "A 2 kg object falls from 10 m height. Find velocity just before impact."
     },
     "Chemistry": {
         "icon": "🧪",
@@ -787,8 +802,13 @@ def get_api_response(question, subject):
         "Content-Type": "application/json"
     }
     
+    # Pick a stronger model for Physics only; keep others unchanged
+    model = "openai/gpt-4o-mini"
+    if subject == "Physics":
+        model = "openai/gpt-4o"
+
     data = {
-        "model": "openai/gpt-4o-mini",
+        "model": model,
         "messages": [
             {"role": "system", "content": SUBJECTS[subject]['prompt']},
             {"role": "user", "content": question}
