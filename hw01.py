@@ -306,7 +306,7 @@ def create_smart_visualization(question: str, subject: str):
 
     try:
         plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(12, 8))  # larger figure for better visibility
         fig.patch.set_facecolor('white')
 
         if subject == "Mathematics":
@@ -465,12 +465,12 @@ def create_smart_visualization(question: str, subject: str):
                         r'draw.*circle.*?(\d+(?:\.\d+)?)',
                     ]
                     
-                    # Extract radius
-                    radius = 3.0  # default
+                    # Extract radius with larger default for visibility
+                    radius = 5.0  # increased default for better visibility
                     for pattern in patterns:
                         match = re.search(pattern, question, flags=re.IGNORECASE)
                         if match:
-                            radius = float(match.group(1))
+                            radius = max(float(match.group(1)), 2.0)  # minimum radius of 2
                             break
                     
                     # Extract center if specified
@@ -482,30 +482,30 @@ def create_smart_visualization(question: str, subject: str):
                     # Set center coordinates
                     center = points.get(center_name, (0.0, 0.0))
                     
-                    # Create circle with clean styling
-                    circle = plt.Circle(center, radius, fill=False, edgecolor='black', linewidth=2.5)
+                    # Create circle with enhanced visibility
+                    circle = plt.Circle(center, radius, fill=False, edgecolor='black', linewidth=4)  # thicker line
                     ax.add_patch(circle)
                     
-                    # Mark center with clean dot
-                    ax.plot(center[0], center[1], 'ko', markersize=6, zorder=10)
+                    # Mark center with larger, more visible dot
+                    ax.plot(center[0], center[1], 'ko', markersize=10, zorder=10)
                     
                     # Position labels in organized quadrants to avoid overlap
                     offset = radius * 0.15
                     
                     # Center label - positioned above center
                     ax.text(center[0], center[1] + offset, center_name, 
-                           ha='center', va='bottom', fontweight='bold', fontsize=11)
+                           ha='center', va='bottom', fontweight='bold', fontsize=14)  # larger font
                     
                     # Radius line and label - positioned at 0 degrees (right)
                     radius_end = (center[0] + radius, center[1])
                     ax.plot([center[0], radius_end[0]], [center[1], radius_end[1]], 
-                           'k--', linewidth=1.5, alpha=0.8)
+                           'k--', linewidth=3, alpha=0.9)  # thicker, more visible radius line
                     
                     # Radius label - positioned at midpoint, slightly above line
                     mid_x = center[0] + radius * 0.5
                     ax.text(mid_x, center[1] + offset*0.8, f'r = {radius}', 
-                           ha='center', va='bottom', fontsize=10, 
-                           bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.8))
+                           ha='center', va='bottom', fontsize=12, fontweight='bold',
+                           bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9))
                     
                     # Additional information positioned strategically
                     info_y_start = center[1] - radius - offset * 4
@@ -520,7 +520,7 @@ def create_smart_visualization(question: str, subject: str):
                         title_text = 'Circumscribed Circle'
                     
                     ax.text(center[0], center[1] + radius + offset * 3, title_text,
-                           ha='center', va='bottom', fontweight='bold', fontsize=12)
+                           ha='center', va='bottom', fontweight='bold', fontsize=16)  # larger title
                     
                     # Mathematical properties below circle
                     circumference = 2 * np.pi * radius
@@ -663,8 +663,8 @@ def create_smart_visualization(question: str, subject: str):
                         def create_standalone_circle():
                             """Clean standalone circle for shape demonstrations"""
                             
-                            # Extract radius
-                            r = 3.0
+                            # Extract radius with better visibility
+                            r = 5.0  # larger default for visibility
                             patterns = [
                                 r'radius\s*(?:=|of|is)?\s*(\d+(?:\.\d+)?)',
                                 r'r\s*=\s*(\d+(?:\.\d+)?)',
@@ -674,19 +674,19 @@ def create_smart_visualization(question: str, subject: str):
                             for pattern in patterns:
                                 match = re.search(pattern, question, flags=re.IGNORECASE)
                                 if match:
-                                    r = float(match.group(1))
+                                    r = max(float(match.group(1)), 2.0)  # minimum radius of 2
                                     break
                             
                             # Special case for unit circle
                             if 'unit circle' in question_lower:
                                 r = 1.0
                             
-                            # Create clean circle
-                            circle = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=2.5)
+                            # Create highly visible circle
+                            circle = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=4)  # thicker
                             ax.add_patch(circle)
                             
-                            # Clean center point
-                            ax.plot(0, 0, 'ko', markersize=6, zorder=10)
+                            # Larger, more visible center point
+                            ax.plot(0, 0, 'ko', markersize=10, zorder=10)
                             
                             # Strategic text positioning to avoid overlap
                             offset = r * 0.12
@@ -695,8 +695,8 @@ def create_smart_visualization(question: str, subject: str):
                             ax.text(0, offset*1.2, 'O', ha='center', va='bottom', 
                                    fontweight='bold', fontsize=11, color=stroke)
                             
-                            # Radius line at 0 degrees
-                            ax.plot([0, r], [0, 0], 'k--', linewidth=1.5, alpha=0.8)
+                            # Radius line at 0 degrees - more visible
+                            ax.plot([0, r], [0, 0], 'k--', linewidth=3, alpha=0.9)
                             
                             # Radius label with background box
                             ax.text(r*0.5, offset*0.8, f'r = {r}', ha='center', va='bottom',
@@ -858,7 +858,7 @@ def create_smart_visualization(question: str, subject: str):
             ax.legend()
 
         buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=180, facecolor='white')
+        plt.savefig(buf, format='png', dpi=200, facecolor='white', bbox_inches='tight')  # higher DPI and tight bbox
         buf.seek(0)
         plt.close(fig)
         return buf
