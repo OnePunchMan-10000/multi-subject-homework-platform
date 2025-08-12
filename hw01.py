@@ -908,6 +908,9 @@ def format_response(response_text):
     code_block_open = False
     code_lines = []
     code_lang = None
+    # Collect final answer following lines and render inside the box
+    final_answer_pending = False
+    final_answer_lines = []
 
     lines = response_text.strip().split('\n')
     for line in lines:
@@ -942,7 +945,7 @@ def format_response(response_text):
             continue
 
         # Skip stray closing tags that may appear in the model text
-        if re.match(r'^</(div|span|p)>$', line):
+        if re.match(r'^\s*</(div|span|p)>\s*$', line):
             continue
 
         # One-line step headers with next-line explanation in monospace box
@@ -954,10 +957,16 @@ def format_response(response_text):
             # by inserting an opener token that the next non-empty, non-step line will close.
             formatted_content.append('<!--STEP_CODE_NEXT-->')
         
-        # Final answer
-        elif 'Final Answer' in line:
-            clean_line = re.sub(r'\*\*', '', line)
-            formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n')
+        # Final answer: capture the following content and render in a single box
+        elif re.search(r'final\s*answer', line, flags=re.IGNORECASE):
+            if final_answer_pending and final_answer_lines:
+                # flush previous just in case
+                formatted_content.append(
+                    f'<div class="final-answer">Final Answer: {format_powers(" ".join(final_answer_lines))}</div>\n'
+                )
+                final_answer_lines = []
+            final_answer_pending = True
+            continue
         
         # Check for any line containing fractions - convert ALL to vertical display
         elif '/' in line and ('(' in line or any(char in line for char in ['x', 'y', 'dx', 'dy', 'du', 'dv'])):
@@ -970,6 +979,22 @@ def format_response(response_text):
             formatted_line = re.sub(r'\(([^)]+)\)\s*/\s*([^/\s]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
             formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
         
+        # If we are collecting final answer content
+        elif final_answer_pending:
+            # Stop collection on empty separator between sections
+            if line.startswith('**Step') or line.startswith('### Step') or line.startswith('```'):
+                formatted_content.append(
+                    f'<div class="final-answer">Final Answer: {format_powers(" ".join(final_answer_lines))}</div>\n'
+                )
+                final_answer_lines = []
+                final_answer_pending = False
+                # reprocess this control line in next loop
+                # push back by modifying line variable, but simpler: treat as step on next iteration by appending a token
+                formatted_content.append('<!--REPLAY_LINE-->')
+                continue
+            final_answer_lines.append(line)
+            continue
+
         # If we previously saw a step header, wrap this first following line in step-code box
         elif formatted_content and formatted_content[-1] == '<!--STEP_CODE_NEXT-->':
             formatted_content.pop()  # remove token
@@ -983,7 +1008,15 @@ def format_response(response_text):
         else:
             formatted_content.append(f"{format_powers(line)}\n")
     
-    return ''.join(formatted_content)
+    # Flush pending final answer if any
+    if final_answer_pending:
+        formatted_content.append(
+            f'<div class="final-answer">Final Answer: {format_powers(" ".join(final_answer_lines))}</div>\n'
+        )
+
+    # Remove any replay tokens accidentally left
+    formatted = [seg for seg in formatted_content if seg != '<!--REPLAY_LINE-->']
+    return ''.join(formatted)
 
 def main():
     # Header
