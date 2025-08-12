@@ -115,14 +115,14 @@ st.markdown("""
         background-color: rgba(255,255,255,0.06);
         border: 1px solid rgba(255,255,255,0.15);
         border-radius: 8px;
-        padding: 1rem 1rem;
+        padding: 1.25rem 1.25rem;
         margin: 1rem 0;
         overflow-x: auto;
     }
     .code-block pre, .code-block code {
         font-family: 'Courier New', monospace;
         color: #e0e0e0;
-        font-size: 0.95em;
+        font-size: 1.05em;
         line-height: 1.5;
         white-space: pre;
     }
@@ -130,6 +130,17 @@ st.markdown("""
         font-size: 0.85em;
         color: #bbb;
         margin-bottom: 0.25rem;
+    }
+    /* One-line step header with next-line code-like explanation */
+    .step-code {
+        background-color: rgba(255,255,255,0.04);
+        border: 1px dashed rgba(76,175,80,0.6);
+        border-radius: 6px;
+        padding: 0.6rem 0.8rem;
+        margin: 0.4rem 0 0.8rem 0;
+        font-family: 'Courier New', monospace;
+        color: #d8f0dc;
+        font-size: 0.98em;
     }
     
     /* Input styling */
@@ -865,12 +876,14 @@ def format_response(response_text):
         if re.match(r'^</(div|span|p)>$', line):
             continue
 
-        # Step headers
+        # One-line step headers with next-line explanation in monospace box
         if re.match(r'^\*\*Step \d+:', line) or re.match(r'^###\s*Step \d+:', line):
             step_text = re.sub(r'\*\*|###', '', line).strip()
-            formatted_content.append(f'<h3 style="color:#4CAF50;margin:1rem 0 0.5rem 0;">{step_text}</h3>')
-            # extra space after each step header for readability
-            formatted_content.append('<div style="height:6px"></div>')
+            # Keep step title on one line
+            formatted_content.append(f'<div style="color:#4CAF50;font-weight:700;margin:0.6rem 0 0.2rem 0;">{step_text}</div>')
+            # The explanation for this step is expected on the next line; we wrap whatever comes next
+            # by inserting an opener token that the next non-empty, non-step line will close.
+            formatted_content.append('<!--STEP_CODE_NEXT-->')
         
         # Final answer
         elif 'Final Answer' in line:
@@ -888,6 +901,11 @@ def format_response(response_text):
             formatted_line = re.sub(r'\(([^)]+)\)\s*/\s*([^/\s]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
             formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
         
+        # If we previously saw a step header, wrap this first following line in step-code box
+        elif formatted_content and formatted_content[-1] == '<!--STEP_CODE_NEXT-->':
+            formatted_content.pop()  # remove token
+            formatted_content.append(f'<div class="step-code">{html.escape(line)}</div>')
+
         # Mathematical expressions with equations (no fractions)
         elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '^', '(', ')'])):
             formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n')
