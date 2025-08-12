@@ -465,12 +465,14 @@ def create_smart_visualization(question: str, subject: str):
                         r'draw.*circle.*?(\d+(?:\.\d+)?)',
                     ]
                     
-                    # Extract radius with larger default for visibility
-                    radius = 5.0  # increased default for better visibility
+                    # Extract radius and scale for full canvas utilization
+                    original_radius = 5.0  # store original value for labels
+                    radius = 20.0  # much larger default to fill canvas
                     for pattern in patterns:
                         match = re.search(pattern, question, flags=re.IGNORECASE)
                         if match:
-                            radius = max(float(match.group(1)), 2.0)  # minimum radius of 2
+                            original_radius = float(match.group(1))
+                            radius = max(original_radius * 4, 10.0)  # scale up user input, minimum 10
                             break
                     
                     # Extract center if specified
@@ -489,8 +491,8 @@ def create_smart_visualization(question: str, subject: str):
                     # Mark center with larger, more visible dot
                     ax.plot(center[0], center[1], 'ko', markersize=10, zorder=10)
                     
-                    # Position labels in organized quadrants to avoid overlap
-                    offset = radius * 0.15
+                    # Position labels proportional to circle size
+                    offset = max(radius * 0.08, 1.0)  # smaller relative offset for large circles
                     
                     # Center label - positioned above center
                     ax.text(center[0], center[1] + offset, center_name, 
@@ -503,7 +505,7 @@ def create_smart_visualization(question: str, subject: str):
                     
                     # Radius label - positioned at midpoint, slightly above line
                     mid_x = center[0] + radius * 0.5
-                    ax.text(mid_x, center[1] + offset*0.8, f'r = {radius}', 
+                    ax.text(mid_x, center[1] + offset*0.8, f'r = {original_radius}', 
                            ha='center', va='bottom', fontsize=12, fontweight='bold',
                            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9))
                     
@@ -511,7 +513,7 @@ def create_smart_visualization(question: str, subject: str):
                     info_y_start = center[1] - radius - offset * 4
                     
                     # Title above circle
-                    title_text = f'Circle (radius = {radius})'
+                    title_text = f'Circle (radius = {original_radius})'
                     if 'unit circle' in question_lower:
                         title_text = 'Unit Circle'
                     elif 'inscribed' in question_lower:
@@ -522,9 +524,9 @@ def create_smart_visualization(question: str, subject: str):
                     ax.text(center[0], center[1] + radius + offset * 3, title_text,
                            ha='center', va='bottom', fontweight='bold', fontsize=16)  # larger title
                     
-                    # Mathematical properties below circle
-                    circumference = 2 * np.pi * radius
-                    area = np.pi * radius**2
+                    # Mathematical properties below circle using original radius
+                    circumference = 2 * np.pi * original_radius
+                    area = np.pi * original_radius**2
                     
                     # Only show measurements if not a tangent construction
                     if 'tangent' not in question_lower:
@@ -537,12 +539,12 @@ def create_smart_visualization(question: str, subject: str):
                     if 'diameter' in question_lower:
                         ax.plot([center[0] - radius, center[0] + radius], [center[1], center[1]], 
                                'k-', linewidth=2, alpha=0.7)
-                        ax.text(center[0], center[1] - offset*2, f'd = {2*radius}',
+                        ax.text(center[0], center[1] - offset*2, f'd = {2*original_radius}',
                                ha='center', va='top', fontsize=10,
                                bbox=dict(boxstyle='round,pad=0.2', facecolor='lightblue', alpha=0.8))
                     
-                    # Set clean bounds with adequate padding
-                    padding = max(radius * 0.6, 1.0)
+                    # Optimize canvas usage - minimal padding for maximum circle size
+                    padding = radius * 0.2  # much smaller padding to utilize more space
                     ax.set_xlim(center[0] - radius - padding, center[0] + radius + padding)
                     ax.set_ylim(center[1] - radius - padding, center[1] + radius + padding)
                     ax.set_aspect('equal')
@@ -663,8 +665,9 @@ def create_smart_visualization(question: str, subject: str):
                         def create_standalone_circle():
                             """Clean standalone circle for shape demonstrations"""
                             
-                            # Extract radius with better visibility
-                            r = 5.0  # larger default for visibility
+                            # Extract radius and scale for proper canvas usage
+                            original_r = 5.0  # store original for labels
+                            r = 20.0  # much larger default to fill canvas
                             patterns = [
                                 r'radius\s*(?:=|of|is)?\s*(\d+(?:\.\d+)?)',
                                 r'r\s*=\s*(\d+(?:\.\d+)?)',
@@ -674,12 +677,14 @@ def create_smart_visualization(question: str, subject: str):
                             for pattern in patterns:
                                 match = re.search(pattern, question, flags=re.IGNORECASE)
                                 if match:
-                                    r = max(float(match.group(1)), 2.0)  # minimum radius of 2
+                                    original_r = float(match.group(1))
+                                    r = max(original_r * 4, 10.0)  # scale up, minimum 10
                                     break
                             
-                            # Special case for unit circle
+                            # Special case for unit circle - but scale for visibility
                             if 'unit circle' in question_lower:
-                                r = 1.0
+                                original_r = 1.0
+                                r = 15.0  # scaled unit circle for better visibility
                             
                             # Create highly visible circle
                             circle = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=4)  # thicker
@@ -688,8 +693,8 @@ def create_smart_visualization(question: str, subject: str):
                             # Larger, more visible center point
                             ax.plot(0, 0, 'ko', markersize=10, zorder=10)
                             
-                            # Strategic text positioning to avoid overlap
-                            offset = r * 0.12
+                            # Strategic text positioning proportional to circle size
+                            offset = max(r * 0.08, 1.0)  # better scaling for large circles
                             
                             # Center label above center
                             ax.text(0, offset*1.2, 'O', ha='center', va='bottom', 
@@ -698,21 +703,21 @@ def create_smart_visualization(question: str, subject: str):
                             # Radius line at 0 degrees - more visible
                             ax.plot([0, r], [0, 0], 'k--', linewidth=3, alpha=0.9)
                             
-                            # Radius label with background box
-                            ax.text(r*0.5, offset*0.8, f'r = {r}', ha='center', va='bottom',
+                            # Radius label with background box showing original value
+                            ax.text(r*0.5, offset*0.8, f'r = {original_r}', ha='center', va='bottom',
                                    fontsize=10, color=stroke,
                                    bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.9, edgecolor='none'))
                             
                             # Title above circle
-                            title = 'Unit Circle' if 'unit' in question_lower else f'Circle (r = {r})'
+                            title = 'Unit Circle' if 'unit' in question_lower else f'Circle (r = {original_r})'
                             ax.text(0, r + offset*4, title, ha='center', va='bottom',
                                    fontweight='bold', fontsize=12, color=stroke)
                             
-                            # Mathematical info below circle
+                            # Mathematical info below circle using original radius
                             if 'tangent' not in question_lower:
                                 info_y = -r - offset*3
-                                circumference = 2 * np.pi * r
-                                area = np.pi * r**2
+                                circumference = 2 * np.pi * original_r
+                                area = np.pi * original_r**2
                                 
                                 ax.text(0, info_y, f'C = 2πr ≈ {circumference:.1f}',
                                        ha='center', va='top', fontsize=9, style='italic', color=stroke)
@@ -722,12 +727,12 @@ def create_smart_visualization(question: str, subject: str):
                             # Diameter if mentioned
                             if 'diameter' in question_lower:
                                 ax.plot([-r, r], [0, 0], color=stroke, linewidth=2, alpha=0.7)
-                                ax.text(0, -offset*1.5, f'd = {2*r}', ha='center', va='top',
+                                ax.text(0, -offset*1.5, f'd = {2*original_r}', ha='center', va='top',
                                        fontsize=10, color=stroke,
                                        bbox=dict(boxstyle='round,pad=0.2', facecolor='lightblue', alpha=0.8))
                             
-                            # Clean layout
-                            padding = max(r * 0.6, 1.0)
+                            # Optimize layout for maximum circle visibility
+                            padding = r * 0.2  # minimal padding for better space usage
                             ax.set_xlim(-r - padding, r + padding)
                             ax.set_ylim(-r - padding, r + padding)
                             ax.set_aspect('equal')
