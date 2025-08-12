@@ -802,34 +802,64 @@ def get_api_response(question, subject):
         "Content-Type": "application/json"
     }
     
-    # Pick a stronger model for Physics only; keep others unchanged
-    model = "openai/gpt-4o-mini"
+    # Choose model (Physics gets a stronger one) and prepare request body
+    primary_model = "openai/gpt-4o-mini"
     if subject == "Physics":
-        model = "openai/gpt-4o"
+        primary_model = "openai/gpt-4o"
 
-    data = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": SUBJECTS[subject]['prompt']},
-            {"role": "user", "content": question}
-        ],
-        "temperature": 0.1,
-        "max_tokens": 2000
-    }
+    fallback_model = "openai/gpt-4o-mini"  # previously working model
+
+    def _make_body(model_name: str):
+        return {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": SUBJECTS[subject]['prompt']},
+                {"role": "user", "content": question}
+            ],
+            "temperature": 0.1,
+            "max_tokens": 2000
+        }
     
     try:
+        # First try with the primary model
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
-            json=data,
+            json=_make_body(primary_model),
             timeout=30
         )
-        
+
         if response.status_code == 200:
             return response.json()['choices'][0]['message']['content']
-        else:
-            st.error(f"API Error: {response.status_code}")
-            return None
+
+        # If primary fails, show details and try a safe fallback
+        try:
+            err_text = response.text[:500]
+        except Exception:
+            err_text = ""
+        st.warning(f"Primary model failed ({primary_model}) - {response.status_code}. Retrying with fallback...")
+        if err_text:
+            st.caption(err_text)
+
+        response_fb = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=_make_body(fallback_model),
+            timeout=30
+        )
+
+        if response_fb.status_code == 200:
+            return response_fb.json()['choices'][0]['message']['content']
+
+        # Give a readable error if fallback also fails
+        try:
+            fb_err = response_fb.text[:500]
+        except Exception:
+            fb_err = ""
+        st.error(f"API Error: {response_fb.status_code}. Failed on both {primary_model} and fallback {fallback_model}.")
+        if fb_err:
+            st.caption(fb_err)
+        return None
             
     except requests.exceptions.RequestException as e:
         st.error(f"Network Error: {str(e)}")
