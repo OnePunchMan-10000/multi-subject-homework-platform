@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from io import BytesIO
 import re
+import html
 
 # Page configuration
 st.set_page_config(
@@ -108,6 +109,27 @@ st.markdown("""
         text-align: center;
         font-weight: bold;
         font-size: 1.2em;
+    }
+    /* Code block styling for Computer Science output */
+    .code-block {
+        background-color: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 8px;
+        padding: 1rem 1rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+    }
+    .code-block pre, .code-block code {
+        font-family: 'Courier New', monospace;
+        color: #e0e0e0;
+        font-size: 0.95em;
+        line-height: 1.5;
+        white-space: pre;
+    }
+    .code-header {
+        font-size: 0.85em;
+        color: #bbb;
+        margin-bottom: 0.25rem;
     }
     
     /* Input styling */
@@ -232,13 +254,23 @@ Provide detailed explanations but keep the formatting clean and readable.""",
     },
     "Computer Science": {
         "icon": "💻",
-        "prompt": """You are a computer science expert. Provide solutions with:
-- Clear algorithmic steps
-- Well-commented code examples
-- Complexity analysis when relevant
-- Best practices and optimization tips
-- Practical implementation details
-- Add blank lines between sections for readability""",
+        "prompt": """You are a computer science expert. Provide solutions using the EXACT format below.
+
+FORMATTING REQUIREMENTS:
+1. Use "**Step 1:**", "**Step 2:**" etc. for each step (short, crisp lines)
+2. For any math-like expressions, keep them as plain text (no LaTeX)
+3. Include time and space complexity where relevant
+4. Keep bullets short and focused; add blank lines between steps for readability
+5. End with "**Complete Code**" followed by ONE consolidated, executable code block fenced with language (e.g., ```python)
+6. Do not put any extra commentary after the final code block
+
+EXAMPLE OF THE FINAL SECTION:
+**Complete Code**
+```python
+# full, runnable program here
+```
+
+Keep explanations clean and readable, mirroring the math section’s clarity.""",
         "example": "Implement binary search algorithm in Python."
     }
 }
@@ -778,7 +810,12 @@ def format_fraction(numerator, denominator):
     </div>"""
 
 def format_response(response_text):
-    """Improved formatting with consistent vertical fractions and tighter spacing"""
+    """Improved formatting with consistent vertical fractions and tighter spacing.
+
+    Also formats Computer Science responses:
+    - Preserves fenced code blocks in a styled container
+    - Keeps non-code steps readable like math section
+    """
     if not response_text:
         return ""
     
@@ -786,16 +823,44 @@ def format_response(response_text):
     response_text = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', response_text)
     response_text = re.sub(r'\\[a-zA-Z]+\{?([^}]*)\}?', r'\1', response_text)
     
-    lines = response_text.strip().split('\n')
+    # Handle fenced code blocks (```lang ... ```)
     formatted_content = []
-    
+    code_block_open = False
+    code_lines = []
+    code_lang = None
+
+    lines = response_text.strip().split('\n')
     for line in lines:
         line = line.strip()
         if not line:
             # Add minimal spacing between sections
-            formatted_content.append("<br>")
+            if not code_block_open:
+                formatted_content.append("<br>")
             continue
         
+        # Detect start/end of fenced code blocks
+        if line.startswith('```'):
+            fence = line.strip()
+            if not code_block_open:
+                # opening
+                code_block_open = True
+                code_lines = []
+                code_lang = fence.strip('`').strip() or 'text'
+            else:
+                # closing -> render and reset
+                escaped = html.escape("\n".join(code_lines))
+                formatted_content.append(
+                    f'<div class="code-block"><div class="code-header">{code_lang}</div><pre><code>{escaped}</code></pre></div>'
+                )
+                code_block_open = False
+                code_lines = []
+                code_lang = None
+            continue
+
+        if code_block_open:
+            code_lines.append(line)
+            continue
+
         # Skip stray closing tags that may appear in the model text
         if re.match(r'^</(div|span|p)>$', line):
             continue
