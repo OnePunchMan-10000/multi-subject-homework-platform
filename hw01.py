@@ -452,101 +452,114 @@ def create_smart_visualization(question: str, subject: str):
                         direction = perp(base) if kind == 'perpendicular' else base
                         draw_infinite_line_through(points[p], direction, linestyle='--', color='#4CAF50' if kind=='perpendicular' else '#90CAF9', linewidth=2, label=f'{kind.title()} to {x}{y} through {p}')
 
-                # Enhanced Circle detection and generation - handles all circle types
-                circle_patterns = [
-                    # Circle with center and radius
-                    r'circle\s+with\s+center\s+([A-Z])\s*(?:and)?\s*radius\s*(\d+(?:\.\d+)?)\s*(?:cm|units?)?',
-                    # Circle radius r cm
-                    r'circle.*?radius\s*(?:of\s*)?(\d+(?:\.\d+)?)\s*(?:cm|units?)?',
-                    # Circle of radius r
-                    r'circle\s+of\s+radius\s*(\d+(?:\.\d+)?)\s*(?:cm|units?)?',
-                    # Just "circle" with number nearby
-                    r'circle.*?(\d+(?:\.\d+)?)\s*(?:cm|units?)',
-                    # Draw a circle
-                    r'draw.*?circle.*?(\d+(?:\.\d+)?)',
-                    # Circle centered at
-                    r'circle\s+centered\s+at\s+([A-Z])',
-                    # Generic circle mentions
-                    r'(?:the\s+)?circle'
-                ]
-                
-                circle_detected = False
-                center_name = 'O'
-                radius = 3.0
-                center_point = (0.0, 0.0)
-                
-                for pattern in circle_patterns:
-                    match = re.search(pattern, question, flags=re.IGNORECASE)
-                    if match:
-                        circle_detected = True
-                        groups = match.groups()
-                        if len(groups) >= 2:  # Center and radius
-                            center_name = groups[0].upper() if groups[0] else 'O'
-                            radius = float(groups[1]) if groups[1] else 3.0
-                        elif len(groups) == 1:
-                            # Check if it's a letter (center) or number (radius)
-                            if groups[0] and groups[0].isalpha():
-                                center_name = groups[0].upper()
-                            elif groups[0] and groups[0].replace('.', '').isdigit():
-                                radius = float(groups[0])
-                        break
-                
-                # Additional radius extraction if not found
-                if circle_detected and radius == 3.0:
-                    radius_match = re.search(r'(?:radius|r)\s*[=:]?\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
-                    if radius_match:
-                        radius = float(radius_match.group(1))
-                
-                # Set center point
-                if center_name in points:
-                    center_point = points[center_name]
-                
-                if circle_detected:
-                    # Create the main circle
-                    circle = plt.Circle(center_point, radius, fill=False, edgecolor='#000000', linewidth=2)
+                # COMPLETELY REDESIGNED Circle Generation System
+                def create_clean_circle():
+                    """Create a clean, professional circle diagram with no overlapping text"""
+                    
+                    # Smart pattern detection for circles
+                    patterns = [
+                        r'circle.*?radius\s*(?:=|of|is)?\s*(\d+(?:\.\d+)?)',
+                        r'radius\s*(?:=|of|is)?\s*(\d+(?:\.\d+)?)',
+                        r'r\s*=\s*(\d+(?:\.\d+)?)',
+                        r'(\d+(?:\.\d+)?)\s*(?:cm|units?|m)\s*radius',
+                        r'draw.*circle.*?(\d+(?:\.\d+)?)',
+                    ]
+                    
+                    # Extract radius
+                    radius = 3.0  # default
+                    for pattern in patterns:
+                        match = re.search(pattern, question, flags=re.IGNORECASE)
+                        if match:
+                            radius = float(match.group(1))
+                            break
+                    
+                    # Extract center if specified
+                    center_match = re.search(r'center\s+([A-Z])|centered\s+at\s+([A-Z])', question, flags=re.IGNORECASE)
+                    center_name = 'O'
+                    if center_match:
+                        center_name = (center_match.group(1) or center_match.group(2)).upper()
+                    
+                    # Set center coordinates
+                    center = points.get(center_name, (0.0, 0.0))
+                    
+                    # Create circle with clean styling
+                    circle = plt.Circle(center, radius, fill=False, edgecolor='black', linewidth=2.5)
                     ax.add_patch(circle)
                     
-                    # Mark center point
-                    ax.scatter([center_point[0]], [center_point[1]], color='#000000', s=30, zorder=5)
-                    ax.text(center_point[0], center_point[1]+0.3, center_name, color='#000000', ha='center', fontweight='bold')
+                    # Mark center with clean dot
+                    ax.plot(center[0], center[1], 'ko', markersize=6, zorder=10)
                     
-                    # Add radius line (unless it's a tangent construction)
-                    if 'tangent' not in question_lower and 'tangents' not in question_lower:
-                        ax.plot([center_point[0], center_point[0]+radius], [center_point[1], center_point[1]], 
-                               color='#000000', linestyle='--', alpha=0.7, linewidth=1)
-                        ax.text(center_point[0]+radius/2, center_point[1]+0.2, f'r = {radius}', 
-                               color='#000000', ha='center', fontsize=10)
+                    # Position labels in organized quadrants to avoid overlap
+                    offset = radius * 0.15
                     
-                    # Add diameter if mentioned
-                    if 'diameter' in question_lower:
-                        ax.plot([center_point[0]-radius, center_point[0]+radius], [center_point[1], center_point[1]], 
-                               color='#000000', linewidth=2)
-                        ax.text(center_point[0], center_point[1]-radius-0.3, f'diameter = {2*radius}', 
-                               color='#000000', ha='center', fontweight='bold')
+                    # Center label - positioned above center
+                    ax.text(center[0], center[1] + offset, center_name, 
+                           ha='center', va='bottom', fontweight='bold', fontsize=11)
                     
-                    # Add circumference annotation
+                    # Radius line and label - positioned at 0 degrees (right)
+                    radius_end = (center[0] + radius, center[1])
+                    ax.plot([center[0], radius_end[0]], [center[1], radius_end[1]], 
+                           'k--', linewidth=1.5, alpha=0.8)
+                    
+                    # Radius label - positioned at midpoint, slightly above line
+                    mid_x = center[0] + radius * 0.5
+                    ax.text(mid_x, center[1] + offset*0.8, f'r = {radius}', 
+                           ha='center', va='bottom', fontsize=10, 
+                           bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.8))
+                    
+                    # Additional information positioned strategically
+                    info_y_start = center[1] - radius - offset * 4
+                    
+                    # Title above circle
+                    title_text = f'Circle (radius = {radius})'
+                    if 'unit circle' in question_lower:
+                        title_text = 'Unit Circle'
+                    elif 'inscribed' in question_lower:
+                        title_text = 'Inscribed Circle'
+                    elif 'circumscribed' in question_lower:
+                        title_text = 'Circumscribed Circle'
+                    
+                    ax.text(center[0], center[1] + radius + offset * 3, title_text,
+                           ha='center', va='bottom', fontweight='bold', fontsize=12)
+                    
+                    # Mathematical properties below circle
                     circumference = 2 * np.pi * radius
-                    ax.text(center_point[0], center_point[1]-radius-0.6, f'C = 2πr = {circumference:.2f}', 
-                           color='#000000', ha='center', fontsize=9, style='italic')
-                    
-                    # Add area annotation
                     area = np.pi * radius**2
-                    ax.text(center_point[0], center_point[1]-radius-0.9, f'A = πr² = {area:.2f}', 
-                           color='#000000', ha='center', fontsize=9, style='italic')
                     
-                    # Handle specific circle constructions
-                    if 'inscribed' in question_lower or 'incircle' in question_lower:
-                        ax.text(center_point[0], center_point[1]+radius+0.5, 'Inscribed Circle', 
-                               color='#000000', ha='center', fontweight='bold')
-                    elif 'circumscribed' in question_lower or 'circumcircle' in question_lower:
-                        ax.text(center_point[0], center_point[1]+radius+0.5, 'Circumscribed Circle', 
-                               color='#000000', ha='center', fontweight='bold')
+                    # Only show measurements if not a tangent construction
+                    if 'tangent' not in question_lower:
+                        ax.text(center[0], info_y_start, f'Circumference = 2πr ≈ {circumference:.1f}',
+                               ha='center', va='top', fontsize=9, style='italic')
+                        ax.text(center[0], info_y_start - offset*2, f'Area = πr² ≈ {area:.1f}',
+                               ha='center', va='top', fontsize=9, style='italic')
                     
-                    # Set proper bounds for circle
-                    padding = radius * 0.4
-                    ax.set_xlim(center_point[0] - radius - padding, center_point[0] + radius + padding)
-                    ax.set_ylim(center_point[1] - radius - padding, center_point[1] + radius + padding)
+                    # Diameter line if mentioned
+                    if 'diameter' in question_lower:
+                        ax.plot([center[0] - radius, center[0] + radius], [center[1], center[1]], 
+                               'k-', linewidth=2, alpha=0.7)
+                        ax.text(center[0], center[1] - offset*2, f'd = {2*radius}',
+                               ha='center', va='top', fontsize=10,
+                               bbox=dict(boxstyle='round,pad=0.2', facecolor='lightblue', alpha=0.8))
+                    
+                    # Set clean bounds with adequate padding
+                    padding = max(radius * 0.6, 1.0)
+                    ax.set_xlim(center[0] - radius - padding, center[0] + radius + padding)
+                    ax.set_ylim(center[1] - radius - padding, center[1] + radius + padding)
                     ax.set_aspect('equal')
+                    
+                    # Clean background
+                    ax.set_facecolor('white')
+                    ax.grid(False)
+                    ax.set_xticks([])
+                    ax.set_yticks([])
+                    
+                    # Add subtle border
+                    for spine in ax.spines.values():
+                        spine.set_visible(False)
+                
+                # Detect if we need a circle
+                if any(term in question_lower for term in ['circle', 'radius', 'circumference', 'diameter']):
+                    create_clean_circle()
 
                 # Improved pair of tangents to a circle with given angle between them
                 tan_match = re.search(r'tangents?\s+to\s+a?\s*circle.*?(?:inclined.*?at|angle.*?of)\s*(\d+(?:\.\d+)?)\s*degrees?', question, flags=re.IGNORECASE)
@@ -646,79 +659,94 @@ def create_smart_visualization(question: str, subject: str):
                         ax.set_aspect('equal')
                         ax.set_title('Semicircle')
                     elif 'circle' in question_lower:
-                        # Enhanced circle generation with multiple detection patterns
-                        r = 3.0  # default radius
-                        center_name = 'O'
+                        # Use the same clean circle generation as above
+                        def create_standalone_circle():
+                            """Clean standalone circle for shape demonstrations"""
+                            
+                            # Extract radius
+                            r = 3.0
+                            patterns = [
+                                r'radius\s*(?:=|of|is)?\s*(\d+(?:\.\d+)?)',
+                                r'r\s*=\s*(\d+(?:\.\d+)?)',
+                                r'circle.*?(\d+(?:\.\d+)?)',
+                            ]
+                            
+                            for pattern in patterns:
+                                match = re.search(pattern, question, flags=re.IGNORECASE)
+                                if match:
+                                    r = float(match.group(1))
+                                    break
+                            
+                            # Special case for unit circle
+                            if 'unit circle' in question_lower:
+                                r = 1.0
+                            
+                            # Create clean circle
+                            circle = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=2.5)
+                            ax.add_patch(circle)
+                            
+                            # Clean center point
+                            ax.plot(0, 0, 'ko', markersize=6, zorder=10)
+                            
+                            # Strategic text positioning to avoid overlap
+                            offset = r * 0.12
+                            
+                            # Center label above center
+                            ax.text(0, offset*1.2, 'O', ha='center', va='bottom', 
+                                   fontweight='bold', fontsize=11, color=stroke)
+                            
+                            # Radius line at 0 degrees
+                            ax.plot([0, r], [0, 0], 'k--', linewidth=1.5, alpha=0.8)
+                            
+                            # Radius label with background box
+                            ax.text(r*0.5, offset*0.8, f'r = {r}', ha='center', va='bottom',
+                                   fontsize=10, color=stroke,
+                                   bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.9, edgecolor='none'))
+                            
+                            # Title above circle
+                            title = 'Unit Circle' if 'unit' in question_lower else f'Circle (r = {r})'
+                            ax.text(0, r + offset*4, title, ha='center', va='bottom',
+                                   fontweight='bold', fontsize=12, color=stroke)
+                            
+                            # Mathematical info below circle
+                            if 'tangent' not in question_lower:
+                                info_y = -r - offset*3
+                                circumference = 2 * np.pi * r
+                                area = np.pi * r**2
+                                
+                                ax.text(0, info_y, f'C = 2πr ≈ {circumference:.1f}',
+                                       ha='center', va='top', fontsize=9, style='italic', color=stroke)
+                                ax.text(0, info_y - offset*2, f'A = πr² ≈ {area:.1f}',
+                                       ha='center', va='top', fontsize=9, style='italic', color=stroke)
+                            
+                            # Diameter if mentioned
+                            if 'diameter' in question_lower:
+                                ax.plot([-r, r], [0, 0], color=stroke, linewidth=2, alpha=0.7)
+                                ax.text(0, -offset*1.5, f'd = {2*r}', ha='center', va='top',
+                                       fontsize=10, color=stroke,
+                                       bbox=dict(boxstyle='round,pad=0.2', facecolor='lightblue', alpha=0.8))
+                            
+                            # Clean layout
+                            padding = max(r * 0.6, 1.0)
+                            ax.set_xlim(-r - padding, r + padding)
+                            ax.set_ylim(-r - padding, r + padding)
+                            ax.set_aspect('equal')
+                            
+                            # Remove clutter
+                            ax.set_facecolor('white')
+                            ax.grid(False)
+                            ax.set_xticks([])
+                            ax.set_yticks([])
+                            for spine in ax.spines.values():
+                                spine.set_visible(False)
+                            
+                            # Optional coordinate grid
+                            if 'coordinate' in question_lower or 'graph' in question_lower:
+                                ax.grid(True, alpha=0.2)
+                                ax.axhline(y=0, color='gray', linewidth=0.5, alpha=0.5)
+                                ax.axvline(x=0, color='gray', linewidth=0.5, alpha=0.5)
                         
-                        # Try multiple patterns to extract radius
-                        radius_patterns = [
-                            r'radius\s*(?:of\s*|=\s*)?(\d+(?:\.\d+)?)',
-                            r'r\s*=\s*(\d+(?:\.\d+)?)',
-                            r'circle.*?(\d+(?:\.\d+)?)\s*(?:cm|units?)',
-                            r'(\d+(?:\.\d+)?)\s*(?:cm|units?).*?radius',
-                        ]
-                        
-                        for pattern in radius_patterns:
-                            radius_match = re.search(pattern, question_lower)
-                            if radius_match:
-                                r = float(radius_match.group(1))
-                                break
-                        
-                        # Check for center specification
-                        center_match = re.search(r'center\s+([A-Z])', question, flags=re.IGNORECASE)
-                        if center_match:
-                            center_name = center_match.group(1).upper()
-                        
-                        # Draw circle using matplotlib Circle for perfect accuracy
-                        circle = plt.Circle((0, 0), r, fill=False, edgecolor=stroke, linewidth=2)
-                        ax.add_patch(circle)
-                        
-                        # Mark center with enhanced styling
-                        center = (0, 0)
-                        ax.scatter([center[0]], [center[1]], color=stroke, s=40, zorder=5)
-                        ax.text(center[0], center[1]+0.3, center_name, color=stroke, ha='center', fontweight='bold', fontsize=12)
-                        
-                        # Add radius line with label
-                        ax.plot([0, r], [0, 0], color=stroke, linestyle='--', alpha=0.8, linewidth=1.5)
-                        ax.text(r/2, 0.25, f'r = {r}', color=stroke, ha='center', fontweight='bold', fontsize=10)
-                        
-                        # Add diameter if mentioned
-                        if 'diameter' in question_lower:
-                            ax.plot([-r, r], [0, 0], color=stroke, linewidth=2.5)
-                            ax.text(0, -r-0.4, f'diameter = {2*r}', color=stroke, ha='center', fontweight='bold')
-                        
-                        # Add key measurements
-                        circumference = 2 * np.pi * r
-                        area = np.pi * r**2
-                        
-                        # Position annotations below the circle
-                        ax.text(0, -r-0.7, f'Circumference = 2πr = {circumference:.2f}', 
-                               color=stroke, ha='center', fontsize=9, style='italic')
-                        ax.text(0, -r-1.0, f'Area = πr² = {area:.2f}', 
-                               color=stroke, ha='center', fontsize=9, style='italic')
-                        
-                        # Handle special circle types
-                        if 'unit circle' in question_lower:
-                            r = 1.0
-                            ax.set_title('Unit Circle (r = 1)', fontweight='bold')
-                        elif 'inscribed' in question_lower:
-                            ax.set_title('Inscribed Circle', fontweight='bold')
-                        elif 'circumscribed' in question_lower:
-                            ax.set_title('Circumscribed Circle', fontweight='bold')
-                        else:
-                            ax.set_title(f'Circle (radius = {r})', fontweight='bold')
-                        
-                        # Set equal aspect and enhanced limits
-                        ax.set_aspect('equal')
-                        padding = max(r * 0.4, 1.2)  # Ensure minimum padding
-                        ax.set_xlim(-r - padding, r + padding)
-                        ax.set_ylim(-r - padding, r + padding)
-                        
-                        # Add grid if appropriate
-                        if 'coordinate' in question_lower or 'graph' in question_lower:
-                            ax.grid(True, alpha=0.3)
-                            ax.axhline(y=0, color='k', linewidth=0.5, alpha=0.7)
-                            ax.axvline(x=0, color='k', linewidth=0.5, alpha=0.7)
+                        create_standalone_circle()
                     elif 'polygon' in question_lower:
                         # default to regular hexagon
                         n = 6
