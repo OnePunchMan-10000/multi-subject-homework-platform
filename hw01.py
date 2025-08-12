@@ -1,9 +1,4 @@
--------- Academic Assistant Pro (fixed) --------------------
-+# Fixes applied:
-+# 1. Corrected broken URL in get_api_response()
-+# 2. Added 'show graphically' to drawing intent list in should_show_diagram()
-+# 3. Added safe-guard in create_smart_visualization() when ax.patches is empty
-+# ------------------------------------------------------------------------
+
 +
 +import streamlit as st
 +import requests
@@ -900,4 +895,5 @@
 +if __name__ == "__main__":
 +    main()
 EOF
+
 
