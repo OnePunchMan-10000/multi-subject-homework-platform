@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from io import BytesIO
 import re
+import sqlite3
+import hashlib
+import os
+import base64
+from datetime import datetime
 import html
 
 # Page configuration
@@ -172,6 +177,167 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# ---------------------------
+# Auth + Storage (SQLite)
+# ---------------------------
+
+DB_PATH = "app_data.db"
+
+def init_db() -> None:
+    """Create tables if they do not exist."""
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                subject TEXT NOT NULL,
+                question TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            """
+        )
+        conn.commit()
+
+
+def _hash_password(password: str) -> str:
+    """Return salted hash using PBKDF2-HMAC-SHA256 as salt:hash (base64)."""
+    salt = os.urandom(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
+    return f"{base64.b64encode(salt).decode()}:{base64.b64encode(dk).decode()}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    try:
+        salt_b64, hash_b64 = stored.split(":", 1)
+        salt = base64.b64decode(salt_b64)
+        expected = base64.b64decode(hash_b64)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
+        return hashlib.sha256(dk).digest() == hashlib.sha256(expected).digest()
+    except Exception:
+        return False
+
+
+def register_user(username: str, password: str) -> tuple[bool, str]:
+    username = username.strip().lower()
+    if not username or not password:
+        return False, "Username and password are required."
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM users WHERE username=?", (username,))
+            if cur.fetchone():
+                return False, "Username already exists."
+            pwd_hash = _hash_password(password)
+            cur.execute(
+                "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
+                (username, pwd_hash, datetime.utcnow().isoformat()),
+            )
+            conn.commit()
+            return True, "Account created. Please log in."
+    except sqlite3.Error as e:
+        return False, f"Database error: {str(e)}"
+
+
+def authenticate_user(username: str, password: str) -> tuple[bool, int | None, str]:
+    username = username.strip().lower()
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT id, password_hash FROM users WHERE username=?", (username,))
+            row = cur.fetchone()
+            if not row:
+                return False, None, "Invalid username or password."
+            user_id, password_hash = row
+            if _verify_password(password, password_hash):
+                return True, user_id, "Login successful."
+            return False, None, "Invalid username or password."
+    except sqlite3.Error as e:
+        return False, None, f"Database error: {str(e)}"
+
+
+def save_history(user_id: int, subject: str, question: str, answer: str) -> None:
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO history (user_id, subject, question, answer, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (user_id, subject, question, answer, datetime.utcnow().isoformat()),
+            )
+            conn.commit()
+    except sqlite3.Error:
+        pass
+
+
+def load_history(user_id: int, limit: int = 20) -> list[tuple]:
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, subject, question, answer, created_at
+                FROM history
+                WHERE user_id=?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (user_id, limit),
+            )
+            return cur.fetchall() or []
+    except sqlite3.Error:
+        return []
+
+
+def auth_ui() -> bool:
+    """Render login/registration UI. Return True if authenticated."""
+    st.markdown("## 🔐 Sign in")
+    tabs = st.tabs(["Login", "Register"])
+
+    with tabs[0]:
+        lg_user = st.text_input("Username", key="login_user")
+        lg_pass = st.text_input("Password", type="password", key="login_pass")
+        if st.button("Login", key="login_btn"):
+            ok, user_id, msg = authenticate_user(lg_user, lg_pass)
+            if ok:
+                st.session_state["user_id"] = user_id
+                st.session_state["username"] = lg_user.strip().lower()
+                st.success("Logged in.")
+                st.experimental_rerun()
+            else:
+                st.error(msg)
+
+    with tabs[1]:
+        rg_user = st.text_input("New username", key="reg_user")
+        rg_pass = st.text_input("New password", type="password", key="reg_pass")
+        rg_pass2 = st.text_input("Confirm password", type="password", key="reg_pass2")
+        if st.button("Create account", key="reg_btn"):
+            if rg_pass != rg_pass2:
+                st.error("Passwords do not match.")
+            else:
+                ok, msg = register_user(rg_user, rg_pass)
+                if ok:
+                    st.success(msg)
+                else:
+                    st.error(msg)
+
+    return bool(st.session_state.get("user_id"))
 
 # Enhanced subject configurations with better prompts
 SUBJECTS = {
@@ -1018,6 +1184,7 @@ def format_response(response_text):
     return ''.join(formatted_content)
 
 def main():
+    init_db()
     # Header
     st.markdown("""
     <div class="main-header">
@@ -1026,6 +1193,11 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
+    # Auth gate
+    if not st.session_state.get("user_id"):
+        if not auth_ui():
+            return
+
     # Main interface
     col1, col2 = st.columns([1, 2])
     
@@ -1069,6 +1241,13 @@ def main():
                             {formatted_response}
                         </div>
                         """, unsafe_allow_html=True)
+                        # Save to history
+                        save_history(
+                            st.session_state["user_id"],
+                            selected_subject,
+                            question.strip(),
+                            formatted_response,
+                        )
                         
                         # Show diagram if needed
                         if should_show_diagram(question, selected_subject):
@@ -1092,6 +1271,18 @@ def main():
             else:
                 st.warning("Please enter a question.")
     
+    # History + footer
+    with st.expander("🕘 View your recent history"):
+        rows = load_history(st.session_state["user_id"], limit=25)
+        if not rows:
+            st.info("No history yet.")
+        else:
+            for _id, subj, q, a, created_at in rows:
+                st.markdown(f"**[{created_at}] {subj}**")
+                st.markdown(f"- Question: {q}")
+                st.markdown(f"<div class='solution-content' style='margin-top:0.5rem'>{a}</div>", unsafe_allow_html=True)
+                st.markdown("---")
+
     # Simple footer
     st.markdown("---")
     st.markdown("""
