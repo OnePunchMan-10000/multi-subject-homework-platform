@@ -319,7 +319,7 @@ def auth_ui() -> bool:
                 st.session_state["user_id"] = user_id
                 st.session_state["username"] = lg_user.strip().lower()
                 st.success("Logged in.")
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error(msg)
 
