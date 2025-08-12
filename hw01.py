@@ -832,14 +832,7 @@ def get_api_response(question, subject):
         if response.status_code == 200:
             return response.json()['choices'][0]['message']['content']
 
-        # If primary fails, show details and try a safe fallback
-        try:
-            err_text = response.text[:500]
-        except Exception:
-            err_text = ""
-        st.warning(f"Primary model failed ({primary_model}) - {response.status_code}. Retrying with fallback...")
-        if err_text:
-            st.caption(err_text)
+        # If primary fails, silently try a safe fallback (no noisy UI messages)
 
         response_fb = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
@@ -851,14 +844,8 @@ def get_api_response(question, subject):
         if response_fb.status_code == 200:
             return response_fb.json()['choices'][0]['message']['content']
 
-        # Give a readable error if fallback also fails
-        try:
-            fb_err = response_fb.text[:500]
-        except Exception:
-            fb_err = ""
-        st.error(f"API Error: {response_fb.status_code}. Failed on both {primary_model} and fallback {fallback_model}.")
-        if fb_err:
-            st.caption(fb_err)
+        # If fallback also fails, show a minimal, user-friendly message only
+        st.error("The service is temporarily unavailable. Please try again in a moment.")
         return None
             
     except requests.exceptions.RequestException as e:
