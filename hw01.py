@@ -54,14 +54,21 @@ st.markdown("""
         margin-bottom: 1.25rem;
     }
     .brand-title {
-        font-size: 4rem;
+        font-size: 4.4rem;
         margin: 0.25rem 0 0.15rem 0;
         line-height: 1.05;
         background: 
             radial-gradient(120% 180% at 10% 10%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0) 60%),
             conic-gradient(from 20deg at 50% 50%, #ff8af0, #6ae3ff, #1de9b6, #ffd54f, #ff8af0);
         -webkit-background-clip: text; background-clip: text; color: transparent;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.25);
+        -webkit-text-stroke: 2px rgba(0,0,0,0.35);
+        text-shadow:
+            0 1px 0 rgba(255,255,255,0.25),
+            0 4px 6px rgba(0,0,0,0.45),
+            0 14px 26px rgba(0,0,0,0.35),
+            0 0 42px rgba(111, 66, 193, 0.28),
+            0 0 64px rgba(79, 195, 247, 0.22);
+        filter: drop-shadow(0 10px 24px rgba(0,0,0,0.35));
         letter-spacing: 0.6px;
     }
     .brand-sub { margin-top: 0.2rem; opacity: 0.96; text-shadow: 0 1px 6px rgba(0,0,0,0.3); }
@@ -139,16 +146,16 @@ st.markdown("""
         font-size: 1.2em;
     }
     
-    /* Centered auth card (glass look) */
-    .auth-card {
-        max-width: 560px;
+    /* Centered auth wrapper (transparent glass) */
+    .login-wrapper {
+        max-width: 820px;
         margin: 6vh auto 2vh auto;
-        padding: 1.25rem 1.25rem 0.75rem 1.25rem;
-        background: rgba(20, 22, 40, 0.35);
+        padding: 1.25rem 1.5rem 1rem 1.5rem;
+        background: rgba(0, 0, 0, 0.22);
         border: 1px solid rgba(255,255,255,0.18);
-        border-radius: 16px;
-        box-shadow: 0 10px 28px rgba(0,0,0,0.35);
-        backdrop-filter: blur(10px);
+        border-radius: 18px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+        backdrop-filter: blur(8px);
     }
     .auth-title { text-align:center; margin: 0.25rem 0 0.5rem 0; }
     .auth-sub { text-align:center; color:#ddd; margin-bottom: 0.75rem; }
@@ -422,7 +429,7 @@ def auth_ui() -> bool:
 
     left, center, right = st.columns([1, 1.1, 1])
     with center:
-        st.markdown('<div class="auth-card login-bg">', unsafe_allow_html=True)
+        st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
         st.markdown("<h2 class='auth-title'>🔐 Sign in</h2>", unsafe_allow_html=True)
         st.markdown("<div class='auth-sub'>Access your study assistant</div>", unsafe_allow_html=True)
         tabs = st.tabs(["Login", "Register"])
@@ -457,42 +464,46 @@ def auth_ui() -> bool:
         # Divider
         st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-        # OAuth buttons (placeholder links to begin OAuth externally)
-        st.markdown("**Or continue with**")
-        col_o1, col_o2 = st.columns(2)
-        with col_o1:
-            google_auth_url = st.secrets.get("GOOGLE_AUTH_URL", "")
-            if st.button("Continue with Google", key="oauth_google"):
-                if google_auth_url:
-                    st.markdown(f"<meta http-equiv='refresh' content='0; url={google_auth_url}'>", unsafe_allow_html=True)
-                else:
-                    # Demo: instantly create a user from a demo email if GOOGLE_DEMO_EMAIL is set
-                    demo_email = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
-                    if demo_email:
-                        ok, user_id, _ = get_or_create_user_from_email(demo_email)
-                        if ok:
-                            st.session_state["user_id"] = user_id
-                            st.session_state["username"] = demo_email
-                            st.success("Signed in with Google (demo)")
-                            st.rerun()
-                    else:
-                        st.info("Configure GOOGLE_AUTH_URL to enable Google sign-in.")
-        with col_o2:
-            github_auth_url = st.secrets.get("GITHUB_AUTH_URL", "")
-            if st.button("Continue with GitHub", key="oauth_github"):
-                if github_auth_url:
-                    st.markdown(f"<meta http-equiv='refresh' content='0; url={github_auth_url}'>", unsafe_allow_html=True)
-                else:
-                    demo_email = st.secrets.get("GITHUB_DEMO_EMAIL", "")
-                    if demo_email:
-                        ok, user_id, _ = get_or_create_user_from_email(demo_email)
-                        if ok:
-                            st.session_state["user_id"] = user_id
-                            st.session_state["username"] = demo_email
-                            st.success("Signed in with GitHub (demo)")
-                            st.rerun()
-                    else:
-                        st.info("Configure GITHUB_AUTH_URL to enable GitHub sign-in.")
+        # OAuth buttons (only show if configured or demo emails provided)
+        google_auth_url = st.secrets.get("GOOGLE_AUTH_URL", "")
+        github_auth_url = st.secrets.get("GITHUB_AUTH_URL", "")
+        # Treat placeholders as not configured
+        if isinstance(google_auth_url, str) and "YOUR_BACKEND" in google_auth_url:
+            google_auth_url = ""
+        if isinstance(github_auth_url, str) and "YOUR_BACKEND" in github_auth_url:
+            github_auth_url = ""
+        google_demo = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
+        github_demo = st.secrets.get("GITHUB_DEMO_EMAIL", "")
+        enable_google = bool(google_auth_url or google_demo)
+        enable_github = bool(github_auth_url or github_demo)
+
+        if enable_google or enable_github:
+            st.markdown("**Or continue with**")
+            cols = st.columns(2 if enable_google and enable_github else 1)
+            if enable_google:
+                with cols[0]:
+                    if st.button("Continue with Google", key="oauth_google"):
+                        if google_auth_url:
+                            st.markdown(f"<meta http-equiv='refresh' content='0; url={google_auth_url}'>", unsafe_allow_html=True)
+                        else:
+                            ok, user_id, _ = get_or_create_user_from_email(google_demo)
+                            if ok:
+                                st.session_state["user_id"] = user_id
+                                st.session_state["username"] = google_demo
+                                st.success("Signed in with Google (demo)")
+                                st.rerun()
+            if enable_github:
+                with cols[1 if enable_google and enable_github else 0]:
+                    if st.button("Continue with GitHub", key="oauth_github"):
+                        if github_auth_url:
+                            st.markdown(f"<meta http-equiv='refresh' content='0; url={github_auth_url}'>", unsafe_allow_html=True)
+                        else:
+                            ok, user_id, _ = get_or_create_user_from_email(github_demo)
+                            if ok:
+                                st.session_state["user_id"] = user_id
+                                st.session_state["username"] = github_demo
+                                st.success("Signed in with GitHub (demo)")
+                                st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
     return bool(st.session_state.get("user_id"))
@@ -1377,8 +1388,10 @@ def main():
     # Header
     st.markdown("""
     <div class="main-header">
-        <h1 class="brand-title">Edullm</h1>
-        <p class="brand-sub">Clear, step-by-step homework solutions</p>
+        <div style="max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.18); border-radius: 14px; padding: 0.75rem 1rem; backdrop-filter: blur(6px);">
+            <h1 class="brand-title" style="margin:0.25rem 0;">Edullm</h1>
+            <p class="brand-sub" style="margin:0.1rem 0 0.25rem 0;">Clear, step-by-step homework solutions</p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
