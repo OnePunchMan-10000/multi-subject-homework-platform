@@ -761,12 +761,31 @@ def auth_ui() -> bool:
         if st.button("Continue with Google", use_container_width=True, key="google_btn"):
             demo_email = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
             if demo_email:
-                ok, user_id, _ = get_or_create_user_from_email(demo_email)
-                if ok:
-                    st.session_state["user_id"] = user_id
-                    st.session_state["username"] = demo_email
-                    st.success("Signed in with Google!")
-                    st.rerun()
+                # Try to register the demo user on the backend (ignore if exists) and login to get a token
+                demo_pwd = pysecrets.token_urlsafe(16)
+                reg_ok, reg_msg = backend_register(demo_email, demo_pwd)
+                # if registration failed because user exists, proceed to login anyway
+                login_ok, token_or_err = backend_login(demo_email, demo_pwd)
+                if not login_ok:
+                    # If backend login with random pwd failed, attempt to login without registering
+                    # (covers case when demo account already exists with unknown password)
+                    # Informative fallback: try to fetch any existing demo access via backend_get_me if token present
+                    st.info("Demo login failed on backend. Falling back to local demo login.")
+                    ok, user_id, _ = get_or_create_user_from_email(demo_email)
+                    if ok:
+                        st.session_state["user_id"] = user_id
+                        st.session_state["username"] = demo_email
+                        st.success("Signed in with Google (local demo)!")
+                        st.rerun()
+                else:
+                    token = token_or_err
+                    st.session_state["access_token"] = token
+                    ok2, me_or_err = backend_get_me(token)
+                    if ok2:
+                        st.session_state["user_id"] = me_or_err.get("id")
+                        st.session_state["username"] = demo_email
+                        st.success("Signed in with Google (backend demo)!")
+                        st.rerun()
             else:
                 st.info("Configure GOOGLE_DEMO_EMAIL in secrets")
     
@@ -774,12 +793,26 @@ def auth_ui() -> bool:
         if st.button("Continue with GitHub", use_container_width=True, key="github_btn"):
             demo_email = st.secrets.get("GITHUB_DEMO_EMAIL", "")
             if demo_email:
-                ok, user_id, _ = get_or_create_user_from_email(demo_email)
-                if ok:
-                    st.session_state["user_id"] = user_id
-                    st.session_state["username"] = demo_email
-                    st.success("Signed in with GitHub!")
-                    st.rerun()
+                demo_pwd = pysecrets.token_urlsafe(16)
+                reg_ok, reg_msg = backend_register(demo_email, demo_pwd)
+                login_ok, token_or_err = backend_login(demo_email, demo_pwd)
+                if not login_ok:
+                    st.info("Demo login failed on backend. Falling back to local demo login.")
+                    ok, user_id, _ = get_or_create_user_from_email(demo_email)
+                    if ok:
+                        st.session_state["user_id"] = user_id
+                        st.session_state["username"] = demo_email
+                        st.success("Signed in with GitHub (local demo)!")
+                        st.rerun()
+                else:
+                    token = token_or_err
+                    st.session_state["access_token"] = token
+                    ok2, me_or_err = backend_get_me(token)
+                    if ok2:
+                        st.session_state["user_id"] = me_or_err.get("id")
+                        st.session_state["username"] = demo_email
+                        st.success("Signed in with GitHub (backend demo)!")
+                        st.rerun()
             else:
                 st.info("Configure GITHUB_DEMO_EMAIL in secrets")
     
@@ -1592,6 +1625,40 @@ def backend_get_me(token: str) -> tuple[bool, dict | str]:
     except requests.RequestException as e:
         return False, str(e)
 
+def backend_save_history(subject: str, question: str, answer: str) -> bool:
+    """Save question/answer to backend history"""
+    try:
+        token = st.session_state.get("access_token")
+        if not token:
+            return False
+        
+        headers = {"Authorization": f"Bearer {token}"}
+        data = {
+            "subject": subject,
+            "question": question,
+            "answer": answer
+        }
+        r = requests.post(f"{BACKEND_URL}/history/save", json=data, headers=headers, timeout=6)
+        return r.status_code in (200, 201)
+    except:
+        return False
+
+def backend_get_history(limit: int = 20) -> list:
+    """Get user history from backend"""
+    try:
+        token = st.session_state.get("access_token")
+        if not token:
+            return []
+        
+        headers = {"Authorization": f"Bearer {token}"}
+        r = requests.get(f"{BACKEND_URL}/history?limit={limit}", headers=headers, timeout=6)
+        if r.status_code == 200:
+            data = r.json()
+            return data.get("history", [])
+        return []
+    except:
+        return []
+
 def format_powers(text):
     """Convert ^2, ^3, etc. to proper superscript format"""
     # Replace common powers with superscript
@@ -1815,13 +1882,17 @@ def main():
                         {formatted_response}
                     </div>
                     """, unsafe_allow_html=True)
-                    # Save to history
-                    save_history(
-                        st.session_state["user_id"],
-                        selected_subject,
-                        question.strip(),
-                        formatted_response,
-                    )
+                    # Save to history (backend)
+                    if backend_save_history(selected_subject, question.strip(), formatted_response):
+                        pass  # Successfully saved
+                    else:
+                        # Fallback to local save if backend fails
+                        save_history(
+                            st.session_state["user_id"],
+                            selected_subject,
+                            question.strip(),
+                            formatted_response,
+                        )
                     
                     # Show diagram if needed
                     if should_show_diagram(question, selected_subject):
@@ -1847,11 +1918,20 @@ def main():
     
     # History + footer
     with st.expander("🕘 View your recent history"):
-        rows = load_history(st.session_state["user_id"], limit=25)
+        # Try to load from backend first, fallback to local
+        rows = backend_get_history(limit=25)
+        if not rows:
+            rows = load_history(st.session_state["user_id"], limit=25)
         if not rows:
             st.info("No history yet.")
         else:
-            for _id, subj, q, a, created_at in rows:
+            for row in rows:
+                # Handle both backend format (dict) and local format (tuple)
+                if isinstance(row, dict):
+                    subj, q, created_at = row['subject'], row['question'], row['created_at']
+                else:
+                    _id, subj, q, a, created_at = row
+                
                 st.markdown(f"**[{created_at}] {subj}**")
                 st.markdown(f"- Question: {q}")
                 # Intentionally do not render the answer to reduce visual bloat and storage usage in UI
