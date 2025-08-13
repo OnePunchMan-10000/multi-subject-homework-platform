@@ -421,9 +421,13 @@ def auth_ui() -> bool:
             border: 1px solid rgba(255,255,255,0.2);
             box-shadow: 0 16px 32px rgba(0,0,0,0.4);
             backdrop-filter: blur(10px);
-            max-width: 650px;
-            margin: 5vh auto;
-            padding: 2.5rem;
+            max-width: 700px;
+            min-height: 80vh;
+            margin: 2vh auto;
+            padding: 3rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }}
         </style>
         """,
