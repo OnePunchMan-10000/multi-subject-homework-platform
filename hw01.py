@@ -395,14 +395,14 @@ def load_history(user_id: int, limit: int = 20) -> list[tuple]:
 
 
 def auth_ui() -> bool:
-    """Simple centered login page with everything in one container."""
+    """Login page matching the first image design."""
     # Set background
     login_bg_url = "https://i.pinimg.com/originals/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
     
-    # Simple CSS for login page
+    # CSS for login page like first image
     st.markdown(f"""
     <style>
-    /* Hide all default streamlit elements */
+    /* Hide streamlit elements */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
@@ -414,48 +414,101 @@ def auth_ui() -> bool:
         background-position: center !important; 
         background-attachment: fixed !important;
     }}
-    .login-container {{
-        background: rgba(0,0,0,0.4);
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        backdrop-filter: blur(15px);
-        max-width: 420px;
-        margin: 8vh auto;
-        padding: 2.5rem 2rem;
-        text-align: center;
+    
+    .auth-container {{
+        background: rgba(45, 55, 75, 0.95);
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        backdrop-filter: blur(20px);
+        max-width: 480px;
+        margin: 5vh auto;
+        padding: 3rem 2.5rem;
+        color: white;
     }}
-    .stForm {{
-        max-width: 320px;
-        margin: 0 auto;
-    }}
+    
     .brand-title {{
-        font-size: 3.5rem;
+        font-size: 3.2rem;
         background: linear-gradient(135deg, #FFD700 0%, #C0C0C0 50%, #FFD700 100%);
         -webkit-background-clip: text;
         color: transparent;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
         font-weight: bold;
+        text-align: center;
+    }}
+    
+    .brand-subtitle {{
+        color: #d0d0d0;
+        text-align: center;
+        margin-bottom: 2.5rem;
+        font-size: 1rem;
+    }}
+    
+    .signin-title {{
+        color: white;
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }}
+    
+    .signin-subtitle {{
+        color: #b0b0b0;
+        text-align: center;
+        margin-bottom: 2rem;
+    }}
+    
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 0px;
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 4px;
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        background-color: transparent;
+        color: #b0b0b0;
+        border-radius: 6px;
+        padding: 8px 16px;
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        background-color: rgba(255,255,255,0.2) !important;
+        color: white !important;
+    }}
+    
+    .oauth-section {{
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255,255,255,0.2);
+    }}
+    
+    .oauth-title {{
+        color: #b0b0b0;
+        text-align: center;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
     }}
     </style>
     """, unsafe_allow_html=True)
     
-    # Single container with everything
-    with st.container():
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
-        
-        # Title
-        st.markdown('<h1 class="brand-title">Edullm</h1>', unsafe_allow_html=True)
-        st.markdown('<p style="color: white; margin-bottom: 2rem;">Clear, step-by-step homework solutions</p>', unsafe_allow_html=True)
-        
-        # Sign in section
-        st.markdown('<h2 style="color: white; margin-bottom: 1rem;">🔐 Sign in</h2>', unsafe_allow_html=True)
-        st.markdown('<p style="color: #ddd; margin-bottom: 1.5rem;">Access your study assistant</p>', unsafe_allow_html=True)
-        
-        # Login form
+    # Main container
+    st.markdown('<div class="auth-container">', unsafe_allow_html=True)
+    
+    # Header
+    st.markdown('<h1 class="brand-title">Edullm</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="brand-subtitle">Clear, step-by-step homework solutions</p>', unsafe_allow_html=True)
+    
+    # Sign in section
+    st.markdown('<h2 class="signin-title">🔐 Sign in</h2>', unsafe_allow_html=True)
+    st.markdown('<p class="signin-subtitle">Access your study assistant</p>', unsafe_allow_html=True)
+    
+    # Login/Register tabs
+    tab1, tab2 = st.tabs(["Login", "Register"])
+    
+    with tab1:
         with st.form("login_form"):
-            username = st.text_input("Username", placeholder="Enter your username")
-            password = st.text_input("Password", type="password", placeholder="Enter your password")
+            username = st.text_input("Username", placeholder="Enter your username", label_visibility="visible")
+            password = st.text_input("Password", type="password", placeholder="Enter your password", label_visibility="visible")
             login_btn = st.form_submit_button("Login", use_container_width=True)
             
             if login_btn and username and password:
@@ -467,31 +520,57 @@ def auth_ui() -> bool:
                     st.rerun()
                 else:
                     st.error(msg)
-        
-        # Register link
-        if st.button("Create New Account", use_container_width=True):
-            st.session_state["show_register"] = not st.session_state.get("show_register", False)
-        
-        # Registration form
-        if st.session_state.get("show_register", False):
-            with st.form("register_form"):
-                new_user = st.text_input("Choose Username", placeholder="Enter new username")
-                new_pass = st.text_input("Choose Password", type="password", placeholder="Enter password")
-                confirm_pass = st.text_input("Confirm Password", type="password", placeholder="Confirm password")
-                register_btn = st.form_submit_button("Create Account", use_container_width=True)
-                
-                if register_btn and new_user and new_pass:
-                    if new_pass != confirm_pass:
-                        st.error("Passwords do not match.")
+    
+    with tab2:
+        with st.form("register_form"):
+            new_user = st.text_input("Username", placeholder="Choose username", key="reg_username")
+            new_pass = st.text_input("Password", type="password", placeholder="Choose password", key="reg_password")
+            confirm_pass = st.text_input("Confirm Password", type="password", placeholder="Confirm password", key="reg_confirm")
+            register_btn = st.form_submit_button("Create Account", use_container_width=True)
+            
+            if register_btn and new_user and new_pass:
+                if new_pass != confirm_pass:
+                    st.error("Passwords do not match.")
+                else:
+                    ok, msg = register_user(new_user, new_pass)
+                    if ok:
+                        st.success(msg)
                     else:
-                        ok, msg = register_user(new_user, new_pass)
-                        if ok:
-                            st.success(msg)
-                            st.session_state["show_register"] = False
-                        else:
-                            st.error(msg)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+                        st.error(msg)
+    
+    # OAuth section
+    st.markdown('<div class="oauth-section">', unsafe_allow_html=True)
+    st.markdown('<p class="oauth-title">Or continue with</p>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Continue with Google", use_container_width=True, key="google_btn"):
+            demo_email = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
+            if demo_email:
+                ok, user_id, _ = get_or_create_user_from_email(demo_email)
+                if ok:
+                    st.session_state["user_id"] = user_id
+                    st.session_state["username"] = demo_email
+                    st.success("Signed in with Google!")
+                    st.rerun()
+            else:
+                st.info("Configure GOOGLE_DEMO_EMAIL in secrets")
+    
+    with col2:
+        if st.button("Continue with GitHub", use_container_width=True, key="github_btn"):
+            demo_email = st.secrets.get("GITHUB_DEMO_EMAIL", "")
+            if demo_email:
+                ok, user_id, _ = get_or_create_user_from_email(demo_email)
+                if ok:
+                    st.session_state["user_id"] = user_id
+                    st.session_state["username"] = demo_email
+                    st.success("Signed in with GitHub!")
+                    st.rerun()
+            else:
+                st.info("Configure GITHUB_DEMO_EMAIL in secrets")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
     return bool(st.session_state.get("user_id"))
 
