@@ -395,16 +395,16 @@ def auth_ui() -> bool:
 
     return bool(st.session_state.get("user_id"))
 
-def render_subject_grid() -> str:
-    """Display subjects in a card grid. Return the currently selected subject."""
+def render_subject_grid(columns: int = 4) -> str | None:
+    """Display subjects in a full-width card grid. Returns selected subject or None."""
     st.markdown("### 📖 Choose a Subject")
     subject_names = list(SUBJECTS.keys())
-    selected = st.session_state.get("selected_subject", subject_names[0])
+    selected = st.session_state.get("selected_subject")
 
-    cols = st.columns(3)
+    cols = st.columns(columns)
     for idx, name in enumerate(subject_names):
         info = SUBJECTS[name]
-        with cols[idx % 3]:
+        with cols[idx % columns]:
             is_active = (name == selected)
             active_cls = " subject-selected" if is_active else ""
             st.markdown(
@@ -421,6 +421,7 @@ def render_subject_grid() -> str:
                 if st.button("Start Learning", key=f"start_{name}"):
                     st.session_state["selected_subject"] = name
                     selected = name
+                    st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
 
     return selected
@@ -1284,69 +1285,73 @@ def main():
         if not auth_ui():
             return
 
-    # Main interface
-    col1, col2 = st.columns([1, 2])
+    # Stage 1: Subject-only page (full width)
+    if not st.session_state.get("selected_subject"):
+        _ = render_subject_grid(columns=4)
+        return
+
+    # Stage 2: Question UI after subject selection
+    selected_subject = st.session_state.get("selected_subject")
+    top_left, top_right = st.columns([3, 1])
+    with top_left:
+        st.markdown(f"### ❓ Your Question — {selected_subject}")
+    with top_right:
+        if st.button("Change subject"):
+            st.session_state["selected_subject"] = None
+            st.rerun()
+
+    question = st.text_area(
+        "Enter your homework question:",
+        height=120,
+        placeholder=f"Ask your {selected_subject} question here...",
+        help="Be specific and include all relevant details"
+    )
     
-    with col1:
-        selected_subject = render_subject_grid()
-    
-    with col2:
-        st.markdown("### ❓ Your Question")
-        if not selected_subject:
-            st.info("Select a subject on the left to begin.")
+    if st.button("🎯 Get Solution", type="primary"):
+        if question.strip():
+            with st.spinner("Getting solution..."):
+                response = get_api_response(question, selected_subject)
+                
+                if response:
+                    st.markdown("---")
+                    st.markdown(f"## 📚 {selected_subject} Solution")
+                    
+                    # Improved formatting in a clean container
+                    formatted_response = format_response(response)
+                    st.markdown(f"""
+                    <div class="solution-content">
+                        {formatted_response}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    # Save to history
+                    save_history(
+                        st.session_state["user_id"],
+                        selected_subject,
+                        question.strip(),
+                        formatted_response,
+                    )
+                    
+                    # Show diagram if needed
+                    if should_show_diagram(question, selected_subject):
+                        st.markdown("### 📊 Visualization")
+                        viz = create_smart_visualization(question, selected_subject)
+                        if viz:
+                            st.image(viz, use_container_width=True)
+                    
+                    # Simple feedback
+                    st.markdown("### Rate this solution")
+                    col_a, col_b, col_c = st.columns(3)
+                    with col_a:
+                        if st.button("👍 Helpful"):
+                            st.success("Thanks!")
+                    with col_b:
+                        if st.button("👎 Needs work"):
+                            st.info("We'll improve!")
+                    with col_c:
+                        if st.button("🔄 Try again"):
+                            st.rerun()
         else:
-            question = st.text_area(
-                "Enter your homework question:",
-                height=120,
-                placeholder=f"Ask your {selected_subject} question here...",
-                help="Be specific and include all relevant details"
-            )
-            
-            if st.button("🎯 Get Solution", type="primary"):
-                if question.strip():
-                    with st.spinner("Getting solution..."):
-                        response = get_api_response(question, selected_subject)
-                        
-                        if response:
-                            st.markdown("---")
-                            st.markdown(f"## 📚 {selected_subject} Solution")
-                            
-                            # Improved formatting in a clean container
-                            formatted_response = format_response(response)
-                            st.markdown(f"""
-                            <div class="solution-content">
-                                {formatted_response}
-                            </div>
-                            """, unsafe_allow_html=True)
-                            # Save to history
-                            save_history(
-                                st.session_state["user_id"],
-                                selected_subject,
-                                question.strip(),
-                                formatted_response,
-                            )
-                            
-                            # Show diagram if needed
-                            if should_show_diagram(question, selected_subject):
-                                st.markdown("### 📊 Visualization")
-                                viz = create_smart_visualization(question, selected_subject)
-                                if viz:
-                                    st.image(viz, use_container_width=True)
-                            
-                            # Simple feedback
-                            st.markdown("### Rate this solution")
-                            col_a, col_b, col_c = st.columns(3)
-                            with col_a:
-                                if st.button("👍 Helpful"):
-                                    st.success("Thanks!")
-                            with col_b:
-                                if st.button("👎 Needs work"):
-                                    st.info("We'll improve!")
-                            with col_c:
-                                if st.button("🔄 Try again"):
-                                    st.rerun()
-                else:
-                    st.warning("Please enter a question.")
+            st.warning("Please enter a question.")
     
     # History + footer
     with st.expander("🕘 View your recent history"):
