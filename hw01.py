@@ -354,23 +354,21 @@ def auth_ui() -> bool:
     except Exception:
         login_bg_url = None
     if not login_bg_url:
-        # Fallback stock; replace in Streamlit secrets as LOGIN_BG_URL
-        login_bg_url = "https://images.unsplash.com/photo-1535909339361-9b1bd3d1a2d7?q=80&w=1200&auto=format&fit=crop"
+        # Fallback to user-provided image if secrets not set
+        login_bg_url = "https://i.pinimg.com/736x/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
     st.markdown(
-        """
+        f"""
         <style>
-        .login-bg {
-            background-image: url('__LOGIN_BG__');
+        .login-bg {{
+            background-image: url('{login_bg_url}');
             background-size: cover; background-position: center; background-attachment: fixed;
             border-radius: 16px; border: 1px solid rgba(255,255,255,0.15);
             box-shadow: 0 14px 30px rgba(0,0,0,0.35);
-        }
+        }}
         </style>
         """,
         unsafe_allow_html=True,
     )
-    # Replace token with runtime URL (avoid quoting issues in CSS block above)
-    st.markdown(f"<script>document.querySelectorAll('style').forEach(s=>s.innerHTML=s.innerHTML.replace('__LOGIN_BG__','{login_bg_url}'));</script>", unsafe_allow_html=True)
 
     left, center, right = st.columns([1, 1.1, 1])
     with center:
