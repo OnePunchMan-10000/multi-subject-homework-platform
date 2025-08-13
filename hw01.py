@@ -402,6 +402,12 @@ def auth_ui() -> bool:
     # Simple CSS for login page
     st.markdown(f"""
     <style>
+    /* Hide all default streamlit elements */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
+    .stDeployButton {{visibility: hidden;}}
+    
     .stApp {{
         background-image: url('{login_bg_url}') !important;
         background-size: cover !important; 
@@ -414,13 +420,17 @@ def auth_ui() -> bool:
         border: 1px solid rgba(255,255,255,0.2);
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         backdrop-filter: blur(15px);
-        max-width: 600px;
-        margin: 5vh auto;
-        padding: 3rem 2rem;
+        max-width: 420px;
+        margin: 8vh auto;
+        padding: 2.5rem 2rem;
         text-align: center;
     }}
+    .stForm {{
+        max-width: 320px;
+        margin: 0 auto;
+    }}
     .brand-title {{
-        font-size: 4rem;
+        font-size: 3.5rem;
         background: linear-gradient(135deg, #FFD700 0%, #C0C0C0 50%, #FFD700 100%);
         -webkit-background-clip: text;
         color: transparent;
