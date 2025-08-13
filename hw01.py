@@ -57,7 +57,7 @@ st.markdown("""
         font-size: 5.2rem;
         margin: 0.25rem 0 0.15rem 0;
         line-height: 1.05;
-        background: linear-gradient(135deg, #d4af37 0%, #c0c0c0 50%, #d4af37 100%);
+        background: linear-gradient(135deg, #FFD700 0%, #C0C0C0 30%, #FFD700 60%, #C0C0C0 100%);
         -webkit-background-clip: text; background-clip: text; color: transparent;
         -webkit-text-stroke: 2px rgba(0,0,0,0.35);
         text-shadow:
@@ -415,10 +415,15 @@ def auth_ui() -> bool:
             background-position: center !important; 
             background-attachment: fixed !important;
         }}
-        .login-bg {{
-            background: rgba(0,0,0,0.35);
-            border-radius: 16px; border: 1px solid rgba(255,255,255,0.18);
-            box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+        .login-wrapper {{
+            background: rgba(0,0,0,0.3);
+            border-radius: 18px; 
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            max-width: 650px;
+            margin: 5vh auto;
+            padding: 2.5rem;
         }}
         </style>
         """,
