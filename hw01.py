@@ -43,24 +43,26 @@ st.markdown("""
     
     .main-header {
         text-align: center;
-        padding: 1.75rem 0 1.25rem 0;
-        background: linear-gradient(135deg, rgba(102,126,234,0.25) 0%, rgba(118,75,162,0.25) 100%);
+        padding: 0.75rem 0 0.25rem 0;
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
         color: white;
-        border-radius: 14px;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(255,255,255,0.15);
-        box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+        margin-bottom: 1.25rem;
     }
     .brand-title {
-        font-size: 3.1rem;
-        margin: 0.25rem 0 0.25rem 0;
-        line-height: 1.1;
-        background: linear-gradient(180deg, #ffffff 0%, #d5e2ff 40%, #b0c1ff 70%, #ffffff 100%);
+        font-size: 3.6rem;
+        margin: 0.25rem 0 0.15rem 0;
+        line-height: 1.05;
+        background: 
+            radial-gradient(120% 180% at 10% 10%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0) 60%),
+            conic-gradient(from 20deg at 50% 50%, #6ae3ff, #d4af37, #ff7ee2, #8be9fd, #b5ff7d, #6ae3ff);
         -webkit-background-clip: text; background-clip: text; color: transparent;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.25);
-        letter-spacing: 0.5px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.25);
+        letter-spacing: 0.6px;
     }
-    .brand-sub { margin-top: 0.25rem; opacity: 0.95; }
+    .brand-sub { margin-top: 0.2rem; opacity: 0.96; text-shadow: 0 1px 6px rgba(0,0,0,0.3); }
     
     /* Improved solution content styling with better spacing */
     .solution-content {
