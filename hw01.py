@@ -395,133 +395,94 @@ def load_history(user_id: int, limit: int = 20) -> list[tuple]:
 
 
 def auth_ui() -> bool:
-    """Render a centered login/registration UI. Return True if authenticated."""
-    # Override background for login page with the provided image across the whole page
-    login_bg_url = None
-    try:
-        login_bg_url = st.secrets.get('LOGIN_BG_URL')
-    except Exception:
-        login_bg_url = None
-    if not login_bg_url:
-        # Fallback to user-provided image if secrets not set
-        login_bg_url = "https://i.pinimg.com/originals/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
-    st.markdown(
-        f"""
-        <style>
-        /* Make the ENTIRE app use the login background while on auth screen */
-        .stApp {{
-            background-image: url('{login_bg_url}') !important;
-            background-size: cover !important; 
-            background-position: center !important; 
-            background-attachment: fixed !important;
-        }}
-        .login-wrapper {{
-            background: rgba(0,0,0,0.3);
-            border-radius: 18px; 
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 16px 32px rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            max-width: 700px;
-            min-height: 80vh;
-            margin: 2vh auto;
-            padding: 3rem 2.5rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Full-page centered container for ALL login components
-    st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+    """Simple centered login page with everything in one container."""
+    # Set background
+    login_bg_url = "https://i.pinimg.com/originals/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
     
-    # Header inside container
-    st.markdown("""
-    <div class="main-header">
-        <h1 class="brand-title" style="margin:0.25rem 0;">Edullm</h1>
-        <p class="brand-sub" style="margin:0.1rem 0 0.25rem 0;">Clear, step-by-step homework solutions</p>
-    </div>
+    # Simple CSS for login page
+    st.markdown(f"""
+    <style>
+    .stApp {{
+        background-image: url('{login_bg_url}') !important;
+        background-size: cover !important; 
+        background-position: center !important; 
+        background-attachment: fixed !important;
+    }}
+    .login-container {{
+        background: rgba(0,0,0,0.4);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        backdrop-filter: blur(15px);
+        max-width: 600px;
+        margin: 5vh auto;
+        padding: 3rem 2rem;
+        text-align: center;
+    }}
+    .brand-title {{
+        font-size: 4rem;
+        background: linear-gradient(135deg, #FFD700 0%, #C0C0C0 50%, #FFD700 100%);
+        -webkit-background-clip: text;
+        color: transparent;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }}
+    </style>
     """, unsafe_allow_html=True)
     
-    st.markdown("<h2 class='auth-title'>🔐 Sign in</h2>", unsafe_allow_html=True)
-    st.markdown("<div class='auth-sub'>Access your study assistant</div>", unsafe_allow_html=True)
-    tabs = st.tabs(["Login", "Register"])
-
-    with tabs[0]:
-        lg_user = st.text_input("Username", key="login_user")
-        lg_pass = st.text_input("Password", type="password", key="login_pass")
-        if st.button("Login", key="login_btn"):
-            ok, user_id, msg = authenticate_user(lg_user, lg_pass)
-            if ok:
-                st.session_state["user_id"] = user_id
-                st.session_state["username"] = lg_user.strip().lower()
-                st.success("Logged in.")
-                st.rerun()
-            else:
-                st.error(msg)
-
-    with tabs[1]:
-        rg_user = st.text_input("New username", key="reg_user")
-        rg_pass = st.text_input("New password", type="password", key="reg_pass")
-        rg_pass2 = st.text_input("Confirm password", type="password", key="reg_pass2")
-        if st.button("Create account", key="reg_btn"):
-            if rg_pass != rg_pass2:
-                st.error("Passwords do not match.")
-            else:
-                ok, msg = register_user(rg_user, rg_pass)
+    # Single container with everything
+    with st.container():
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        
+        # Title
+        st.markdown('<h1 class="brand-title">Edullm</h1>', unsafe_allow_html=True)
+        st.markdown('<p style="color: white; margin-bottom: 2rem;">Clear, step-by-step homework solutions</p>', unsafe_allow_html=True)
+        
+        # Sign in section
+        st.markdown('<h2 style="color: white; margin-bottom: 1rem;">🔐 Sign in</h2>', unsafe_allow_html=True)
+        st.markdown('<p style="color: #ddd; margin-bottom: 1.5rem;">Access your study assistant</p>', unsafe_allow_html=True)
+        
+        # Login form
+        with st.form("login_form"):
+            username = st.text_input("Username", placeholder="Enter your username")
+            password = st.text_input("Password", type="password", placeholder="Enter your password")
+            login_btn = st.form_submit_button("Login", use_container_width=True)
+            
+            if login_btn and username and password:
+                ok, user_id, msg = authenticate_user(username, password)
                 if ok:
-                    st.success(msg)
+                    st.session_state["user_id"] = user_id
+                    st.session_state["username"] = username.strip().lower()
+                    st.success("Logged in successfully!")
+                    st.rerun()
                 else:
                     st.error(msg)
-
-    # Divider
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-    # OAuth buttons (only show if configured or demo emails provided)
-    google_auth_url = st.secrets.get("GOOGLE_AUTH_URL", "")
-    github_auth_url = st.secrets.get("GITHUB_AUTH_URL", "")
-    # Treat placeholders as not configured
-    if isinstance(google_auth_url, str) and "YOUR_BACKEND" in google_auth_url:
-        google_auth_url = ""
-    if isinstance(github_auth_url, str) and "YOUR_BACKEND" in github_auth_url:
-        github_auth_url = ""
-    google_demo = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
-    github_demo = st.secrets.get("GITHUB_DEMO_EMAIL", "")
-    enable_google = bool(google_auth_url or google_demo)
-    enable_github = bool(github_auth_url or github_demo)
-
-    if enable_google or enable_github:
-        st.markdown("**Or continue with**")
-        cols = st.columns(2 if enable_google and enable_github else 1)
-        if enable_google:
-            with cols[0]:
-                if st.button("Continue with Google", key="oauth_google"):
-                    if google_auth_url:
-                        st.markdown(f"<meta http-equiv='refresh' content='0; url={google_auth_url}'>", unsafe_allow_html=True)
+        
+        # Register link
+        if st.button("Create New Account", use_container_width=True):
+            st.session_state["show_register"] = not st.session_state.get("show_register", False)
+        
+        # Registration form
+        if st.session_state.get("show_register", False):
+            with st.form("register_form"):
+                new_user = st.text_input("Choose Username", placeholder="Enter new username")
+                new_pass = st.text_input("Choose Password", type="password", placeholder="Enter password")
+                confirm_pass = st.text_input("Confirm Password", type="password", placeholder="Confirm password")
+                register_btn = st.form_submit_button("Create Account", use_container_width=True)
+                
+                if register_btn and new_user and new_pass:
+                    if new_pass != confirm_pass:
+                        st.error("Passwords do not match.")
                     else:
-                        ok, user_id, _ = get_or_create_user_from_email(google_demo)
+                        ok, msg = register_user(new_user, new_pass)
                         if ok:
-                            st.session_state["user_id"] = user_id
-                            st.session_state["username"] = google_demo
-                            st.success("Signed in with Google (demo)")
-                            st.rerun()
-        if enable_github:
-            with cols[1 if enable_google and enable_github else 0]:
-                if st.button("Continue with GitHub", key="oauth_github"):
-                    if github_auth_url:
-                        st.markdown(f"<meta http-equiv='refresh' content='0; url={github_auth_url}'>", unsafe_allow_html=True)
-                    else:
-                        ok, user_id, _ = get_or_create_user_from_email(github_demo)
-                        if ok:
-                            st.session_state["user_id"] = user_id
-                            st.session_state["username"] = github_demo
-                            st.success("Signed in with GitHub (demo)")
-                            st.rerun()
+                            st.success(msg)
+                            st.session_state["show_register"] = False
+                        else:
+                            st.error(msg)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown('</div>', unsafe_allow_html=True)
-
     return bool(st.session_state.get("user_id"))
 
 def render_subject_grid(columns: int = 4) -> str | None:
