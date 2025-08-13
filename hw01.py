@@ -30,14 +30,26 @@ st.markdown("""
     
     /* Clean, simple styling */
     .stApp {
-        /* Flashy study vibe with layered gradient + subtle pattern */
-        background: 
-            radial-gradient(circle at 20% 10%, rgba(255,255,255,0.12) 0, rgba(255,255,255,0) 40%),
-            radial-gradient(circle at 80% 30%, rgba(255,255,255,0.10) 0, rgba(255,255,255,0) 45%),
-            radial-gradient(circle at 10% 70%, rgba(255,255,255,0.08) 0, rgba(255,255,255,0) 40%),
-            linear-gradient(135deg, #6a11cb 0%, #b8a6ff 35%, #ffffff 100%);
+        /* Vibrant animated gradient with subtle radial highlights */
+        --g1: #6a11cb;   /* deep purple */
+        --g2: #b91372;   /* magenta */
+        --g3: #ff7ee2;   /* pink */
+        --g4: #ffffff;   /* white */
+        background:
+            radial-gradient(circle at 20% 10%, rgba(255,255,255,0.15) 0, rgba(255,255,255,0) 40%),
+            radial-gradient(circle at 80% 30%, rgba(255,255,255,0.12) 0, rgba(255,255,255,0) 45%),
+            radial-gradient(circle at 10% 70%, rgba(255,255,255,0.10) 0, rgba(255,255,255,0) 40%),
+            linear-gradient(130deg, var(--g1), var(--g2), var(--g3), var(--g4));
+        background-size: 200% 200%, 200% 200%, 200% 200%, 300% 300%;
+        animation: gradientShift 16s ease-in-out infinite;
         background-attachment: fixed;
         color: white;
+    }
+
+    @keyframes gradientShift {
+        0%   { background-position: 0% 50%, 10% 10%, 80% 20%, 0% 50%; }
+        50%  { background-position: 100% 50%, 20% 20%, 70% 70%, 100% 50%; }
+        100% { background-position: 0% 50%, 10% 10%, 80% 20%, 0% 50%; }
     }
     
     .main-header {
@@ -152,6 +164,7 @@ st.markdown("""
     .subject-title { font-weight: 700; font-size: 1.05rem; margin-left: 0.4rem; display:inline-block; }
     .subject-desc { color: #e5e5e5; font-size: 0.92rem; margin-top: 0.5rem; line-height: 1.45; }
     .subject-cta .stButton>button { margin-top: 0.5rem; width: 100%; }
+    .subject-selected { border-color: rgba(255,255,255,0.75); box-shadow: 0 0 0 2px rgba(255,255,255,0.45) inset, 0 12px 26px rgba(0,0,0,0.36); }
     /* Code block styling for Computer Science output */
     .code-block {
         background-color: rgba(255,255,255,0.06);
@@ -392,9 +405,11 @@ def render_subject_grid() -> str:
     for idx, name in enumerate(subject_names):
         info = SUBJECTS[name]
         with cols[idx % 3]:
+            is_active = (name == selected)
+            active_cls = " subject-selected" if is_active else ""
             st.markdown(
                 f"""
-                <div class='subject-card'>
+                <div class='subject-card{active_cls}'>
                     <div><span class='subject-icon'>{info['icon']}</span><span class='subject-title'>{name}</span></div>
                     <div class='subject-desc'>Focused, step-by-step help tailored for {name.lower()}.</div>
                 </div>
@@ -1277,59 +1292,61 @@ def main():
     
     with col2:
         st.markdown("### ❓ Your Question")
-        
-        question = st.text_area(
-            "Enter your homework question:",
-            height=120,
-            placeholder=f"Ask your {selected_subject} question here...",
-            help="Be specific and include all relevant details"
-        )
-        
-        if st.button("🎯 Get Solution", type="primary"):
-            if question.strip():
-                with st.spinner("Getting solution..."):
-                    response = get_api_response(question, selected_subject)
-                    
-                    if response:
-                        st.markdown("---")
-                        st.markdown(f"## 📚 {selected_subject} Solution")
+        if not selected_subject:
+            st.info("Select a subject on the left to begin.")
+        else:
+            question = st.text_area(
+                "Enter your homework question:",
+                height=120,
+                placeholder=f"Ask your {selected_subject} question here...",
+                help="Be specific and include all relevant details"
+            )
+            
+            if st.button("🎯 Get Solution", type="primary"):
+                if question.strip():
+                    with st.spinner("Getting solution..."):
+                        response = get_api_response(question, selected_subject)
                         
-                        # Improved formatting in a clean container
-                        formatted_response = format_response(response)
-                        st.markdown(f"""
-                        <div class="solution-content">
-                            {formatted_response}
-                        </div>
-                        """, unsafe_allow_html=True)
-                        # Save to history
-                        save_history(
-                            st.session_state["user_id"],
-                            selected_subject,
-                            question.strip(),
-                            formatted_response,
-                        )
-                        
-                        # Show diagram if needed
-                        if should_show_diagram(question, selected_subject):
-                            st.markdown("### 📊 Visualization")
-                            viz = create_smart_visualization(question, selected_subject)
-                            if viz:
-                                st.image(viz, use_container_width=True)
-                        
-                        # Simple feedback
-                        st.markdown("### Rate this solution")
-                        col_a, col_b, col_c = st.columns(3)
-                        with col_a:
-                            if st.button("👍 Helpful"):
-                                st.success("Thanks!")
-                        with col_b:
-                            if st.button("👎 Needs work"):
-                                st.info("We'll improve!")
-                        with col_c:
-                            if st.button("🔄 Try again"):
-                                st.rerun()
-            else:
-                st.warning("Please enter a question.")
+                        if response:
+                            st.markdown("---")
+                            st.markdown(f"## 📚 {selected_subject} Solution")
+                            
+                            # Improved formatting in a clean container
+                            formatted_response = format_response(response)
+                            st.markdown(f"""
+                            <div class="solution-content">
+                                {formatted_response}
+                            </div>
+                            """, unsafe_allow_html=True)
+                            # Save to history
+                            save_history(
+                                st.session_state["user_id"],
+                                selected_subject,
+                                question.strip(),
+                                formatted_response,
+                            )
+                            
+                            # Show diagram if needed
+                            if should_show_diagram(question, selected_subject):
+                                st.markdown("### 📊 Visualization")
+                                viz = create_smart_visualization(question, selected_subject)
+                                if viz:
+                                    st.image(viz, use_container_width=True)
+                            
+                            # Simple feedback
+                            st.markdown("### Rate this solution")
+                            col_a, col_b, col_c = st.columns(3)
+                            with col_a:
+                                if st.button("👍 Helpful"):
+                                    st.success("Thanks!")
+                            with col_b:
+                                if st.button("👎 Needs work"):
+                                    st.info("We'll improve!")
+                            with col_c:
+                                if st.button("🔄 Try again"):
+                                    st.rerun()
+                else:
+                    st.warning("Please enter a question.")
     
     # History + footer
     with st.expander("🕘 View your recent history"):
