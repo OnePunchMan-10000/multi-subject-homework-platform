@@ -100,6 +100,30 @@ def create_user(username: str, password_hash: str) -> int:
         conn.commit()
         return cur.lastrowid
 
+def save_user_history(user_id: int, subject: str, question: str, answer: str):
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                subject TEXT NOT NULL,
+                question TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                created_at TEXT DEFAULT (datetime('now'))
+            );
+        ''')
+        cur.execute('INSERT INTO history (user_id, subject, question, answer) VALUES (?, ?, ?, ?)', 
+                   (user_id, subject, question, answer))
+        conn.commit()
+
+def get_user_history(user_id: int, limit: int = 20):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?', (user_id, limit))
+        return [dict(row) for row in cur.fetchall()]
+
 # Initialize database on startup
 init_db()
 
@@ -170,6 +194,51 @@ def admin_users():
                 'users': users,
                 'database_path': DB_PATH
             }
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+@app.route('/history/save', methods=['POST'])
+def save_history():
+    """Save user question/answer history"""
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return {'error': 'Missing or invalid authorization header'}, 401
+    
+    token = auth_header[7:]  # Remove "Bearer "
+    try:
+        payload = decode_token(token)
+        user_id = int(payload['sub'])
+    except ValueError as e:
+        return {'error': str(e)}, 401
+    
+    data = request.get_json()
+    if not data or not all(k in data for k in ['subject', 'question', 'answer']):
+        return {'error': 'Missing required fields: subject, question, answer'}, 400
+    
+    try:
+        save_user_history(user_id, data['subject'], data['question'], data['answer'])
+        return {'ok': True, 'message': 'History saved'}, 201
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+@app.route('/history', methods=['GET'])
+def get_history():
+    """Get user history"""
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return {'error': 'Missing or invalid authorization header'}, 401
+    
+    token = auth_header[7:]  # Remove "Bearer "
+    try:
+        payload = decode_token(token)
+        user_id = int(payload['sub'])
+    except ValueError as e:
+        return {'error': str(e)}, 401
+    
+    limit = request.args.get('limit', 20, type=int)
+    try:
+        history = get_user_history(user_id, limit)
+        return {'history': history}
     except Exception as e:
         return {'error': str(e)}, 500
 
