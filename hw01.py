@@ -59,15 +59,15 @@ st.markdown("""
         line-height: 1.05;
         background: 
             radial-gradient(120% 180% at 10% 10%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0) 60%),
-            conic-gradient(from 20deg at 50% 50%, #ff8af0, #6ae3ff, #1de9b6, #ffd54f, #ff8af0);
+            conic-gradient(from 10deg at 50% 50%, #fffbea 0%, #d4af37 18%, #e6e2d3 32%, #c0c0c0 48%, #f5e6a8 62%, #bdbdbd 78%, #fffbea 100%);
         -webkit-background-clip: text; background-clip: text; color: transparent;
-        -webkit-text-stroke: 2px rgba(0,0,0,0.35);
+        -webkit-text-stroke: 1.6px rgba(0,0,0,0.35);
         text-shadow:
             0 1px 0 rgba(255,255,255,0.25),
-            0 4px 6px rgba(0,0,0,0.45),
+            0 6px 10px rgba(0,0,0,0.45),
             0 14px 26px rgba(0,0,0,0.35),
-            0 0 42px rgba(111, 66, 193, 0.28),
-            0 0 64px rgba(79, 195, 247, 0.22);
+            0 0 36px rgba(212, 175, 55, 0.25),
+            0 0 54px rgba(192, 192, 192, 0.20);
         filter: drop-shadow(0 10px 24px rgba(0,0,0,0.35));
         letter-spacing: 0.6px;
     }
@@ -427,9 +427,10 @@ def auth_ui() -> bool:
         unsafe_allow_html=True,
     )
 
-    left, center, right = st.columns([1, 1.1, 1])
-    with center:
-        st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+    # Full-page centered container for ALL login components
+    st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+    cols_top = st.columns([1, 2, 1])
+    with cols_top[1]:
         st.markdown("<h2 class='auth-title'>🔐 Sign in</h2>", unsafe_allow_html=True)
         st.markdown("<div class='auth-sub'>Access your study assistant</div>", unsafe_allow_html=True)
         tabs = st.tabs(["Login", "Register"])
@@ -504,7 +505,7 @@ def auth_ui() -> bool:
                                 st.session_state["username"] = github_demo
                                 st.success("Signed in with GitHub (demo)")
                                 st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     return bool(st.session_state.get("user_id"))
 
