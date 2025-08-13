@@ -30,7 +30,13 @@ st.markdown("""
     
     /* Clean, simple styling */
     .stApp {
-        background-color: #0e1117;
+        /* Flashy study vibe with layered gradient + subtle pattern */
+        background: 
+            radial-gradient(circle at 20% 10%, rgba(255,255,255,0.12) 0, rgba(255,255,255,0) 40%),
+            radial-gradient(circle at 80% 30%, rgba(255,255,255,0.10) 0, rgba(255,255,255,0) 45%),
+            radial-gradient(circle at 10% 70%, rgba(255,255,255,0.08) 0, rgba(255,255,255,0) 40%),
+            linear-gradient(135deg, #6a11cb 0%, #b8a6ff 35%, #ffffff 100%);
+        background-attachment: fixed;
         color: white;
     }
     
@@ -115,6 +121,37 @@ st.markdown("""
         font-weight: bold;
         font-size: 1.2em;
     }
+    
+    /* Centered auth card (glass look) */
+    .auth-card {
+        max-width: 560px;
+        margin: 6vh auto 2vh auto;
+        padding: 1.25rem 1.25rem 0.75rem 1.25rem;
+        background: rgba(20, 22, 40, 0.35);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 16px;
+        box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+        backdrop-filter: blur(10px);
+    }
+    .auth-title { text-align:center; margin: 0.25rem 0 0.5rem 0; }
+    .auth-sub { text-align:center; color:#ddd; margin-bottom: 0.75rem; }
+
+    /* Subject grid cards */
+    .subject-card {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 14px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 0.6rem;
+        min-height: 150px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+    .subject-card:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(0,0,0,0.32); }
+    .subject-icon { font-size: 1.8rem; display: inline-block; width: 2.2rem; text-align:center; }
+    .subject-title { font-weight: 700; font-size: 1.05rem; margin-left: 0.4rem; display:inline-block; }
+    .subject-desc { color: #e5e5e5; font-size: 0.92rem; margin-top: 0.5rem; line-height: 1.45; }
+    .subject-cta .stButton>button { margin-top: 0.5rem; width: 100%; }
     /* Code block styling for Computer Science output */
     .code-block {
         background-color: rgba(255,255,255,0.06);
@@ -270,16 +307,17 @@ def authenticate_user(username: str, password: str) -> tuple[bool, int | None, s
         return False, None, f"Database error: {str(e)}"
 
 
-def save_history(user_id: int, subject: str, question: str, answer: str) -> None:
+def save_history(user_id: int, subject: str, question: str, answer: str | None) -> None:
     try:
         with sqlite3.connect(DB_PATH) as conn:
             cur = conn.cursor()
+            # Store only the question by default; keep answer nullable for future features
             cur.execute(
                 """
                 INSERT INTO history (user_id, subject, question, answer, created_at)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (user_id, subject, question, answer, datetime.utcnow().isoformat()),
+                (user_id, subject, question, None, datetime.utcnow().isoformat()),
             )
             conn.commit()
     except sqlite3.Error:
@@ -306,38 +344,71 @@ def load_history(user_id: int, limit: int = 20) -> list[tuple]:
 
 
 def auth_ui() -> bool:
-    """Render login/registration UI. Return True if authenticated."""
-    st.markdown("## 🔐 Sign in")
-    tabs = st.tabs(["Login", "Register"])
+    """Render a centered login/registration UI. Return True if authenticated."""
+    left, center, right = st.columns([1, 1.1, 1])
+    with center:
+        st.markdown('<div class="auth-card">', unsafe_allow_html=True)
+        st.markdown("<h2 class='auth-title'>🔐 Sign in</h2>", unsafe_allow_html=True)
+        st.markdown("<div class='auth-sub'>Access your study assistant</div>", unsafe_allow_html=True)
+        tabs = st.tabs(["Login", "Register"])
 
-    with tabs[0]:
-        lg_user = st.text_input("Username", key="login_user")
-        lg_pass = st.text_input("Password", type="password", key="login_pass")
-        if st.button("Login", key="login_btn"):
-            ok, user_id, msg = authenticate_user(lg_user, lg_pass)
-            if ok:
-                st.session_state["user_id"] = user_id
-                st.session_state["username"] = lg_user.strip().lower()
-                st.success("Logged in.")
-                st.rerun()
-            else:
-                st.error(msg)
-
-    with tabs[1]:
-        rg_user = st.text_input("New username", key="reg_user")
-        rg_pass = st.text_input("New password", type="password", key="reg_pass")
-        rg_pass2 = st.text_input("Confirm password", type="password", key="reg_pass2")
-        if st.button("Create account", key="reg_btn"):
-            if rg_pass != rg_pass2:
-                st.error("Passwords do not match.")
-            else:
-                ok, msg = register_user(rg_user, rg_pass)
+        with tabs[0]:
+            lg_user = st.text_input("Username", key="login_user")
+            lg_pass = st.text_input("Password", type="password", key="login_pass")
+            if st.button("Login", key="login_btn"):
+                ok, user_id, msg = authenticate_user(lg_user, lg_pass)
                 if ok:
-                    st.success(msg)
+                    st.session_state["user_id"] = user_id
+                    st.session_state["username"] = lg_user.strip().lower()
+                    st.success("Logged in.")
+                    st.rerun()
                 else:
                     st.error(msg)
 
+        with tabs[1]:
+            rg_user = st.text_input("New username", key="reg_user")
+            rg_pass = st.text_input("New password", type="password", key="reg_pass")
+            rg_pass2 = st.text_input("Confirm password", type="password", key="reg_pass2")
+            if st.button("Create account", key="reg_btn"):
+                if rg_pass != rg_pass2:
+                    st.error("Passwords do not match.")
+                else:
+                    ok, msg = register_user(rg_user, rg_pass)
+                    if ok:
+                        st.success(msg)
+                    else:
+                        st.error(msg)
+        st.markdown('</div>', unsafe_allow_html=True)
+
     return bool(st.session_state.get("user_id"))
+
+def render_subject_grid() -> str:
+    """Display subjects in a card grid. Return the currently selected subject."""
+    st.markdown("### 📖 Choose a Subject")
+    subject_names = list(SUBJECTS.keys())
+    selected = st.session_state.get("selected_subject", subject_names[0])
+
+    cols = st.columns(3)
+    for idx, name in enumerate(subject_names):
+        info = SUBJECTS[name]
+        with cols[idx % 3]:
+            st.markdown(
+                f"""
+                <div class='subject-card'>
+                    <div><span class='subject-icon'>{info['icon']}</span><span class='subject-title'>{name}</span></div>
+                    <div class='subject-desc'>Focused, step-by-step help tailored for {name.lower()}.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            with st.container():
+                st.markdown("<div class='subject-cta'>", unsafe_allow_html=True)
+                if st.button("Start Learning", key=f"start_{name}"):
+                    st.session_state["selected_subject"] = name
+                    selected = name
+                st.markdown("</div>", unsafe_allow_html=True)
+
+    return selected
 
 # Enhanced subject configurations with better prompts
 SUBJECTS = {
@@ -1202,18 +1273,7 @@ def main():
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        st.markdown("### 📖 Select Subject")
-        
-        subject_options = [f"{info['icon']} {subject}" for subject, info in SUBJECTS.items()]
-        selected_subject_display = st.selectbox(
-            "Choose your subject:",
-            subject_options,
-            help="Select the academic subject for your question"
-        )
-        
-        selected_subject = selected_subject_display.split(' ', 1)[1]
-        
-        # Example section removed per user request
+        selected_subject = render_subject_grid()
     
     with col2:
         st.markdown("### ❓ Your Question")
@@ -1280,7 +1340,7 @@ def main():
             for _id, subj, q, a, created_at in rows:
                 st.markdown(f"**[{created_at}] {subj}**")
                 st.markdown(f"- Question: {q}")
-                st.markdown(f"<div class='solution-content' style='margin-top:0.5rem'>{a}</div>", unsafe_allow_html=True)
+                # Intentionally do not render the answer to reduce visual bloat and storage usage in UI
                 st.markdown("---")
 
     # Simple footer
