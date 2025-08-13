@@ -30,26 +30,15 @@ st.markdown("""
     
     /* Clean, simple styling */
     .stApp {
-        /* Vibrant animated gradient with subtle radial highlights */
-        --g1: #6a11cb;   /* deep purple */
-        --g2: #b91372;   /* magenta */
-        --g3: #ff7ee2;   /* pink */
-        --g4: #ffffff;   /* white */
+        /* Non-interactive, static gradient; can be overridden per-page below */
+        --g1: #6a11cb; --g2: #b91372; --g3: #ff7ee2; --g4: #ffffff;
         background:
             radial-gradient(circle at 20% 10%, rgba(255,255,255,0.15) 0, rgba(255,255,255,0) 40%),
             radial-gradient(circle at 80% 30%, rgba(255,255,255,0.12) 0, rgba(255,255,255,0) 45%),
             radial-gradient(circle at 10% 70%, rgba(255,255,255,0.10) 0, rgba(255,255,255,0) 40%),
             linear-gradient(130deg, var(--g1), var(--g2), var(--g3), var(--g4));
-        background-size: 200% 200%, 200% 200%, 200% 200%, 300% 300%;
-        animation: gradientShift 16s ease-in-out infinite;
         background-attachment: fixed;
         color: white;
-    }
-
-    @keyframes gradientShift {
-        0%   { background-position: 0% 50%, 10% 10%, 80% 20%, 0% 50%; }
-        50%  { background-position: 100% 50%, 20% 20%, 70% 70%, 100% 50%; }
-        100% { background-position: 0% 50%, 10% 10%, 80% 20%, 0% 50%; }
     }
     
     .main-header {
@@ -358,9 +347,34 @@ def load_history(user_id: int, limit: int = 20) -> list[tuple]:
 
 def auth_ui() -> bool:
     """Render a centered login/registration UI. Return True if authenticated."""
+    # Override background for login page with the provided image if available
+    login_bg_url = None
+    try:
+        login_bg_url = st.secrets.get('LOGIN_BG_URL')
+    except Exception:
+        login_bg_url = None
+    if not login_bg_url:
+        # Fallback stock; replace in Streamlit secrets as LOGIN_BG_URL
+        login_bg_url = "https://images.unsplash.com/photo-1535909339361-9b1bd3d1a2d7?q=80&w=1200&auto=format&fit=crop"
+    st.markdown(
+        """
+        <style>
+        .login-bg {
+            background-image: url('__LOGIN_BG__');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            border-radius: 16px; border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    # Replace token with runtime URL (avoid quoting issues in CSS block above)
+    st.markdown(f"<script>document.querySelectorAll('style').forEach(s=>s.innerHTML=s.innerHTML.replace('__LOGIN_BG__','{login_bg_url}'));</script>", unsafe_allow_html=True)
+
     left, center, right = st.columns([1, 1.1, 1])
     with center:
-        st.markdown('<div class="auth-card">', unsafe_allow_html=True)
+        st.markdown('<div class="auth-card login-bg">', unsafe_allow_html=True)
         st.markdown("<h2 class='auth-title'>🔐 Sign in</h2>", unsafe_allow_html=True)
         st.markdown("<div class='auth-sub'>Access your study assistant</div>", unsafe_allow_html=True)
         tabs = st.tabs(["Login", "Register"])
@@ -1285,8 +1299,28 @@ def main():
         if not auth_ui():
             return
 
-    # Stage 1: Subject-only page (full width)
+    # Stage 1: Subject-only page (full width) with gold/silver theme override
     if not st.session_state.get("selected_subject"):
+        st.markdown(
+            """
+            <style>
+            .stApp { 
+                --g1: #d4af37; /* gold */
+                --g2: #c0c0c0; /* silver */
+                --g3: #e7cf7a; /* light gold */
+                --g4: #f5f5f5; /* near white */
+                background:
+                    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.16) 0, rgba(255,255,255,0) 40%),
+                    radial-gradient(circle at 20% 70%, rgba(255,255,255,0.12) 0, rgba(255,255,255,0) 45%),
+                    linear-gradient(135deg, var(--g1), var(--g2), var(--g3), var(--g4));
+            }
+            .subject-card { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); }
+            .subject-selected { border-color: rgba(255,255,255,0.85); box-shadow: 0 0 0 2px rgba(255,255,255,0.55) inset; }
+            .stButton>button { background: linear-gradient(135deg, #d4af37, #c0c0c0); }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
         _ = render_subject_grid(columns=4)
         return
 
