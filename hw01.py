@@ -43,12 +43,24 @@ st.markdown("""
     
     .main-header {
         text-align: center;
-        padding: 1.5rem 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.75rem 0 1.25rem 0;
+        background: linear-gradient(135deg, rgba(102,126,234,0.25) 0%, rgba(118,75,162,0.25) 100%);
         color: white;
-        border-radius: 10px;
+        border-radius: 14px;
         margin-bottom: 2rem;
+        border: 1px solid rgba(255,255,255,0.15);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.25);
     }
+    .brand-title {
+        font-size: 3.1rem;
+        margin: 0.25rem 0 0.25rem 0;
+        line-height: 1.1;
+        background: linear-gradient(180deg, #ffffff 0%, #d5e2ff 40%, #b0c1ff 70%, #ffffff 100%);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        letter-spacing: 0.5px;
+    }
+    .brand-sub { margin-top: 0.25rem; opacity: 0.95; }
     
     /* Improved solution content styling with better spacing */
     .solution-content {
@@ -347,7 +359,7 @@ def load_history(user_id: int, limit: int = 20) -> list[tuple]:
 
 def auth_ui() -> bool:
     """Render a centered login/registration UI. Return True if authenticated."""
-    # Override background for login page with the provided image if available
+    # Override background for login page with the provided image across the whole page
     login_bg_url = None
     try:
         login_bg_url = st.secrets.get('LOGIN_BG_URL')
@@ -359,10 +371,16 @@ def auth_ui() -> bool:
     st.markdown(
         f"""
         <style>
+        /* Make the ENTIRE app use the login background while on auth screen */
+        .stApp {{
+            background-image: url('{login_bg_url}') !important;
+            background-size: cover !important; 
+            background-position: center !important; 
+            background-attachment: fixed !important;
+        }}
         .login-bg {{
-            background-image: url('{login_bg_url}');
-            background-size: cover; background-position: center; background-attachment: fixed;
-            border-radius: 16px; border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.35);
+            border-radius: 16px; border: 1px solid rgba(255,255,255,0.18);
             box-shadow: 0 14px 30px rgba(0,0,0,0.35);
         }}
         </style>
@@ -1287,8 +1305,8 @@ def main():
     # Header
     st.markdown("""
     <div class="main-header">
-        <h1>🎓 Academic Assistant Pro</h1>
-        <p>Clear, step-by-step homework solutions</p>
+        <h1 class="brand-title">Edullm</h1>
+        <p class="brand-sub">Clear, step-by-step homework solutions</p>
     </div>
     """, unsafe_allow_html=True)
     
