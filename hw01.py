@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from io import BytesIO
 import re
+import secrets as pysecrets
+from urllib.parse import urlencode
 import sqlite3
 import hashlib
 import os
@@ -52,12 +54,12 @@ st.markdown("""
         margin-bottom: 1.25rem;
     }
     .brand-title {
-        font-size: 3.6rem;
+        font-size: 4rem;
         margin: 0.25rem 0 0.15rem 0;
         line-height: 1.05;
         background: 
             radial-gradient(120% 180% at 10% 10%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0) 60%),
-            conic-gradient(from 20deg at 50% 50%, #6ae3ff, #d4af37, #ff7ee2, #8be9fd, #b5ff7d, #6ae3ff);
+            conic-gradient(from 20deg at 50% 50%, #ff8af0, #6ae3ff, #1de9b6, #ffd54f, #ff8af0);
         -webkit-background-clip: text; background-clip: text; color: transparent;
         text-shadow: 0 2px 10px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.25);
         letter-spacing: 0.6px;
@@ -267,6 +269,34 @@ def init_db() -> None:
         conn.commit()
 
 
+def get_or_create_user_from_email(email: str, display_name: str | None = None) -> tuple[bool, int | None, str]:
+    """Find user by email-as-username; create if missing.
+
+    Returns (ok, user_id, message).
+    """
+    if not email:
+        return False, None, "Email not provided"
+    username = email.strip().lower()
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM users WHERE username=?", (username,))
+            row = cur.fetchone()
+            if row:
+                return True, row[0], "Signed in."
+            # Create with random password
+            random_pwd = pysecrets.token_urlsafe(24)
+            pwd_hash = _hash_password(random_pwd)
+            cur.execute(
+                "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
+                (username, pwd_hash, datetime.utcnow().isoformat()),
+            )
+            conn.commit()
+            return True, cur.lastrowid, "Account created via OAuth."
+    except sqlite3.Error as e:
+        return False, None, f"Database error: {str(e)}"
+
+
 def _hash_password(password: str) -> str:
     """Return salted hash using PBKDF2-HMAC-SHA256 as salt:hash (base64)."""
     salt = os.urandom(16)
@@ -369,7 +399,7 @@ def auth_ui() -> bool:
         login_bg_url = None
     if not login_bg_url:
         # Fallback to user-provided image if secrets not set
-        login_bg_url = "https://i.pinimg.com/736x/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
+        login_bg_url = "https://i.pinimg.com/originals/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
     st.markdown(
         f"""
         <style>
@@ -423,6 +453,46 @@ def auth_ui() -> bool:
                         st.success(msg)
                     else:
                         st.error(msg)
+
+        # Divider
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+        # OAuth buttons (placeholder links to begin OAuth externally)
+        st.markdown("**Or continue with**")
+        col_o1, col_o2 = st.columns(2)
+        with col_o1:
+            google_auth_url = st.secrets.get("GOOGLE_AUTH_URL", "")
+            if st.button("Continue with Google", key="oauth_google"):
+                if google_auth_url:
+                    st.markdown(f"<meta http-equiv='refresh' content='0; url={google_auth_url}'>", unsafe_allow_html=True)
+                else:
+                    # Demo: instantly create a user from a demo email if GOOGLE_DEMO_EMAIL is set
+                    demo_email = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
+                    if demo_email:
+                        ok, user_id, _ = get_or_create_user_from_email(demo_email)
+                        if ok:
+                            st.session_state["user_id"] = user_id
+                            st.session_state["username"] = demo_email
+                            st.success("Signed in with Google (demo)")
+                            st.rerun()
+                    else:
+                        st.info("Configure GOOGLE_AUTH_URL to enable Google sign-in.")
+        with col_o2:
+            github_auth_url = st.secrets.get("GITHUB_AUTH_URL", "")
+            if st.button("Continue with GitHub", key="oauth_github"):
+                if github_auth_url:
+                    st.markdown(f"<meta http-equiv='refresh' content='0; url={github_auth_url}'>", unsafe_allow_html=True)
+                else:
+                    demo_email = st.secrets.get("GITHUB_DEMO_EMAIL", "")
+                    if demo_email:
+                        ok, user_id, _ = get_or_create_user_from_email(demo_email)
+                        if ok:
+                            st.session_state["user_id"] = user_id
+                            st.session_state["username"] = demo_email
+                            st.success("Signed in with GitHub (demo)")
+                            st.rerun()
+                    else:
+                        st.info("Configure GITHUB_AUTH_URL to enable GitHub sign-in.")
         st.markdown('</div>', unsafe_allow_html=True)
 
     return bool(st.session_state.get("user_id"))
