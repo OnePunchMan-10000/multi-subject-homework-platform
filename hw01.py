@@ -29,6 +29,71 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    .stDeployButton {visibility: hidden;}
+    
+    /* Navigation Menu */
+    .nav-menu {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 15px 25px;
+        margin: 20px 0;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-item {
+        display: inline-block;
+        margin: 0 20px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 25px;
+        color: white !important;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .nav-item:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .nav-item.active {
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Footer */
+    .app-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 10px 0;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 12px;
+        z-index: 1000;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    
+    /* Add bottom padding to main content to avoid footer overlap */
+    .main .block-container {
+        padding-bottom: 60px !important;
+    }
     
     /* Clean, simple styling */
     .stApp {
@@ -237,6 +302,144 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# ---------------------------
+# Navigation and Footer Functions
+# ---------------------------
+
+def render_navigation():
+    """Render the top navigation menu"""
+    # Initialize page state
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = 'home'
+    
+    # Navigation menu
+    st.markdown("""
+    <div class="nav-menu">
+        <div style="text-align: center;">
+    """, unsafe_allow_html=True)
+    
+    # Create navigation buttons
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+    
+    with col1:
+        if st.button("🏠 Home", key="nav_home", help="Go to homepage"):
+            st.session_state.current_page = 'home'
+            st.rerun()
+    
+    with col2:
+        if st.button("👤 Profile", key="nav_profile", help="View your profile"):
+            st.session_state.current_page = 'profile'
+            st.rerun()
+    
+    with col3:
+        if st.button("📚 Subjects", key="nav_subjects", help="Browse subjects"):
+            st.session_state.current_page = 'subjects'
+            st.rerun()
+    
+    with col4:
+        if st.button("ℹ️ About", key="nav_about", help="About Edullm"):
+            st.session_state.current_page = 'about'
+            st.rerun()
+    
+    with col5:
+        if st.session_state.get('logged_in', False):
+            if st.button("🚪 Logout", key="nav_logout", help="Sign out"):
+                # Clear session
+                for key in list(st.session_state.keys()):
+                    if key not in ['current_page']:
+                        del st.session_state[key]
+                st.session_state.current_page = 'home'
+                st.success("Logged out successfully!")
+                st.rerun()
+        else:
+            if st.button("🔑 Login", key="nav_login", help="Sign in"):
+                st.session_state.current_page = 'home'
+                st.rerun()
+    
+    st.markdown("</div></div>", unsafe_allow_html=True)
+
+def render_footer():
+    """Render the bottom footer"""
+    st.markdown("""
+    <div class="app-footer">
+        <div class="footer-content">
+            © 2025 Edullm - Academic Assistant Pro. All rights reserved. | 
+            Empowering students with AI-powered homework solutions.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_home_page():
+    """Render the homepage with subject selection"""
+    st.markdown('<div class="main-header">Edullm</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Clear, step-by-step homework solutions</div>', unsafe_allow_html=True)
+    
+    # Subject selection
+    render_subject_grid()
+
+def render_profile_page():
+    """Render the user profile page"""
+    st.markdown('<div class="main-header">👤 User Profile</div>', unsafe_allow_html=True)
+    
+    if not st.session_state.get('logged_in', False):
+        st.warning("Please log in to view your profile.")
+        return
+    
+    user_email = st.session_state.get('user_email', 'Unknown')
+    st.markdown(f"""
+    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 20px 0;">
+        <h3>👋 Welcome back!</h3>
+        <p><strong>Email:</strong> {user_email}</p>
+        <p><strong>Member since:</strong> 2025</p>
+        <p><strong>Questions solved:</strong> Coming soon...</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_about_page():
+    """Render the about page"""
+    st.markdown('<div class="main-header">ℹ️ About Edullm</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; margin: 20px 0; line-height: 1.6;">
+        <h3>🎓 Your AI-Powered Academic Assistant</h3>
+        
+        <p><strong>Edullm</strong> is designed to help students excel in their academic journey by providing 
+        clear, step-by-step solutions to homework problems across multiple subjects.</p>
+        
+        <h4>📚 Subjects We Cover:</h4>
+        <ul>
+            <li>📐 <strong>Mathematics</strong> - Algebra, Calculus, Geometry, Statistics</li>
+            <li>🧪 <strong>Physics</strong> - Mechanics, Thermodynamics, Electromagnetism</li>
+            <li>⚗️ <strong>Chemistry</strong> - Organic, Inorganic, Physical Chemistry</li>
+            <li>🧬 <strong>Biology</strong> - Cell Biology, Genetics, Ecology</li>
+            <li>💻 <strong>Computer Science</strong> - Programming, Algorithms, Data Structures</li>
+            <li>📊 <strong>Economics</strong> - Micro, Macro, Econometrics</li>
+            <li>📖 <strong>English</strong> - Literature, Grammar, Writing</li>
+            <li>📜 <strong>History</strong> - World History, Analysis, Research</li>
+            <li>🌍 <strong>Geography</strong> - Physical, Human, Environmental</li>
+        </ul>
+        
+        <h4>✨ Features:</h4>
+        <ul>
+            <li>🤖 AI-powered explanations</li>
+            <li>📝 Step-by-step solutions</li>
+            <li>📊 Visual diagrams and graphs</li>
+            <li>💾 Save your solution history</li>
+            <li>🔐 Secure user accounts</li>
+        </ul>
+        
+        <h4>🚀 Mission:</h4>
+        <p>To make quality education accessible to every student by providing instant, 
+        accurate, and comprehensive homework assistance.</p>
+        
+        <hr style="border: 1px solid rgba(255,255,255,0.3); margin: 20px 0;">
+        
+        <p style="text-align: center; opacity: 0.8;">
+            <em>Built with ❤️ for students worldwide</em>
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ---------------------------
 # Auth + Storage (SQLite)
@@ -510,16 +713,25 @@ def auth_ui() -> bool:
             username = st.text_input("Username", placeholder="Enter your username", label_visibility="visible")
             password = st.text_input("Password", type="password", placeholder="Enter your password", label_visibility="visible")
             login_btn = st.form_submit_button("Login", use_container_width=True)
-            
-            if login_btn and username and password:
-                ok, user_id, msg = authenticate_user(username, password)
-                if ok:
-                    st.session_state["user_id"] = user_id
-                    st.session_state["username"] = username.strip().lower()
-                    st.success("Logged in successfully!")
-                    st.rerun()
+
+            if login_btn:
+                if not username or not password:
+                    st.error("Username and password required")
                 else:
-                    st.error(msg)
+                    ok, token_or_err = backend_login(username, password)
+                    if ok:
+                        token = token_or_err
+                        st.session_state["access_token"] = token
+                        ok2, me_or_err = backend_get_me(token)
+                        if ok2:
+                            st.session_state["user_id"] = me_or_err.get("id")
+                            st.session_state["username"] = me_or_err.get("username")
+                            st.success("Logged in successfully!")
+                            st.rerun()
+                        else:
+                            st.error(f"Login succeeded but fetching user failed: {me_or_err}")
+                    else:
+                        st.error(f"Login failed: {token_or_err}")
     
     with tab2:
         with st.form("register_form"):
@@ -527,12 +739,14 @@ def auth_ui() -> bool:
             new_pass = st.text_input("Password", type="password", placeholder="Choose password", key="reg_password")
             confirm_pass = st.text_input("Confirm Password", type="password", placeholder="Confirm password", key="reg_confirm")
             register_btn = st.form_submit_button("Create Account", use_container_width=True)
-            
-            if register_btn and new_user and new_pass:
-                if new_pass != confirm_pass:
+
+            if register_btn:
+                if not new_user or not new_pass:
+                    st.error("Username and password required")
+                elif new_pass != confirm_pass:
                     st.error("Passwords do not match.")
                 else:
-                    ok, msg = register_user(new_user, new_pass)
+                    ok, msg = backend_register(new_user, new_pass)
                     if ok:
                         st.success(msg)
                     else:
@@ -1328,6 +1542,56 @@ def get_api_response(question, subject):
         st.error(f"Network Error: {str(e)}")
         return None
 
+
+# ---------------------------
+# Backend helpers (HTTP)
+# ---------------------------
+try:
+    BACKEND_URL = st.secrets.get('BACKEND_URL', 'http://127.0.0.1:8000')
+except:
+    BACKEND_URL = 'http://127.0.0.1:8000'
+
+def backend_register(username: str, password: str) -> tuple[bool, str]:
+    try:
+        r = requests.post(f"{BACKEND_URL}/auth/register", json={"username": username, "password": password}, timeout=6)
+        if r.status_code in (200, 201):
+            return True, r.json().get('message', 'Account created')
+        # Attempt to read common error message
+        try:
+            return False, r.json().get('detail', r.text)
+        except Exception:
+            return False, r.text
+    except requests.RequestException as e:
+        return False, str(e)
+
+
+def backend_login(username: str, password: str) -> tuple[bool, str]:
+    try:
+        # backend expects form data for OAuth2PasswordRequestForm
+        r = requests.post(f"{BACKEND_URL}/auth/login", data={"username": username, "password": password}, timeout=6)
+        if r.status_code == 200:
+            return True, r.json().get('access_token')
+        try:
+            return False, r.json().get('detail', r.text)
+        except Exception:
+            return False, r.text
+    except requests.RequestException as e:
+        return False, str(e)
+
+
+def backend_get_me(token: str) -> tuple[bool, dict | str]:
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        r = requests.get(f"{BACKEND_URL}/auth/me", headers=headers, timeout=6)
+        if r.status_code == 200:
+            return True, r.json()
+        try:
+            return False, r.json().get('detail', r.text)
+        except Exception:
+            return False, r.text
+    except requests.RequestException as e:
+        return False, str(e)
+
 def format_powers(text):
     """Convert ^2, ^3, etc. to proper superscript format"""
     # Replace common powers with superscript
@@ -1452,10 +1716,30 @@ def format_response(response_text):
 def main():
     init_db()
     
-    # Auth gate
+    # Auth gate - if not logged in, show only login page
     if not st.session_state.get("user_id"):
+        # No navigation on login page, keep it clean
         if not auth_ui():
             return
+    
+    # User is logged in - show navigation
+    render_navigation()
+    
+    # Check current page (only after login)
+    current_page = st.session_state.get('current_page', 'home')
+    
+    # Handle different pages
+    if current_page == 'profile':
+        render_profile_page()
+        render_footer()
+        return
+    elif current_page == 'about':
+        render_about_page()
+        render_footer()
+        return
+    elif current_page == 'subjects':
+        # Set selected_subject to None to show subject grid
+        st.session_state["selected_subject"] = None
 
     # Stage 1: Subject-only page (full width) with gold/silver theme override
     if not st.session_state.get("selected_subject"):
@@ -1573,13 +1857,8 @@ def main():
                 # Intentionally do not render the answer to reduce visual bloat and storage usage in UI
                 st.markdown("---")
 
-    # Simple footer
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align: center; color: #666; padding: 1rem;">
-        <p>🎓 Academic Assistant Pro - Focus on Learning</p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Render footer
+    render_footer()
 
 if __name__ == "__main__":
     main()
