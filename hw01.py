@@ -434,7 +434,7 @@ def auth_ui() -> bool:
         unsafe_allow_html=True,
     )
 
-    # Full-page centered container for ALL login components including header
+    # Full-page centered container for ALL login components
     st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
     
     # Header inside container
@@ -445,82 +445,81 @@ def auth_ui() -> bool:
     </div>
     """, unsafe_allow_html=True)
     
-    cols_top = st.columns([1, 2, 1])
-    with cols_top[1]:
-        st.markdown("<h2 class='auth-title'>🔐 Sign in</h2>", unsafe_allow_html=True)
-        st.markdown("<div class='auth-sub'>Access your study assistant</div>", unsafe_allow_html=True)
-        tabs = st.tabs(["Login", "Register"])
+    st.markdown("<h2 class='auth-title'>🔐 Sign in</h2>", unsafe_allow_html=True)
+    st.markdown("<div class='auth-sub'>Access your study assistant</div>", unsafe_allow_html=True)
+    tabs = st.tabs(["Login", "Register"])
 
-        with tabs[0]:
-            lg_user = st.text_input("Username", key="login_user")
-            lg_pass = st.text_input("Password", type="password", key="login_pass")
-            if st.button("Login", key="login_btn"):
-                ok, user_id, msg = authenticate_user(lg_user, lg_pass)
+    with tabs[0]:
+        lg_user = st.text_input("Username", key="login_user")
+        lg_pass = st.text_input("Password", type="password", key="login_pass")
+        if st.button("Login", key="login_btn"):
+            ok, user_id, msg = authenticate_user(lg_user, lg_pass)
+            if ok:
+                st.session_state["user_id"] = user_id
+                st.session_state["username"] = lg_user.strip().lower()
+                st.success("Logged in.")
+                st.rerun()
+            else:
+                st.error(msg)
+
+    with tabs[1]:
+        rg_user = st.text_input("New username", key="reg_user")
+        rg_pass = st.text_input("New password", type="password", key="reg_pass")
+        rg_pass2 = st.text_input("Confirm password", type="password", key="reg_pass2")
+        if st.button("Create account", key="reg_btn"):
+            if rg_pass != rg_pass2:
+                st.error("Passwords do not match.")
+            else:
+                ok, msg = register_user(rg_user, rg_pass)
                 if ok:
-                    st.session_state["user_id"] = user_id
-                    st.session_state["username"] = lg_user.strip().lower()
-                    st.success("Logged in.")
-                    st.rerun()
+                    st.success(msg)
                 else:
                     st.error(msg)
 
-        with tabs[1]:
-            rg_user = st.text_input("New username", key="reg_user")
-            rg_pass = st.text_input("New password", type="password", key="reg_pass")
-            rg_pass2 = st.text_input("Confirm password", type="password", key="reg_pass2")
-            if st.button("Create account", key="reg_btn"):
-                if rg_pass != rg_pass2:
-                    st.error("Passwords do not match.")
-                else:
-                    ok, msg = register_user(rg_user, rg_pass)
-                    if ok:
-                        st.success(msg)
+    # Divider
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+    # OAuth buttons (only show if configured or demo emails provided)
+    google_auth_url = st.secrets.get("GOOGLE_AUTH_URL", "")
+    github_auth_url = st.secrets.get("GITHUB_AUTH_URL", "")
+    # Treat placeholders as not configured
+    if isinstance(google_auth_url, str) and "YOUR_BACKEND" in google_auth_url:
+        google_auth_url = ""
+    if isinstance(github_auth_url, str) and "YOUR_BACKEND" in github_auth_url:
+        github_auth_url = ""
+    google_demo = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
+    github_demo = st.secrets.get("GITHUB_DEMO_EMAIL", "")
+    enable_google = bool(google_auth_url or google_demo)
+    enable_github = bool(github_auth_url or github_demo)
+
+    if enable_google or enable_github:
+        st.markdown("**Or continue with**")
+        cols = st.columns(2 if enable_google and enable_github else 1)
+        if enable_google:
+            with cols[0]:
+                if st.button("Continue with Google", key="oauth_google"):
+                    if google_auth_url:
+                        st.markdown(f"<meta http-equiv='refresh' content='0; url={google_auth_url}'>", unsafe_allow_html=True)
                     else:
-                        st.error(msg)
-
-        # Divider
-        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-        # OAuth buttons (only show if configured or demo emails provided)
-        google_auth_url = st.secrets.get("GOOGLE_AUTH_URL", "")
-        github_auth_url = st.secrets.get("GITHUB_AUTH_URL", "")
-        # Treat placeholders as not configured
-        if isinstance(google_auth_url, str) and "YOUR_BACKEND" in google_auth_url:
-            google_auth_url = ""
-        if isinstance(github_auth_url, str) and "YOUR_BACKEND" in github_auth_url:
-            github_auth_url = ""
-        google_demo = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
-        github_demo = st.secrets.get("GITHUB_DEMO_EMAIL", "")
-        enable_google = bool(google_auth_url or google_demo)
-        enable_github = bool(github_auth_url or github_demo)
-
-        if enable_google or enable_github:
-            st.markdown("**Or continue with**")
-            cols = st.columns(2 if enable_google and enable_github else 1)
-            if enable_google:
-                with cols[0]:
-                    if st.button("Continue with Google", key="oauth_google"):
-                        if google_auth_url:
-                            st.markdown(f"<meta http-equiv='refresh' content='0; url={google_auth_url}'>", unsafe_allow_html=True)
-                        else:
-                            ok, user_id, _ = get_or_create_user_from_email(google_demo)
-                            if ok:
-                                st.session_state["user_id"] = user_id
-                                st.session_state["username"] = google_demo
-                                st.success("Signed in with Google (demo)")
-                                st.rerun()
-            if enable_github:
-                with cols[1 if enable_google and enable_github else 0]:
-                    if st.button("Continue with GitHub", key="oauth_github"):
-                        if github_auth_url:
-                            st.markdown(f"<meta http-equiv='refresh' content='0; url={github_auth_url}'>", unsafe_allow_html=True)
-                        else:
-                            ok, user_id, _ = get_or_create_user_from_email(github_demo)
-                            if ok:
-                                st.session_state["user_id"] = user_id
-                                st.session_state["username"] = github_demo
-                                st.success("Signed in with GitHub (demo)")
-                                st.rerun()
+                        ok, user_id, _ = get_or_create_user_from_email(google_demo)
+                        if ok:
+                            st.session_state["user_id"] = user_id
+                            st.session_state["username"] = google_demo
+                            st.success("Signed in with Google (demo)")
+                            st.rerun()
+        if enable_github:
+            with cols[1 if enable_google and enable_github else 0]:
+                if st.button("Continue with GitHub", key="oauth_github"):
+                    if github_auth_url:
+                        st.markdown(f"<meta http-equiv='refresh' content='0; url={github_auth_url}'>", unsafe_allow_html=True)
+                    else:
+                        ok, user_id, _ = get_or_create_user_from_email(github_demo)
+                        if ok:
+                            st.session_state["user_id"] = user_id
+                            st.session_state["username"] = github_demo
+                            st.success("Signed in with GitHub (demo)")
+                            st.rerun()
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
     return bool(st.session_state.get("user_id"))
