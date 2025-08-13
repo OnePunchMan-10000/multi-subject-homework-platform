@@ -54,22 +54,20 @@ st.markdown("""
         margin-bottom: 1.25rem;
     }
     .brand-title {
-        font-size: 4.4rem;
+        font-size: 5.2rem;
         margin: 0.25rem 0 0.15rem 0;
         line-height: 1.05;
-        background: 
-            radial-gradient(120% 180% at 10% 10%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0) 60%),
-            conic-gradient(from 10deg at 50% 50%, #fffbea 0%, #d4af37 18%, #e6e2d3 32%, #c0c0c0 48%, #f5e6a8 62%, #bdbdbd 78%, #fffbea 100%);
+        background: linear-gradient(135deg, #d4af37 0%, #c0c0c0 50%, #d4af37 100%);
         -webkit-background-clip: text; background-clip: text; color: transparent;
-        -webkit-text-stroke: 1.6px rgba(0,0,0,0.35);
+        -webkit-text-stroke: 2px rgba(0,0,0,0.35);
         text-shadow:
-            0 1px 0 rgba(255,255,255,0.25),
-            0 6px 10px rgba(0,0,0,0.45),
-            0 14px 26px rgba(0,0,0,0.35),
-            0 0 36px rgba(212, 175, 55, 0.25),
-            0 0 54px rgba(192, 192, 192, 0.20);
-        filter: drop-shadow(0 10px 24px rgba(0,0,0,0.35));
-        letter-spacing: 0.6px;
+            0 2px 0 rgba(255,255,255,0.25),
+            0 6px 12px rgba(0,0,0,0.45),
+            0 16px 28px rgba(0,0,0,0.35),
+            0 0 40px rgba(212, 175, 55, 0.3),
+            0 0 60px rgba(192, 192, 192, 0.25);
+        filter: drop-shadow(0 12px 28px rgba(0,0,0,0.4));
+        letter-spacing: 0.8px;
     }
     .brand-sub { margin-top: 0.2rem; opacity: 0.96; text-shadow: 0 1px 6px rgba(0,0,0,0.3); }
     
@@ -427,8 +425,17 @@ def auth_ui() -> bool:
         unsafe_allow_html=True,
     )
 
-    # Full-page centered container for ALL login components
+    # Full-page centered container for ALL login components including header
     st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+    
+    # Header inside container
+    st.markdown("""
+    <div class="main-header">
+        <h1 class="brand-title" style="margin:0.25rem 0;">Edullm</h1>
+        <p class="brand-sub" style="margin:0.1rem 0 0.25rem 0;">Clear, step-by-step homework solutions</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     cols_top = st.columns([1, 2, 1])
     with cols_top[1]:
         st.markdown("<h2 class='auth-title'>🔐 Sign in</h2>", unsafe_allow_html=True)
@@ -1386,15 +1393,6 @@ def format_response(response_text):
 
 def main():
     init_db()
-    # Header
-    st.markdown("""
-    <div class="main-header">
-        <div style="max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.18); border-radius: 14px; padding: 0.75rem 1rem; backdrop-filter: blur(6px);">
-            <h1 class="brand-title" style="margin:0.25rem 0;">Edullm</h1>
-            <p class="brand-sub" style="margin:0.1rem 0 0.25rem 0;">Clear, step-by-step homework solutions</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
     
     # Auth gate
     if not st.session_state.get("user_id"):
@@ -1423,10 +1421,26 @@ def main():
             """,
             unsafe_allow_html=True,
         )
+        # Header for subjects page
+        st.markdown("""
+        <div class="main-header">
+            <h1 class="brand-title" style="margin:0.25rem 0;">Edullm</h1>
+            <p class="brand-sub" style="margin:0.1rem 0 0.25rem 0;">Clear, step-by-step homework solutions</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         _ = render_subject_grid(columns=4)
         return
 
     # Stage 2: Question UI after subject selection
+    # Header for question page
+    st.markdown("""
+    <div class="main-header">
+        <h1 class="brand-title" style="margin:0.25rem 0;">Edullm</h1>
+        <p class="brand-sub" style="margin:0.1rem 0 0.25rem 0;">Clear, step-by-step homework solutions</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     selected_subject = st.session_state.get("selected_subject")
     top_left, top_right = st.columns([3, 1])
     with top_left:
