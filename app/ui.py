@@ -43,6 +43,9 @@ def render_navigation():
     if 'current_page' not in st.session_state:
         st.session_state.current_page = 'home'
     
+    # Check if user is logged in (using user_id)
+    is_logged_in = bool(st.session_state.get("user_id"))
+    
     # Navigation menu
     st.markdown("""
     <div class="nav-menu">
@@ -73,7 +76,7 @@ def render_navigation():
             st.rerun()
     
     with col5:
-        if st.session_state.get('logged_in', False):
+        if is_logged_in:
             if st.button("🚪 Logout", key="nav_logout", help="Sign out"):
                 # Clear session
                 for key in list(st.session_state.keys()):
@@ -88,7 +91,7 @@ def render_navigation():
                 st.rerun()
     
     # Admin button (only visible when logged in)
-    if st.session_state.get('logged_in', False):
+    if is_logged_in:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🔐 Admin", key="nav_admin", help="Admin database access"):
             st.session_state.current_page = 'admin'
@@ -122,15 +125,15 @@ def render_profile_page():
     """Render the user profile page"""
     st.markdown('<div class="main-header">👤 User Profile</div>', unsafe_allow_html=True)
     
-    if not st.session_state.get('logged_in', False):
+    if not st.session_state.get("user_id"):
         st.warning("Please log in to view your profile.")
         return
     
-    user_email = st.session_state.get('user_email', 'Unknown')
+    username = st.session_state.get("username", "Unknown")
     st.markdown(f"""
     <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 20px 0;">
         <h3>👋 Welcome back!</h3>
-        <p><strong>Email:</strong> {user_email}</p>
+        <p><strong>Username:</strong> {username}</p>
         <p><strong>Member since:</strong> 2025</p>
         <p><strong>Questions solved:</strong> Coming soon...</p>
     </div>
@@ -378,6 +381,10 @@ def admin_ui():
         st.error("Wrong password")
         return
 
+    # Debug: Show current session state
+    st.subheader("🔍 Debug: Session State")
+    st.json(st.session_state)
+    
     db_path = os.path.join(os.getcwd(), "app_data.db")
     if not os.path.exists(db_path):
         st.warning(f"Database not found at {db_path}. Run the app and register a user first.")
