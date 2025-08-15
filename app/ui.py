@@ -403,18 +403,45 @@ def admin_ui():
         
         # Check if tables exist
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tables = cursor.fetchall()
+        
+        # Check database type and use appropriate queries
+        try:
+            # Try PostgreSQL-style query first
+            cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+            tables = cursor.fetchall()
+            is_postgres = True
+            st.info("🔍 Detected: PostgreSQL database")
+        except:
+            # Fallback to SQLite
+            try:
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                tables = cursor.fetchall()
+                is_postgres = False
+                st.info("🔍 Detected: SQLite database")
+            except Exception as e:
+                st.error(f"❌ Could not determine database type: {e}")
+                return
+        
         st.info(f"📋 Available tables: {[t[0] for t in tables]}")
         
         # Show users with detailed debugging
         if ('users',) in tables:
             st.subheader("👥 Users")
             
-            # Check table structure
-            cursor.execute("PRAGMA table_info(users)")
-            columns = cursor.fetchall()
-            st.info(f"Users table columns: {[col[1] for col in columns]}")
+            # Check table structure based on database type
+            if is_postgres:
+                cursor.execute("""
+                    SELECT column_name, data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'users' 
+                    ORDER BY ordinal_position
+                """)
+                columns = cursor.fetchall()
+                st.info(f"Users table columns: {[col[0] for col in columns]}")
+            else:
+                cursor.execute("PRAGMA table_info(users)")
+                columns = cursor.fetchall()
+                st.info(f"Users table columns: {[col[1] for col in columns]}")
             
             # Check row count
             cursor.execute("SELECT COUNT(*) FROM users")
@@ -447,10 +474,20 @@ def admin_ui():
         if ('history',) in tables:
             st.subheader("📝 Recent History")
             
-            # Check table structure
-            cursor.execute("PRAGMA table_info(history)")
-            columns = cursor.fetchall()
-            st.info(f"History table columns: {[col[1] for col in columns]}")
+            # Check table structure based on database type
+            if is_postgres:
+                cursor.execute("""
+                    SELECT column_name, data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'history' 
+                    ORDER BY ordinal_position
+                """)
+                columns = cursor.fetchall()
+                st.info(f"History table columns: {[col[0] for col in columns]}")
+            else:
+                cursor.execute("PRAGMA table_info(history)")
+                columns = cursor.fetchall()
+                st.info(f"History table columns: {[col[1] for col in columns]}")
             
             # Check row count
             cursor.execute("SELECT COUNT(*) FROM history")
