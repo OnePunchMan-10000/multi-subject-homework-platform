@@ -32,6 +32,11 @@ def main():
         render_about_page()
         render_footer()
         return
+    elif current_page == 'admin':
+        from app.ui import admin_ui
+        admin_ui()
+        render_footer()
+        return
     elif current_page == 'subjects':
         # Set selected_subject to None to show subject grid
         st.session_state["selected_subject"] = None

@@ -6,6 +6,9 @@ from app.subjects import SUBJECTS
 from app.backend import backend_register, backend_login, backend_get_me
 from app.backend import backend_save_history
 from app.db import get_or_create_user_from_email
+import os
+import sqlite3
+import pandas as pd
 
 # Page CSS and styling
 _GLOBAL_CSS = r"""
@@ -83,6 +86,13 @@ def render_navigation():
             if st.button("🔑 Login", key="nav_login", help="Sign in"):
                 st.session_state.current_page = 'home'
                 st.rerun()
+    
+    # Admin button (only visible when logged in)
+    if st.session_state.get('logged_in', False):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🔐 Admin", key="nav_admin", help="Admin database access"):
+            st.session_state.current_page = 'admin'
+            st.rerun()
     
     st.markdown("</div></div>", unsafe_allow_html=True)
 
@@ -350,5 +360,49 @@ def render_subject_grid(columns: int = 4) -> str | None:
                 st.markdown("</div>", unsafe_allow_html=True)
 
     return selected
+
+
+def admin_ui():
+    """Admin-only DB viewer (requires ADMIN_PASSWORD in st.secrets)."""
+    admin_pw = st.secrets.get("ADMIN_PASSWORD", None)
+    if not admin_pw:
+        st.error("Admin UI not configured. Set ADMIN_PASSWORD in Streamlit secrets.")
+        return
+
+    pw = st.text_input("Admin password", type="password")
+    if not pw:
+        st.info("Enter admin password to view DB")
+        return
+
+    if pw != admin_pw:
+        st.error("Wrong password")
+        return
+
+    db_path = os.path.join(os.getcwd(), "app_data.db")
+    if not os.path.exists(db_path):
+        st.warning(f"Database not found at {db_path}. Run the app and register a user first.")
+        return
+
+    try:
+        conn = sqlite3.connect(db_path)
+        df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
+        st.subheader("👥 Users")
+        st.table(df_users)
+
+        df_hist = pd.read_sql_query("""
+            SELECT h.id, u.username, h.subject, substr(h.question,1,200) as question_preview, h.created_at
+            FROM history h JOIN users u ON h.user_id = u.id
+            ORDER BY h.id DESC LIMIT 50
+        """, conn)
+        st.subheader("📝 Recent History")
+        st.table(df_hist)
+
+        # download users CSV
+        csv = df_users.to_csv(index=False).encode("utf-8")
+        st.download_button("📥 Download users CSV", data=csv, file_name="users.csv", mime="text/csv")
+
+        conn.close()
+    except Exception as e:
+        st.error(f"Database error: {e}")
 
 
