@@ -20,8 +20,6 @@ if IS_POSTGRES:
     import psycopg2
     import psycopg2.extras
 
-CORS(app)  # Enable CORS for all routes
-
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
