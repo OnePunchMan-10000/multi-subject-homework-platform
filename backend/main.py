@@ -156,14 +156,14 @@ def create_user(username: str, password_hash: str) -> int:
     if IS_POSTGRES:
         with _connect() as conn:
             cur = conn.cursor()
-            cur.execute(_adjust_query('INSERT INTO users (username, password_hash) VALUES (?, ?) RETURNING id'), (username_clean, password_hash))
+            cur.execute(_adjust_query('INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, now()) RETURNING id'), (username_clean, password_hash))
             new_id = cur.fetchone()[0]
             conn.commit()
             return int(new_id)
     else:
-        with sqlite3.connect(DB_PATH) as conn:
+        with _connect() as conn:
             cur = conn.cursor()
-            cur.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username_clean, password_hash))
+            cur.execute('INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, datetime("now"))', (username_clean, password_hash))
             conn.commit()
             return cur.lastrowid
 
@@ -171,10 +171,10 @@ def save_user_history(user_id: int, subject: str, question: str, answer: str):
     if IS_POSTGRES:
         with _connect() as conn:
             cur = conn.cursor()
-            cur.execute(_adjust_query('INSERT INTO history (user_id, subject, question, answer) VALUES (?, ?, ?, ?)'), (user_id, subject, question, answer))
+            cur.execute(_adjust_query('INSERT INTO history (user_id, subject, question, answer, created_at) VALUES (?, ?, ?, ?, now())'), (user_id, subject, question, answer))
             conn.commit()
     else:
-        with sqlite3.connect(DB_PATH) as conn:
+        with _connect() as conn:
             cur = conn.cursor()
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS history (
@@ -263,16 +263,28 @@ def me():
 def admin_users():
     """Admin endpoint to view all users (for debugging)"""
     try:
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
+        conn = _connect()
+        cur = conn.cursor()
+        
+        if IS_POSTGRES:
             cur.execute('SELECT id, username, created_at FROM users ORDER BY created_at DESC')
-            users = [dict(row) for row in cur.fetchall()]
-            return {
-                'total_users': len(users),
-                'users': users,
-                'database_path': DB_PATH
-            }
+        else:
+            cur.execute('SELECT id, username, created_at FROM users ORDER BY created_at DESC')
+        
+        users = []
+        for row in cur.fetchall():
+            users.append({
+                'id': row[0],
+                'username': row[1],
+                'created_at': str(row[2])
+            })
+        
+        conn.close()
+        return {
+            'total_users': len(users),
+            'users': users,
+            'database_type': 'PostgreSQL' if IS_POSTGRES else 'SQLite'
+        }
     except Exception as e:
         return {'error': str(e)}, 500
 
