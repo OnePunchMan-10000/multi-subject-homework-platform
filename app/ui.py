@@ -419,36 +419,88 @@ def admin_ui():
         tables = cursor.fetchall()
         st.info(f"📋 Available tables: {[t[0] for t in tables]}")
         
-        # Show users
+        # Show users with detailed debugging
         if ('users',) in tables:
-            df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
             st.subheader("👥 Users")
-            if len(df_users) > 0:
+            
+            # Check table structure
+            cursor.execute("PRAGMA table_info(users)")
+            columns = cursor.fetchall()
+            st.info(f"Users table columns: {[col[1] for col in columns]}")
+            
+            # Check row count
+            cursor.execute("SELECT COUNT(*) FROM users")
+            user_count = cursor.fetchone()[0]
+            st.info(f"Total users in table: {user_count}")
+            
+            if user_count > 0:
+                df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
                 st.table(df_users)
                 st.success(f"Found {len(df_users)} users")
             else:
                 st.warning("Users table exists but is empty")
+                
+                # Try to see if there are any rows at all
+                cursor.execute("SELECT * FROM users LIMIT 5")
+                any_rows = cursor.fetchall()
+                if any_rows:
+                    st.info(f"Raw user data found: {any_rows}")
+                else:
+                    st.info("No user rows found in table")
         else:
             st.warning("Users table not found")
 
-        # Show history
+        # Show history with detailed debugging
         if ('history',) in tables:
-            df_hist = pd.read_sql_query("""
-                SELECT h.id, u.username, h.subject, substr(h.question,1,200) as question_preview, h.created_at
-                FROM history h JOIN users u ON h.user_id = u.id
-                ORDER BY h.id DESC LIMIT 50
-            """, conn)
             st.subheader("📝 Recent History")
-            if len(df_hist) > 0:
+            
+            # Check table structure
+            cursor.execute("PRAGMA table_info(history)")
+            columns = cursor.fetchall()
+            st.info(f"History table columns: {[col[1] for col in columns]}")
+            
+            # Check row count
+            cursor.execute("SELECT COUNT(*) FROM history")
+            history_count = cursor.fetchone()[0]
+            st.info(f"Total history entries: {history_count}")
+            
+            if history_count > 0:
+                df_hist = pd.read_sql_query("""
+                    SELECT h.id, u.username, h.subject, substr(h.question,1,200) as question_preview, h.created_at
+                    FROM history h JOIN users u ON h.user_id = u.id
+                    ORDER BY h.id DESC LIMIT 50
+                """, conn)
                 st.table(df_hist)
                 st.success(f"Found {len(df_hist)} history entries")
             else:
                 st.warning("History table exists but is empty")
+                
+                # Try to see if there are any rows at all
+                cursor.execute("SELECT * FROM history LIMIT 5")
+                any_rows = cursor.fetchall()
+                if any_rows:
+                    st.info(f"Raw history data found: {any_rows}")
+                else:
+                    st.info("No history rows found in table")
         else:
             st.warning("History table not found")
 
+        # Try direct queries without JOIN to see if data exists
+        st.subheader("🔍 Direct Table Queries (Debug)")
+        
+        if ('users',) in tables:
+            cursor.execute("SELECT * FROM users")
+            all_users = cursor.fetchall()
+            st.info(f"All users (raw): {all_users}")
+        
+        if ('history',) in tables:
+            cursor.execute("SELECT * FROM history")
+            all_history = cursor.fetchall()
+            st.info(f"All history (raw): {all_history}")
+
         # download users CSV if users exist
-        if ('users',) in tables and len(df_users) > 0:
+        if ('users',) in tables and user_count > 0:
+            df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
             csv = df_users.to_csv(index=False).encode("utf-8")
             st.download_button("📥 Download users CSV", data=csv, file_name="users.csv", mime="text/csv")
 
@@ -456,5 +508,7 @@ def admin_ui():
     except Exception as e:
         st.error(f"❌ Database error: {e}")
         st.error("This might be a database connection or permission issue on Streamlit Sharing.")
+        import traceback
+        st.error(f"Full error traceback: {traceback.format_exc()}")
 
 
