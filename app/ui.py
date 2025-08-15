@@ -385,33 +385,21 @@ def admin_ui():
     st.subheader("🔍 Debug: Session State")
     st.json(st.session_state)
     
-    # Try multiple possible database paths for Streamlit Sharing
-    possible_paths = [
-        "app_data.db",  # Current directory
-        "/tmp/app_data.db",  # Temp directory
-        "/home/appuser/app_data.db",  # User home
-        os.path.join(os.getcwd(), "app_data.db"),  # Full path
-        os.path.join(os.path.dirname(__file__), "..", "app_data.db"),  # Relative to app folder
-    ]
-    
-    db_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            db_path = path
-            break
-    
-    if not db_path:
-        st.error("❌ Database not found! Tried these paths:")
-        for path in possible_paths:
-            st.write(f"   • {path}")
-        st.warning("The database might be in a different location on Streamlit Sharing.")
-        return
-
-    st.success(f"✅ Database found at: {db_path}")
-    st.info(f"📁 File size: {os.path.getsize(db_path)} bytes")
-    
+    # Use the SAME database connection method as the main app
     try:
-        conn = sqlite3.connect(db_path)
+        # Import the database module to use the same connection logic
+        from app.db import _connect
+        
+        st.subheader("🔗 Database Connection")
+        st.info("Using the same database connection method as the main app...")
+        
+        # Get database connection using the app's method
+        conn = _connect()
+        if not conn:
+            st.error("❌ Failed to get database connection using app's method")
+            return
+            
+        st.success("✅ Connected to database using app's connection method")
         
         # Check if tables exist
         cursor = conn.cursor()
@@ -437,6 +425,11 @@ def admin_ui():
                 df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
                 st.table(df_users)
                 st.success(f"Found {len(df_users)} users")
+                
+                # Show raw data for verification
+                cursor.execute("SELECT * FROM users ORDER BY id DESC")
+                raw_users = cursor.fetchall()
+                st.info(f"Raw user data: {raw_users}")
             else:
                 st.warning("Users table exists but is empty")
                 
@@ -472,6 +465,11 @@ def admin_ui():
                 """, conn)
                 st.table(df_hist)
                 st.success(f"Found {len(df_hist)} history entries")
+                
+                # Show raw data for verification
+                cursor.execute("SELECT * FROM history ORDER BY id DESC LIMIT 10")
+                raw_history = cursor.fetchall()
+                st.info(f"Raw history data: {raw_history}")
             else:
                 st.warning("History table exists but is empty")
                 
@@ -498,15 +496,146 @@ def admin_ui():
             all_history = cursor.fetchall()
             st.info(f"All history (raw): {all_history}")
 
-        # download users CSV if users exist
+        # Download users CSV if users exist
         if ('users',) in tables and user_count > 0:
             df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
             csv = df_users.to_csv(index=False).encode("utf-8")
             st.download_button("📥 Download users CSV", data=csv, file_name="users.csv", mime="text/csv")
 
         conn.close()
+        
+    except ImportError:
+        st.error("❌ Could not import app.db module. Using fallback connection method...")
+        
+        # Fallback: Try to find database file
+        possible_paths = [
+            "app_data.db",  # Current directory
+            "/tmp/app_data.db",  # Temp directory
+            "/home/appuser/app_data.db",  # User home
+            os.path.join(os.getcwd(), "app_data.db"),  # Full path
+            os.path.join(os.path.dirname(__file__), "..", "app_data.db"),  # Relative to app folder
+        ]
+        
+        db_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                db_path = path
+                break
+        
+        if not db_path:
+            st.error("❌ Database not found! Tried these paths:")
+            for path in possible_paths:
+                st.write(f"   • {path}")
+            st.warning("The database might be in a different location on Streamlit Sharing.")
+            return
+
+        st.success(f"✅ Database found at: {db_path}")
+        st.info(f"📁 File size: {os.path.getsize(db_path)} bytes")
+        
+        try:
+            conn = sqlite3.connect(db_path)
+            
+            # Check if tables exist
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = cursor.fetchall()
+            st.info(f"📋 Available tables: {[t[0] for t in tables]}")
+            
+            # Show users with detailed debugging
+            if ('users',) in tables:
+                st.subheader("👥 Users")
+                
+                # Check table structure
+                cursor.execute("PRAGMA table_info(users)")
+                columns = cursor.fetchall()
+                st.info(f"Users table columns: {[col[1] for col in columns]}")
+                
+                # Check row count
+                cursor.execute("SELECT COUNT(*) FROM users")
+                user_count = cursor.fetchone()[0]
+                st.info(f"Total users in table: {user_count}")
+                
+                if user_count > 0:
+                    df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
+                    st.table(df_users)
+                    st.success(f"Found {len(df_users)} users")
+                else:
+                    st.warning("Users table exists but is empty")
+                    
+                    # Try to see if there are any rows at all
+                    cursor.execute("SELECT * FROM users LIMIT 5")
+                    any_rows = cursor.fetchall()
+                    if any_rows:
+                        st.info(f"Raw user data found: {any_rows}")
+                    else:
+                        st.info("No user rows found in table")
+            else:
+                st.warning("Users table not found")
+
+            # Show history with detailed debugging
+            if ('history',) in tables:
+                st.subheader("📝 Recent History")
+                
+                # Check table structure
+                cursor.execute("PRAGMA table_info(history)")
+                columns = cursor.fetchall()
+                st.info(f"History table columns: {[col[1] for col in columns]}")
+                
+                # Check row count
+                cursor.execute("SELECT COUNT(*) FROM history")
+                history_count = cursor.fetchone()[0]
+                st.info(f"Total history entries: {history_count}")
+                
+                if history_count > 0:
+                    df_hist = pd.read_sql_query("""
+                        SELECT h.id, u.username, h.subject, substr(h.question,1,200) as question_preview, h.created_at
+                        FROM history h JOIN users u ON h.user_id = u.id
+                        ORDER BY h.id DESC LIMIT 50
+                    """, conn)
+                    st.table(df_hist)
+                    st.success(f"Found {len(df_hist)} history entries")
+                else:
+                    st.warning("History table exists but is empty")
+                    
+                    # Try to see if there are any rows at all
+                    cursor.execute("SELECT * FROM history LIMIT 5")
+                    any_rows = cursor.fetchall()
+                    if any_rows:
+                        st.info(f"Raw history data found: {any_rows}")
+                    else:
+                        st.info("No history rows found in table")
+            else:
+                st.warning("History table not found")
+
+            # Try direct queries without JOIN to see if data exists
+            st.subheader("🔍 Direct Table Queries (Debug)")
+            
+            if ('users',) in tables:
+                cursor.execute("SELECT * FROM users")
+                all_users = cursor.fetchall()
+                st.info(f"All users (raw): {all_users}")
+            
+            if ('history',) in tables:
+                cursor.execute("SELECT * FROM history")
+                all_history = cursor.fetchall()
+                st.info(f"All history (raw): {all_history}")
+
+            # Download users CSV if users exist
+            if ('users',) in tables and user_count > 0:
+                df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
+                csv = df_users.to_csv(index=False).encode("utf-8")
+                st.download_button("📥 Download users CSV", data=csv, file_name="users.csv", mime="text/csv")
+
+            conn.close()
+            
+        except Exception as e:
+            st.error(f"❌ Database error: {e}")
+            st.error("This might be a database connection or permission issue on Streamlit Sharing.")
+            import traceback
+            st.error(f"Full error traceback: {traceback.format_exc()}")
+            
     except Exception as e:
-        st.error(f"❌ Database error: {e}")
+        st.error(f"❌ Error: {e}")
         st.error("This might be a database connection or permission issue on Streamlit Sharing.")
         import traceback
         st.error(f"Full error traceback: {traceback.format_exc()}")
