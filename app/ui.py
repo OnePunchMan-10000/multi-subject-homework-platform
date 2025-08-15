@@ -384,6 +384,22 @@ def admin_ui():
     # Debug: Show current session state
     st.subheader("🔍 Debug: Session State")
     st.json(st.session_state)
+
+    # Debug: Masked DATABASE_URL display (temporary) — shows only prefix, never full secret
+    try:
+        db_secret = st.secrets.get("DATABASE_URL") if hasattr(st, "secrets") else None
+    except Exception:
+        db_secret = None
+    if not db_secret:
+        # fallback to environment variable
+        db_secret = os.environ.get("DATABASE_URL")
+
+    if db_secret:
+        masked = db_secret[:12] + "..." if len(db_secret) > 12 else db_secret
+        st.info(f"🔐 DATABASE_URL visible (masked): {masked}")
+        st.caption("This is a masked preview to confirm the secret is available to the app. Remove this debug after verification.")
+    else:
+        st.warning("🔐 DATABASE_URL not found in Streamlit secrets or environment for this deployment.")
     
     # Use the SAME database connection method as the main app
     try:
