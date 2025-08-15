@@ -385,31 +385,76 @@ def admin_ui():
     st.subheader("🔍 Debug: Session State")
     st.json(st.session_state)
     
-    db_path = os.path.join(os.getcwd(), "app_data.db")
-    if not os.path.exists(db_path):
-        st.warning(f"Database not found at {db_path}. Run the app and register a user first.")
+    # Try multiple possible database paths for Streamlit Sharing
+    possible_paths = [
+        "app_data.db",  # Current directory
+        "/tmp/app_data.db",  # Temp directory
+        "/home/appuser/app_data.db",  # User home
+        os.path.join(os.getcwd(), "app_data.db"),  # Full path
+        os.path.join(os.path.dirname(__file__), "..", "app_data.db"),  # Relative to app folder
+    ]
+    
+    db_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            db_path = path
+            break
+    
+    if not db_path:
+        st.error("❌ Database not found! Tried these paths:")
+        for path in possible_paths:
+            st.write(f"   • {path}")
+        st.warning("The database might be in a different location on Streamlit Sharing.")
         return
 
+    st.success(f"✅ Database found at: {db_path}")
+    st.info(f"📁 File size: {os.path.getsize(db_path)} bytes")
+    
     try:
         conn = sqlite3.connect(db_path)
-        df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
-        st.subheader("👥 Users")
-        st.table(df_users)
+        
+        # Check if tables exist
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = cursor.fetchall()
+        st.info(f"📋 Available tables: {[t[0] for t in tables]}")
+        
+        # Show users
+        if ('users',) in tables:
+            df_users = pd.read_sql_query("SELECT id, username, created_at FROM users ORDER BY id DESC", conn)
+            st.subheader("👥 Users")
+            if len(df_users) > 0:
+                st.table(df_users)
+                st.success(f"Found {len(df_users)} users")
+            else:
+                st.warning("Users table exists but is empty")
+        else:
+            st.warning("Users table not found")
 
-        df_hist = pd.read_sql_query("""
-            SELECT h.id, u.username, h.subject, substr(h.question,1,200) as question_preview, h.created_at
-            FROM history h JOIN users u ON h.user_id = u.id
-            ORDER BY h.id DESC LIMIT 50
-        """, conn)
-        st.subheader("📝 Recent History")
-        st.table(df_hist)
+        # Show history
+        if ('history',) in tables:
+            df_hist = pd.read_sql_query("""
+                SELECT h.id, u.username, h.subject, substr(h.question,1,200) as question_preview, h.created_at
+                FROM history h JOIN users u ON h.user_id = u.id
+                ORDER BY h.id DESC LIMIT 50
+            """, conn)
+            st.subheader("📝 Recent History")
+            if len(df_hist) > 0:
+                st.table(df_hist)
+                st.success(f"Found {len(df_hist)} history entries")
+            else:
+                st.warning("History table exists but is empty")
+        else:
+            st.warning("History table not found")
 
-        # download users CSV
-        csv = df_users.to_csv(index=False).encode("utf-8")
-        st.download_button("📥 Download users CSV", data=csv, file_name="users.csv", mime="text/csv")
+        # download users CSV if users exist
+        if ('users',) in tables and len(df_users) > 0:
+            csv = df_users.to_csv(index=False).encode("utf-8")
+            st.download_button("📥 Download users CSV", data=csv, file_name="users.csv", mime="text/csv")
 
         conn.close()
     except Exception as e:
-        st.error(f"Database error: {e}")
+        st.error(f"❌ Database error: {e}")
+        st.error("This might be a database connection or permission issue on Streamlit Sharing.")
 
 
