@@ -3,6 +3,9 @@
 Run with: streamlit run run.py
 """
 
+# Import local config first to set up database connection
+import local_config
+
 from app.main import main
 import streamlit as st
 

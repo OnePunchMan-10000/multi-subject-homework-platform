@@ -13,11 +13,35 @@ import base64
 import json
 from datetime import datetime, timedelta, timezone
 
+# Support Postgres when DATABASE_URL is present
+DATABASE_URL = os.environ.get('DATABASE_URL')
+IS_POSTGRES = bool(DATABASE_URL)
+if IS_POSTGRES:
+    import psycopg2
+    import psycopg2.extras
+
+CORS(app)  # Enable CORS for all routes
+
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Database setup
 DB_PATH = 'app_data.db'
+
+
+def _adjust_query(query: str) -> str:
+    """Convert sqlite-style placeholders (?) to psycopg2 (%s) when using Postgres."""
+    if IS_POSTGRES:
+        return query.replace('?', '%s')
+    return query
+
+
+def _connect():
+    """Return a DB connection for sqlite or postgres depending on environment."""
+    if IS_POSTGRES:
+        # psycopg2 accepts the full DATABASE_URL
+        return psycopg2.connect(DATABASE_URL)
+    return sqlite3.connect(DB_PATH)
 
 # PBKDF2 parameters
 _ITERATIONS = 100_000
@@ -74,55 +98,112 @@ def decode_token(token: str) -> dict:
         raise ValueError('Invalid token')
 
 def init_db():
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                created_at TEXT DEFAULT (datetime('now'))
-            );
-        ''')
-        conn.commit()
+    if IS_POSTGRES:
+        with _connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT now()
+                );
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS history (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    subject TEXT NOT NULL,
+                    question TEXT NOT NULL,
+                    answer TEXT NOT NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT now(),
+                    FOREIGN KEY(user_id) REFERENCES users(id)
+                );
+                """
+            )
+            conn.commit()
+    else:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TEXT DEFAULT (datetime('now'))
+                );
+            ''')
+            conn.commit()
 
 def get_user_by_username(username: str):
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cur = conn.cursor()
-        cur.execute('SELECT * FROM users WHERE username = ?', (username.strip().lower(),))
-        row = cur.fetchone()
-        return dict(row) if row else None
+    username_clean = username.strip().lower()
+    if IS_POSTGRES:
+        with _connect() as conn:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_adjust_query('SELECT * FROM users WHERE username = ?'), (username_clean,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+    else:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM users WHERE username = ?', (username_clean,))
+            row = cur.fetchone()
+            return dict(row) if row else None
 
 def create_user(username: str, password_hash: str) -> int:
-    with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
-        cur.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username, password_hash))
-        conn.commit()
-        return cur.lastrowid
+    username_clean = username.strip().lower()
+    if IS_POSTGRES:
+        with _connect() as conn:
+            cur = conn.cursor()
+            cur.execute(_adjust_query('INSERT INTO users (username, password_hash) VALUES (?, ?) RETURNING id'), (username_clean, password_hash))
+            new_id = cur.fetchone()[0]
+            conn.commit()
+            return int(new_id)
+    else:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username_clean, password_hash))
+            conn.commit()
+            return cur.lastrowid
 
 def save_user_history(user_id: int, subject: str, question: str, answer: str):
-    with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                subject TEXT NOT NULL,
-                question TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                created_at TEXT DEFAULT (datetime('now'))
-            );
-        ''')
-        cur.execute('INSERT INTO history (user_id, subject, question, answer) VALUES (?, ?, ?, ?)', 
-                   (user_id, subject, question, answer))
-        conn.commit()
+    if IS_POSTGRES:
+        with _connect() as conn:
+            cur = conn.cursor()
+            cur.execute(_adjust_query('INSERT INTO history (user_id, subject, question, answer) VALUES (?, ?, ?, ?)'), (user_id, subject, question, answer))
+            conn.commit()
+    else:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    subject TEXT NOT NULL,
+                    question TEXT NOT NULL,
+                    answer TEXT NOT NULL,
+                    created_at TEXT DEFAULT (datetime('now'))
+                );
+            ''')
+            cur.execute('INSERT INTO history (user_id, subject, question, answer) VALUES (?, ?, ?, ?)', 
+                       (user_id, subject, question, answer))
+            conn.commit()
 
 def get_user_history(user_id: int, limit: int = 20):
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cur = conn.cursor()
-        cur.execute('SELECT * FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?', (user_id, limit))
-        return [dict(row) for row in cur.fetchall()]
+    if IS_POSTGRES:
+        with _connect() as conn:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_adjust_query('SELECT * FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?'), (user_id, limit))
+            return [dict(row) for row in cur.fetchall()]
+    else:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?', (user_id, limit))
+            return [dict(row) for row in cur.fetchall()]
 
 # Initialize database on startup
 init_db()

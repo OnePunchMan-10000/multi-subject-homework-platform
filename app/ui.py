@@ -369,31 +369,101 @@ def admin_ui():
     """Admin panel for viewing user data."""
     st.title("🔐 Admin Panel")
     
-    # Simple hardcoded display - bypass all the broken DB logic
-    st.subheader("👥 Users (Hardcoded Display)")
+    # Show database connection info
+    from app.db import _connect, IS_POSTGRES, DATABASE_URL
+    st.subheader("🔗 Database Connection")
     
-    # Display the users we know exist
-    users_data = [
-        {"id": 1, "username": "user1", "created_at": "2024-01-01"},
-        {"id": 2, "username": "user2", "created_at": "2024-01-01"}
-    ]
+    if IS_POSTGRES:
+        st.success("✅ Connected to PostgreSQL (Railway)")
+        if DATABASE_URL:
+            masked_url = DATABASE_URL[:20] + "..." if len(DATABASE_URL) > 20 else DATABASE_URL
+            st.info(f"Database: {masked_url}")
+    else:
+        st.info("📁 Using local SQLite database")
     
-    st.table(users_data)
-    st.success(f"Found {len(users_data)} users")
-    
-    # Download CSV
-    import pandas as pd
-    df = pd.DataFrame(users_data)
-    csv = df.to_csv(index=False).encode("utf-8")
-    st.download_button("📥 Download users CSV", data=csv, file_name="users.csv", mime="text/csv")
-    
-    st.subheader("📝 Recent History")
-    st.info("History display temporarily disabled - users are visible above")
+    # Try to get real user data from the active database
+    try:
+        conn = _connect()
+        cursor = conn.cursor()
+        
+        # Check which tables exist and have data
+        if IS_POSTGRES:
+            cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+            tables = [row[0] for row in cursor.fetchall()]
+        else:
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = [row[0] for row in cursor.fetchall()]
+        
+        st.subheader("📋 Available Tables")
+        st.info(f"Tables: {tables}")
+        
+        # Try to get users from various possible table names
+        user_data = []
+        for table_name in ['users', 'user']:
+            if table_name in tables:
+                try:
+                    if IS_POSTGRES:
+                        cursor.execute(f'SELECT COUNT(*) FROM "{table_name}"')
+                    else:
+                        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+                    count = cursor.fetchone()[0]
+                    
+                    if count > 0:
+                        if IS_POSTGRES:
+                            cursor.execute(f'SELECT id, username, created_at FROM "{table_name}" ORDER BY id')
+                        else:
+                            cursor.execute(f"SELECT id, username, created_at FROM {table_name} ORDER BY id")
+                        users = cursor.fetchall()
+                        
+                        for user in users:
+                            user_data.append({
+                                "id": user[0],
+                                "username": user[1], 
+                                "created_at": str(user[2])
+                            })
+                        break
+                except Exception as e:
+                    st.warning(f"Error reading {table_name} table: {e}")
+        
+        if user_data:
+            st.subheader("👥 Users (Real Data)")
+            st.table(user_data)
+            st.success(f"Found {len(user_data)} users in database")
+            
+            # Download CSV
+            import pandas as pd
+            df = pd.DataFrame(user_data)
+            csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button("📥 Download users CSV", data=csv, file_name="users.csv", mime="text/csv")
+        else:
+            st.subheader("👥 Users")
+            st.warning("No users found in any table")
+            
+            # Show hardcoded fallback
+            st.info("Showing fallback data:")
+            fallback_users = [
+                {"id": 1, "username": "user1", "created_at": "2024-01-01"},
+                {"id": 2, "username": "user2", "created_at": "2024-01-01"}
+            ]
+            st.table(fallback_users)
+        
+        conn.close()
+        
+    except Exception as e:
+        st.error(f"Database error: {e}")
+        st.subheader("👥 Users (Fallback)")
+        st.info("Showing fallback data due to database error:")
+        fallback_users = [
+            {"id": 1, "username": "user1", "created_at": "2024-01-01"},
+            {"id": 2, "username": "user2", "created_at": "2024-01-01"}
+        ]
+        st.table(fallback_users)
     
     st.subheader("🔧 Debug Info")
     st.json({
         "session_state": dict(st.session_state),
-        "database_url_set": bool(os.environ.get("DATABASE_URL")),
+        "database_type": "PostgreSQL" if IS_POSTGRES else "SQLite",
+        "database_url_set": bool(DATABASE_URL),
         "streamlit_secrets_available": hasattr(st, "secrets")
     })
 
