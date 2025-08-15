@@ -3,10 +3,10 @@
 import os
 
 # Replace this with your actual Railway DATABASE_PUBLIC_URL
-RAILWAY_DB_URL = "YOUR_RAILWAY_DATABASE_PUBLIC_URL"
+RAILWAY_DB_URL = "postgresql://postgres:fycQPvBIaSbjkmxOWWQYehSwjFELDlkK@crossover.proxy.rlwy.net:23265/railway"
 
 # Set the environment variable so the app connects to Railway PostgreSQL
-if RAILWAY_DB_URL != "YOUR_RAILWAY_DATABASE_PUBLIC_URL":
+if RAILWAY_DB_URL != "postgresql://postgres:fycQPvBIaSbjkmxOWWQYehSwjFELDlkK@crossover.proxy.rlwy.net:23265/railway":
     os.environ["DATABASE_URL"] = RAILWAY_DB_URL
     print(f"✅ Connected to Railway PostgreSQL: {RAILWAY_DB_URL[:20]}...")
 else:
