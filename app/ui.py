@@ -484,7 +484,52 @@ def admin_ui():
                 else:
                     st.info("No user rows found in table")
         else:
-            st.warning("Users table not found")
+            # Try the legacy "user" table (some deployments use this name)
+            table_names = [t[0] for t in tables]
+            if 'user' in table_names or ('user',) in tables:
+                st.subheader("👥 Users (from \"user\" table)")
+                # Check table structure
+                if is_postgres:
+                    cursor.execute("""
+                        SELECT column_name, data_type
+                        FROM information_schema.columns
+                        WHERE table_name = 'user'
+                        ORDER BY ordinal_position
+                    """)
+                    columns = cursor.fetchall()
+                    st.info(f"User table columns: {[col[0] for col in columns]}")
+                    cursor.execute('SELECT COUNT(*) FROM "user"')
+                    user_count = cursor.fetchone()[0]
+                else:
+                    cursor.execute("PRAGMA table_info(user)")
+                    columns = cursor.fetchall()
+                    st.info(f"User table columns: {[col[1] for col in columns]}")
+                    cursor.execute('SELECT COUNT(*) FROM user')
+                    user_count = cursor.fetchone()[0]
+
+                st.info(f"Total users in 'user' table: {user_count}")
+                if user_count > 0:
+                    # Read and display rows
+                    if is_postgres:
+                        df_users = pd.read_sql_query('SELECT id, username, created_at FROM "user" ORDER BY id DESC', conn)
+                    else:
+                        df_users = pd.read_sql_query('SELECT id, username, created_at FROM user ORDER BY id DESC', conn)
+                    st.table(df_users)
+                    st.success(f"Found {len(df_users)} users in 'user' table")
+                    # Raw data
+                    if is_postgres:
+                        cursor.execute('SELECT * FROM "user" ORDER BY id DESC')
+                    else:
+                        cursor.execute('SELECT * FROM user ORDER BY id DESC')
+                    raw_users = cursor.fetchall()
+                    st.info(f"Raw user data: {raw_users}")
+                    # Offer CSV download
+                    csv = df_users.to_csv(index=False).encode("utf-8")
+                    st.download_button("📥 Download users CSV (from 'user')", data=csv, file_name="users_from_user_table.csv", mime="text/csv")
+                else:
+                    st.warning("'user' table exists but is empty")
+            else:
+                st.warning("Users table not found")
 
         # Show history with detailed debugging
         if ('history',) in tables:
@@ -623,7 +668,35 @@ def admin_ui():
                     else:
                         st.info("No user rows found in table")
             else:
-                st.warning("Users table not found")
+                # Try the legacy "user" table (some deployments use this name)
+                table_names = [t[0] for t in tables]
+                if 'user' in table_names or ('user',) in tables:
+                    st.subheader("👥 Users (from \"user\" table)")
+                    # Check table structure
+                    cursor.execute("PRAGMA table_info(user)")
+                    columns = cursor.fetchall()
+                    st.info(f"User table columns: {[col[1] for col in columns]}")
+                    cursor.execute('SELECT COUNT(*) FROM user')
+                    user_count = cursor.fetchone()[0]
+
+                    st.info(f"Total users in 'user' table: {user_count}")
+                    if user_count > 0:
+                        # Read and display rows
+                        cursor.execute('SELECT id, username, created_at FROM user ORDER BY id DESC')
+                        df_users = cursor.fetchall()
+                        st.table(df_users)
+                        st.success(f"Found {len(df_users)} users in 'user' table")
+                        # Raw data
+                        cursor.execute('SELECT * FROM user ORDER BY id DESC')
+                        raw_users = cursor.fetchall()
+                        st.info(f"Raw user data: {raw_users}")
+                        # Offer CSV download
+                        csv = pd.DataFrame(raw_users, columns=['id', 'username', 'created_at']).to_csv(index=False).encode("utf-8")
+                        st.download_button("📥 Download users CSV (from 'user')", data=csv, file_name="users_from_user_table.csv", mime="text/csv")
+                    else:
+                        st.warning("'user' table exists but is empty")
+                else:
+                    st.warning("Users table not found")
 
             # Show history with detailed debugging
             if ('history',) in tables:
