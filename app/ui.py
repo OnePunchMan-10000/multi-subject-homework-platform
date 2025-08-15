@@ -369,6 +369,21 @@ def admin_ui():
     """Admin panel for viewing user data."""
     st.title("🔐 Admin Panel")
     
+    # Admin password protection
+    admin_pw = st.secrets.get("ADMIN_PASSWORD", None)
+    if not admin_pw:
+        st.error("Admin UI not configured. Set ADMIN_PASSWORD in Streamlit secrets.")
+        return
+    
+    pw = st.text_input("Admin password", type="password")
+    if not pw:
+        st.info("Enter admin password to view database")
+        return
+    
+    if pw != admin_pw:
+        st.error("Wrong password")
+        return
+    
     # Show database connection info
     from app.db import _connect, IS_POSTGRES, DATABASE_URL
     st.subheader("🔗 Database Connection")
