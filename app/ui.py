@@ -202,6 +202,12 @@ def auth_ui() -> bool:
     .stDeployButton {{visibility: hidden;}}
     .nav-menu {{display: none !important;}}
     
+    /* Hide stray top floating rounded/shadow boxes on auth page */
+    /* Targets elements inside .stApp that have both a box-shadow and border-radius style */
+    .stApp div[style*="box-shadow"][style*="border-radius"] { display: none !important; }
+    /* Also hide any fixed-position rounded elements (common for floating headers) */
+    .stApp div[style*="position: fixed"][style*="border-radius"] { display: none !important; }
+
     .stApp {{
         background-image: url('{login_bg_url}') !important;
         background-size: cover !important; 
