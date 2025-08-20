@@ -188,182 +188,45 @@ def render_about_page():
 
 
 def auth_ui() -> bool:
-    """Render a clean, professional login/register UI.
+    """Minimal login page: plain white background, plain text, simple form.
 
-    This replaces the previous CSS/JS hacks and provides a modern, responsive
-    auth panel centered on the page. Navigation remains hidden on the auth page.
+    This intentionally removes all previous CSS, JS and extra UI. Only the
+    necessary login form remains. Returns True when the user is authenticated.
     """
-    login_bg_url = "https://i.pinimg.com/originals/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
-
-    # Modern minimal CSS (use f-string; double braces for literal CSS braces)
-    st.markdown(f"""
+    # Plain white background
+    st.markdown("""
     <style>
-    /* Hide default Streamlit chrome */
-    #MainMenu {{ visibility: hidden; }}
-    footer {{ visibility: hidden; }}
-    header {{ visibility: hidden; }}
-    .nav-menu {{ display: none !important; }}
-
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-    .stApp {{
-        background-image: url('{login_bg_url}') !important;
-        background-size: cover !important;
-        background-position: center !important;
-        background-attachment: fixed !important;
-    }}
-
-    /* Centered auth wrapper */
-    .auth-wrapper {{
-        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-        max-width: 720px;
-        margin: 6vh auto;
-        padding: 36px 36px;
-        border-radius: 12px;
-        background: rgba(8, 16, 24, 0.62);
-        border: 1px solid rgba(255,255,255,0.04);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        color: #ffffff;
-    }}
-
-    .auth-header {{ margin-bottom: 18px; }}
-    .brand-title {{ font-size: 34px; font-weight: 700; margin: 0 0 6px 0; color: #fff; }}
-    .brand-subtitle {{ color: rgba(255,255,255,0.88); margin: 0 0 16px 0; font-size: 14px; }}
-
-    .form-row {{ margin-bottom: 12px; }}
-    .stTextInput>div>div>input {{ height:44px; border-radius:8px; background: rgba(255,255,255,0.04); color:#fff; padding:10px 12px; }}
-
-    .primary-btn button {{ background: linear-gradient(90deg,#ff5a5f,#ff9b6b); border-radius:10px; color:#fff; padding:12px 18px; font-weight:600; border:none; }}
-    .secondary-btn button {{ background: rgba(255,255,255,0.95); color:#111; border-radius:10px; padding:10px 14px; font-weight:600; border:none; }}
-
-    .oauth-section {{ margin-top: 18px; display:flex; gap:12px; }}
-
-    @media (max-width: 720px) {{
-        .auth-wrapper {{ margin: 3vh 16px; padding: 20px; }}
-        .brand-title {{ font-size: 26px; }}
-    }}
+    .stApp { background: #ffffff !important; color: #111111 !important; }
+    .css-1d391kg, .css-1v3fvcr, .stMarkdown { color: #111111 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-    # Auth container
-    st.markdown('<div class="auth-wrapper">', unsafe_allow_html=True)
-    st.markdown('<div class="auth-header"><div class="brand-title">Edullm</div><div class="brand-subtitle">Clear, step-by-step homework solutions</div></div>', unsafe_allow_html=True)
+    st.write("Edullm")
+    st.write("Please sign in to continue.")
 
-    # Tabs: Login / Register
-    tab_login, tab_register = st.tabs(["Login", "Register"])
+    with st.form('login_form'):
+        username = st.text_input('Username')
+        password = st.text_input('Password', type='password')
+        submitted = st.form_submit_button('Login')
 
-    with tab_login:
-        with st.form('login_form'):
-            st.markdown('<div class="form-row">', unsafe_allow_html=True)
-            username = st.text_input('Username', placeholder='Enter your username', label_visibility='visible')
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            st.markdown('<div class="form-row">', unsafe_allow_html=True)
-            password = st.text_input('Password', type='password', placeholder='Enter your password', label_visibility='visible')
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            col_primary, col_secondary = st.columns([3,1])
-            with col_primary:
-                login_btn = st.form_submit_button('Login', key='login_btn', help='Sign in', use_container_width=True)
-            with col_secondary:
-                if st.button('Forgot', key='forgot_btn'):
-                    st.info('Password reset is not configured in this demo.')
-
-            if login_btn:
-                if not username or not password:
-                    st.error('Username and password required')
-                else:
-                    ok, token_or_err = backend_login(username, password)
-                    if ok:
-                        token = token_or_err
-                        st.session_state['access_token'] = token
-                        ok2, me_or_err = backend_get_me(token)
-                        if ok2:
-                            st.session_state['user_id'] = me_or_err.get('id')
-                            st.session_state['username'] = me_or_err.get('username')
-                            st.success('Logged in successfully!')
-                            st.rerun()
-                        else:
-                            st.error(f'Login succeeded but fetching user failed: {me_or_err}')
-                    else:
-                        st.error(f'Login failed: {token_or_err}')
-
-    with tab_register:
-        with st.form('register_form'):
-            new_user = st.text_input('Username', placeholder='Choose a username', key='reg_username')
-            new_pass = st.text_input('Password', type='password', placeholder='Choose a password', key='reg_password')
-            confirm_pass = st.text_input('Confirm Password', type='password', placeholder='Confirm password', key='reg_confirm')
-            register_btn = st.form_submit_button('Create Account', key='register_btn', use_container_width=True)
-
-            if register_btn:
-                if not new_user or not new_pass:
-                    st.error('Username and password required')
-                elif new_pass != confirm_pass:
-                    st.error('Passwords do not match.')
-                else:
-                    ok, msg = backend_register(new_user, new_pass)
-                    if ok:
-                        st.success(msg)
-                    else:
-                        st.error(msg)
-
-    # OAuth buttons
-    st.markdown('<div class="oauth-section">', unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button('Continue with Google', use_container_width=True, key='google_oauth'):
-            demo_email = st.secrets.get('GOOGLE_DEMO_EMAIL', '')
-            if demo_email:
-                demo_pwd = pysecrets.token_urlsafe(16)
-                reg_ok, reg_msg = backend_register(demo_email, demo_pwd)
-                login_ok, token_or_err = backend_login(demo_email, demo_pwd)
-                if not login_ok:
-                    ok, user_id, _ = get_or_create_user_from_email(demo_email)
-                    if ok:
-                        st.session_state['user_id'] = user_id
-                        st.session_state['username'] = demo_email
-                        st.success('Signed in with Google (local demo)!')
-                        st.rerun()
-                else:
+        if submitted:
+            if not username or not password:
+                st.error('Username and password required')
+            else:
+                ok, token_or_err = backend_login(username, password)
+                if ok:
                     token = token_or_err
                     st.session_state['access_token'] = token
                     ok2, me_or_err = backend_get_me(token)
                     if ok2:
                         st.session_state['user_id'] = me_or_err.get('id')
-                        st.session_state['username'] = demo_email
-                        st.success('Signed in with Google (backend demo)!')
+                        st.session_state['username'] = me_or_err.get('username')
+                        st.success('Logged in successfully!')
                         st.rerun()
-            else:
-                st.info('Configure GOOGLE_DEMO_EMAIL in secrets')
-    with col2:
-        if st.button('Continue with GitHub', use_container_width=True, key='github_oauth'):
-            demo_email = st.secrets.get('GITHUB_DEMO_EMAIL', '')
-            if demo_email:
-                demo_pwd = pysecrets.token_urlsafe(16)
-                reg_ok, reg_msg = backend_register(demo_email, demo_pwd)
-                login_ok, token_or_err = backend_login(demo_email, demo_pwd)
-                if not login_ok:
-                    ok, user_id, _ = get_or_create_user_from_email(demo_email)
-                    if ok:
-                        st.session_state['user_id'] = user_id
-                        st.session_state['username'] = demo_email
-                        st.success('Signed in with GitHub (local demo)!')
-                        st.rerun()
+                    else:
+                        st.error('Login succeeded but fetching user failed.')
                 else:
-                    token = token_or_err
-                    st.session_state['access_token'] = token
-                    ok2, me_or_err = backend_get_me(token)
-                    if ok2:
-                        st.session_state['user_id'] = me_or_err.get('id')
-                        st.session_state['username'] = demo_email
-                        st.success('Signed in with GitHub (backend demo)!')
-                        st.rerun()
-            else:
-                st.info('Configure GITHUB_DEMO_EMAIL in secrets')
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Close wrapper
-    st.markdown('</div>', unsafe_allow_html=True)
+                    st.error('Login failed.')
 
     return bool(st.session_state.get('user_id'))
 
