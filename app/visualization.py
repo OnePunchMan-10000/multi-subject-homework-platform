@@ -68,7 +68,7 @@ def create_smart_visualization(question: str, subject: str):
 
     try:
         plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(8, 5))  # Reduced size for smaller images as requested
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)  # Much smaller size to prevent full screen domination
         fig.patch.set_facecolor('white')
 
         if subject == "Mathematics":
@@ -520,7 +520,7 @@ def create_smart_visualization(question: str, subject: str):
             ax.legend()
 
         buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=180, facecolor='white')
+        plt.savefig(buf, format='png', dpi=180, facecolor='white', bbox_inches='tight', pad_inches=0.1)
         buf.seek(0)
         plt.close(fig)
         return buf
