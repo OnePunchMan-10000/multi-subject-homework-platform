@@ -16,7 +16,7 @@ def main():
         # No navigation on login page, keep it clean
         if not auth_ui():
             return
-    
+
     # User is logged in - show navigation
     render_navigation()
     

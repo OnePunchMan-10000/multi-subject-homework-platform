@@ -192,13 +192,15 @@ def auth_ui() -> bool:
     # It depends on backend_register/backend_login/backend_get_me and local fallback.
 
     login_bg_url = "https://i.pinimg.com/originals/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
+    # Hide navigation only on auth page and use a polished auth container look
     st.markdown(f"""
     <style>
-    /* Hide streamlit elements */
+    /* Hide streamlit elements and top nav on auth page */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
     .stDeployButton {{visibility: hidden;}}
+    .nav-menu {{display: none !important;}}
     
     .stApp {{
         background-image: url('{login_bg_url}') !important;
@@ -208,15 +210,28 @@ def auth_ui() -> bool:
     }}
     
     .auth-container {{
-        background: rgba(45, 55, 75, 0.95);
-        border-radius: 16px;
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-        backdrop-filter: blur(20px);
-        max-width: 480px;
-        margin: 5vh auto;
-        padding: 3rem 2.5rem;
-        color: white;
+        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 30px 60px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+        backdrop-filter: blur(10px) saturate(120%);
+        max-width: 720px;
+        margin: 6vh auto;
+        padding: 3.5rem 3rem;
+        color: #ffffff;
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }}
+
+    .brand-title {{ font-size: 48px; margin: 0 0 6px 0; font-weight: 700; color: #fff; letter-spacing: -0.5px }}
+    .brand-subtitle {{ color: rgba(255,255,255,0.85); margin-top: 0; margin-bottom: 1.4rem; font-size: 16px }}
+
+    .stButton>button, .stForm button {{ background: linear-gradient(90deg,#ff4d4f,#ff7a45); border-radius: 10px; border: none; padding: 12px 18px; color:#ffffff; font-weight:600 }}
+    .stTextInput>div>div>input {{ background: rgba(10,10,10,0.25); padding: 12px 14px; border-radius: 8px; color: #fff }}
+    .stTabs button[role="tab"] {{ font-weight:600 }}
+    
+    @media (max-width: 800px) {{
+        .auth-container {{ margin: 2vh 1rem; padding: 2rem 1.5rem; max-width: 100% }}
+        .brand-title {{ font-size: 32px }}
     }}
     </style>
     """, unsafe_allow_html=True)
