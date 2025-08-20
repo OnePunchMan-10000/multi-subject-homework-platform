@@ -20,17 +20,7 @@ _GLOBAL_CSS = r"""
     header {visibility: hidden;}
     .stDeployButton {visibility: hidden;}
     
-    /* Navigation Menu */
-    .nav-menu {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 15px 25px;
-        margin: 20px 0;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-    /* ... rest of CSS omitted for brevity in this file view; full CSS reproduced in original hw01.py */
+    /* Navigation menu removed for minimalist layout */
 </style>
 """
 
@@ -40,65 +30,8 @@ def render_global_css():
 
 def render_navigation():
     """Render the top navigation menu"""
-    # Initialize page state
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = 'home'
-    
-    # Check if user is logged in (using user_id)
-    is_logged_in = bool(st.session_state.get("user_id"))
-    
-    # Navigation menu
-    st.markdown("""
-    <div class="nav-menu">
-        <div style="text-align: center;">
-    """, unsafe_allow_html=True)
-    
-    # Create navigation buttons
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
-    
-    with col1:
-        if st.button("🏠 Home", key="nav_home", help="Go to homepage"):
-            st.session_state.current_page = 'home'
-            st.rerun()
-    
-    with col2:
-        if st.button("👤 Profile", key="nav_profile", help="View your profile"):
-            st.session_state.current_page = 'profile'
-            st.rerun()
-    
-    with col3:
-        if st.button("📚 Subjects", key="nav_subjects", help="Browse subjects"):
-            st.session_state.current_page = 'subjects'
-            st.rerun()
-    
-    with col4:
-        if st.button("ℹ️ About", key="nav_about", help="About Edullm"):
-            st.session_state.current_page = 'about'
-            st.rerun()
-    
-    with col5:
-        if is_logged_in:
-            if st.button("🚪 Logout", key="nav_logout", help="Sign out"):
-                # Clear session
-                for key in list(st.session_state.keys()):
-                    if key not in ['current_page']:
-                        del st.session_state[key]
-                st.session_state.current_page = 'home'
-                st.success("Logged out successfully!")
-                st.rerun()
-        else:
-            if st.button("🔑 Login", key="nav_login", help="Sign in"):
-                st.session_state.current_page = 'home'
-                st.rerun()
-    
-    # Admin button (only visible when logged in)
-    if is_logged_in:
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🔐 Admin", key="nav_admin", help="Admin database access"):
-            st.session_state.current_page = 'admin'
-            st.rerun()
-    
-    st.markdown("</div></div>", unsafe_allow_html=True)
+    # Navigation intentionally disabled for a minimal layout.
+    return
 
 
 def render_footer():

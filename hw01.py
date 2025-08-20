@@ -309,55 +309,8 @@ st.markdown("""
 
 def render_navigation():
     """Render the top navigation menu"""
-    # Initialize page state
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = 'home'
-    
-    # Navigation menu
-    st.markdown("""
-    <div class="nav-menu">
-        <div style="text-align: center;">
-    """, unsafe_allow_html=True)
-    
-    # Create navigation buttons
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
-    
-    with col1:
-        if st.button("🏠 Home", key="nav_home", help="Go to homepage"):
-            st.session_state.current_page = 'home'
-            st.rerun()
-    
-    with col2:
-        if st.button("👤 Profile", key="nav_profile", help="View your profile"):
-            st.session_state.current_page = 'profile'
-            st.rerun()
-    
-    with col3:
-        if st.button("📚 Subjects", key="nav_subjects", help="Browse subjects"):
-            st.session_state.current_page = 'subjects'
-            st.rerun()
-    
-    with col4:
-        if st.button("ℹ️ About", key="nav_about", help="About Edullm"):
-            st.session_state.current_page = 'about'
-            st.rerun()
-    
-    with col5:
-        if st.session_state.get('logged_in', False):
-            if st.button("🚪 Logout", key="nav_logout", help="Sign out"):
-                # Clear session
-                for key in list(st.session_state.keys()):
-                    if key not in ['current_page']:
-                        del st.session_state[key]
-                st.session_state.current_page = 'home'
-                st.success("Logged out successfully!")
-                st.rerun()
-        else:
-            if st.button("🔑 Login", key="nav_login", help="Sign in"):
-                st.session_state.current_page = 'home'
-                st.rerun()
-    
-    st.markdown("</div></div>", unsafe_allow_html=True)
+    # Navigation disabled in this distribution to remove floating nav bar
+    return
 
 def render_footer():
     """Render the bottom footer"""
