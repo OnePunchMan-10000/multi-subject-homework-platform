@@ -188,106 +188,118 @@ def render_about_page():
 
 
 def auth_ui() -> bool:
-    """Login page matching the first image design."""
-    # Note: For brevity this function reproduces the original auth UI behavior.
-    # It depends on backend_register/backend_login/backend_get_me and local fallback.
+    """Render a clean, professional login/register UI.
 
+    This replaces the previous CSS/JS hacks and provides a modern, responsive
+    auth panel centered on the page. Navigation remains hidden on the auth page.
+    """
     login_bg_url = "https://i.pinimg.com/originals/33/ff/b4/33ffb4819b0810c8ef39bf7b4f1b4f27.jpg"
-    # Hide navigation only on auth page and use a polished auth container look
+
+    # Modern minimal CSS (use f-string; double braces for literal CSS braces)
     st.markdown(f"""
     <style>
-    /* Hide streamlit elements and top nav on auth page */
-    #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
-    header {{visibility: hidden;}}
-    .stDeployButton {{visibility: hidden;}}
-    .nav-menu {{display: none !important;}}
-    
-    /* Hide stray top floating rounded/shadow boxes on auth page */
-    /* Targets elements inside .stApp that have both a box-shadow and border-radius style */
-    .stApp div[style*="box-shadow"][style*="border-radius"] {{ display: none !important; }}
-    /* Also hide any fixed-position rounded elements (common for floating headers) */
-    .stApp div[style*="position: fixed"][style*="border-radius"] {{ display: none !important; }}
+    /* Hide default Streamlit chrome */
+    #MainMenu {{ visibility: hidden; }}
+    footer {{ visibility: hidden; }}
+    header {{ visibility: hidden; }}
+    .nav-menu {{ display: none !important; }}
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
     .stApp {{
         background-image: url('{login_bg_url}') !important;
-        background-size: cover !important; 
-        background-position: center !important; 
+        background-size: cover !important;
+        background-position: center !important;
         background-attachment: fixed !important;
     }}
-    
-    .auth-container {{
-        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-        border-radius: 18px;
-        border: 1px solid rgba(255,255,255,0.08);
-        box-shadow: 0 30px 60px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
-        backdrop-filter: blur(10px) saturate(120%);
+
+    /* Centered auth wrapper */
+    .auth-wrapper {{
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
         max-width: 720px;
         margin: 6vh auto;
-        padding: 3.5rem 3rem;
+        padding: 36px 36px;
+        border-radius: 12px;
+        background: rgba(8, 16, 24, 0.62);
+        border: 1px solid rgba(255,255,255,0.04);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         color: #ffffff;
-        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-        position: relative; /* ensure it sits above stray floating elements */
-        z-index: 99999;
     }}
 
-    .brand-title {{ font-size: 48px; margin: 0 0 6px 0; font-weight: 700; color: #fff; letter-spacing: -0.5px }}
-    .brand-subtitle {{ color: rgba(255,255,255,0.85); margin-top: 0; margin-bottom: 1.4rem; font-size: 16px }}
+    .auth-header {{ margin-bottom: 18px; }}
+    .brand-title {{ font-size: 34px; font-weight: 700; margin: 0 0 6px 0; color: #fff; }}
+    .brand-subtitle {{ color: rgba(255,255,255,0.88); margin: 0 0 16px 0; font-size: 14px; }}
 
-    .stButton>button, .stForm button {{ background: linear-gradient(90deg,#ff4d4f,#ff7a45); border-radius: 10px; border: none; padding: 12px 18px; color:#ffffff; font-weight:600 }}
-    .stTextInput>div>div>input {{ background: rgba(10,10,10,0.25); padding: 12px 14px; border-radius: 8px; color: #fff }}
-    .stTabs button[role="tab"] {{ font-weight:600 }}
-    
-    @media (max-width: 800px) {{
-        .auth-container {{ margin: 2vh 1rem; padding: 2rem 1.5rem; max-width: 100% }}
-        .brand-title {{ font-size: 32px }}
+    .form-row {{ margin-bottom: 12px; }}
+    .stTextInput>div>div>input {{ height:44px; border-radius:8px; background: rgba(255,255,255,0.04); color:#fff; padding:10px 12px; }}
+
+    .primary-btn button {{ background: linear-gradient(90deg,#ff5a5f,#ff9b6b); border-radius:10px; color:#fff; padding:12px 18px; font-weight:600; border:none; }}
+    .secondary-btn button {{ background: rgba(255,255,255,0.95); color:#111; border-radius:10px; padding:10px 14px; font-weight:600; border:none; }}
+
+    .oauth-section {{ margin-top: 18px; display:flex; gap:12px; }}
+
+    @media (max-width: 720px) {{
+        .auth-wrapper {{ margin: 3vh 16px; padding: 20px; }}
+        .brand-title {{ font-size: 26px; }}
     }}
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="auth-container">', unsafe_allow_html=True)
-    st.markdown('<h1 class="brand-title">Edullm</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="brand-subtitle">Clear, step-by-step homework solutions</p>', unsafe_allow_html=True)
+    # Auth container
+    st.markdown('<div class="auth-wrapper">', unsafe_allow_html=True)
+    st.markdown('<div class="auth-header"><div class="brand-title">Edullm</div><div class="brand-subtitle">Clear, step-by-step homework solutions</div></div>', unsafe_allow_html=True)
 
-    tab1, tab2 = st.tabs(["Login", "Register"])
+    # Tabs: Login / Register
+    tab_login, tab_register = st.tabs(["Login", "Register"])
 
-    with tab1:
-        with st.form("login_form"):
-            username = st.text_input("Username", placeholder="Enter your username", label_visibility="visible")
-            password = st.text_input("Password", type="password", placeholder="Enter your password", label_visibility="visible")
-            login_btn = st.form_submit_button("Login", use_container_width=True)
+    with tab_login:
+        with st.form('login_form'):
+            st.markdown('<div class="form-row">', unsafe_allow_html=True)
+            username = st.text_input('Username', placeholder='Enter your username', label_visibility='visible')
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            st.markdown('<div class="form-row">', unsafe_allow_html=True)
+            password = st.text_input('Password', type='password', placeholder='Enter your password', label_visibility='visible')
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            col_primary, col_secondary = st.columns([3,1])
+            with col_primary:
+                login_btn = st.form_submit_button('Login', key='login_btn', help='Sign in', use_container_width=True)
+            with col_secondary:
+                if st.button('Forgot', key='forgot_btn'):
+                    st.info('Password reset is not configured in this demo.')
 
             if login_btn:
                 if not username or not password:
-                    st.error("Username and password required")
+                    st.error('Username and password required')
                 else:
                     ok, token_or_err = backend_login(username, password)
                     if ok:
                         token = token_or_err
-                        st.session_state["access_token"] = token
+                        st.session_state['access_token'] = token
                         ok2, me_or_err = backend_get_me(token)
                         if ok2:
-                            st.session_state["user_id"] = me_or_err.get("id")
-                            st.session_state["username"] = me_or_err.get("username")
-                            st.success("Logged in successfully!")
+                            st.session_state['user_id'] = me_or_err.get('id')
+                            st.session_state['username'] = me_or_err.get('username')
+                            st.success('Logged in successfully!')
                             st.rerun()
                         else:
-                            st.error(f"Login succeeded but fetching user failed: {me_or_err}")
+                            st.error(f'Login succeeded but fetching user failed: {me_or_err}')
                     else:
-                        st.error(f"Login failed: {token_or_err}")
+                        st.error(f'Login failed: {token_or_err}')
 
-    with tab2:
-        with st.form("register_form"):
-            new_user = st.text_input("Username", placeholder="Choose username", key="reg_username")
-            new_pass = st.text_input("Password", type="password", placeholder="Choose password", key="reg_password")
-            confirm_pass = st.text_input("Confirm Password", type="password", placeholder="Confirm password", key="reg_confirm")
-            register_btn = st.form_submit_button("Create Account", use_container_width=True)
+    with tab_register:
+        with st.form('register_form'):
+            new_user = st.text_input('Username', placeholder='Choose a username', key='reg_username')
+            new_pass = st.text_input('Password', type='password', placeholder='Choose a password', key='reg_password')
+            confirm_pass = st.text_input('Confirm Password', type='password', placeholder='Confirm password', key='reg_confirm')
+            register_btn = st.form_submit_button('Create Account', key='register_btn', use_container_width=True)
 
             if register_btn:
                 if not new_user or not new_pass:
-                    st.error("Username and password required")
+                    st.error('Username and password required')
                 elif new_pass != confirm_pass:
-                    st.error("Passwords do not match.")
+                    st.error('Passwords do not match.')
                 else:
                     ok, msg = backend_register(new_user, new_pass)
                     if ok:
@@ -295,123 +307,65 @@ def auth_ui() -> bool:
                     else:
                         st.error(msg)
 
-    # OAuth demo buttons (Google / GitHub)
+    # OAuth buttons
+    st.markdown('<div class="oauth-section">', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Continue with Google", use_container_width=True, key="google_btn"):
-            demo_email = st.secrets.get("GOOGLE_DEMO_EMAIL", "")
+        if st.button('Continue with Google', use_container_width=True, key='google_oauth'):
+            demo_email = st.secrets.get('GOOGLE_DEMO_EMAIL', '')
             if demo_email:
                 demo_pwd = pysecrets.token_urlsafe(16)
                 reg_ok, reg_msg = backend_register(demo_email, demo_pwd)
                 login_ok, token_or_err = backend_login(demo_email, demo_pwd)
                 if not login_ok:
-                    st.info("Demo login failed on backend. Falling back to local demo login.")
                     ok, user_id, _ = get_or_create_user_from_email(demo_email)
                     if ok:
-                        st.session_state["user_id"] = user_id
-                        st.session_state["username"] = demo_email
-                        st.success("Signed in with Google (local demo)!")
+                        st.session_state['user_id'] = user_id
+                        st.session_state['username'] = demo_email
+                        st.success('Signed in with Google (local demo)!')
                         st.rerun()
                 else:
                     token = token_or_err
-                    st.session_state["access_token"] = token
+                    st.session_state['access_token'] = token
                     ok2, me_or_err = backend_get_me(token)
                     if ok2:
-                        st.session_state["user_id"] = me_or_err.get("id")
-                        st.session_state["username"] = demo_email
-                        st.success("Signed in with Google (backend demo)!")
+                        st.session_state['user_id'] = me_or_err.get('id')
+                        st.session_state['username'] = demo_email
+                        st.success('Signed in with Google (backend demo)!')
                         st.rerun()
             else:
-                st.info("Configure GOOGLE_DEMO_EMAIL in secrets")
-
+                st.info('Configure GOOGLE_DEMO_EMAIL in secrets')
     with col2:
-        if st.button("Continue with GitHub", use_container_width=True, key="github_btn"):
-            demo_email = st.secrets.get("GITHUB_DEMO_EMAIL", "")
+        if st.button('Continue with GitHub', use_container_width=True, key='github_oauth'):
+            demo_email = st.secrets.get('GITHUB_DEMO_EMAIL', '')
             if demo_email:
                 demo_pwd = pysecrets.token_urlsafe(16)
                 reg_ok, reg_msg = backend_register(demo_email, demo_pwd)
                 login_ok, token_or_err = backend_login(demo_email, demo_pwd)
                 if not login_ok:
-                    st.info("Demo login failed on backend. Falling back to local demo login.")
                     ok, user_id, _ = get_or_create_user_from_email(demo_email)
                     if ok:
-                        st.session_state["user_id"] = user_id
-                        st.session_state["username"] = demo_email
-                        st.success("Signed in with GitHub (local demo)!")
+                        st.session_state['user_id'] = user_id
+                        st.session_state['username'] = demo_email
+                        st.success('Signed in with GitHub (local demo)!')
                         st.rerun()
                 else:
                     token = token_or_err
-                    st.session_state["access_token"] = token
+                    st.session_state['access_token'] = token
                     ok2, me_or_err = backend_get_me(token)
                     if ok2:
-                        st.session_state["user_id"] = me_or_err.get("id")
-                        st.session_state["username"] = demo_email
-                        st.success("Signed in with GitHub (backend demo)!")
+                        st.session_state['user_id'] = me_or_err.get('id')
+                        st.session_state['username'] = demo_email
+                        st.success('Signed in with GitHub (backend demo)!')
                         st.rerun()
             else:
-                st.info("Configure GITHUB_DEMO_EMAIL in secrets")
-
+                st.info('Configure GITHUB_DEMO_EMAIL in secrets')
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # Close wrapper
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Aggressive: remove any top-floating rounded/box-shadow element after DOM loads (runs twice)
-    components.html("""
-    <script>
-    (function(){
-      function removeCandidates(){
-        try{
-          const els = Array.from(document.querySelectorAll('body *'));
-          const removed = [];
-          els.forEach(function(el){
-            if(el.classList && el.classList.contains('auth-container')) return; // keep auth container
-            const cs = window.getComputedStyle(el);
-            if(!cs) return;
-            const bs = cs.boxShadow || '';
-            const br = parseFloat(cs.borderRadius) || 0;
-            const rect = el.getBoundingClientRect();
-            // Candidate: visible shadow or strong radius, wide enough, near top or fixed
-            if((bs && bs !== 'none' || br > 6) && rect.width > 180 && (rect.top < window.innerHeight*0.25 || cs.position === 'fixed')){
-              removed.push({tag: el.tagName.toLowerCase(), class: el.className, id: el.id || null, top: rect.top, width: rect.width});
-              el.style.display = 'none';
-            }
-          });
-          if(removed.length) console.log('AUTH_REMOVED_CANDIDATES', removed);
-        }catch(e){console.warn('auth-remove-js', e)}
-      }
-      window.addEventListener('load', function(){ setTimeout(removeCandidates, 80); setTimeout(removeCandidates, 300); });
-      // run immediately in case DOM already loaded
-      setTimeout(removeCandidates, 50);
-    })();
-    </script>
-    """, height=0)
 
-    # EXTRA: specifically hide Streamlit emotion cache elements that appear as floating previews
-    components.html("""
-    <script>
-    (function(){
-      function hideEmotionPreviews(){
-        try{
-          const candidates = Array.from(document.querySelectorAll('[class*="st-emotion-cache"], [class*="st-emotion"]'));
-          const removed = [];
-          candidates.forEach(function(el){
-            const rect = el.getBoundingClientRect();
-            const cs = window.getComputedStyle(el);
-            // Heuristic: small banner near top or with top < 140 and width > 200
-            if(rect.top >= 0 && rect.top < 140 && rect.width > 200 && rect.height < window.innerHeight*0.6){
-              el.style.display = 'none';
-              removed.push({class: el.className, top: rect.top, width: rect.width, height: rect.height});
-            }
-          });
-          if(removed.length) console.log('HIDDEN_EMOTION_PREVIEWS', removed);
-        }catch(e){console.warn('hide-emotion-previews', e)}
-      }
-      window.addEventListener('load', function(){ setTimeout(hideEmotionPreviews, 80); setTimeout(hideEmotionPreviews, 400); });
-      setTimeout(hideEmotionPreviews, 60);
-    })();
-    </script>
-    """, height=0)
-
-    return bool(st.session_state.get("user_id"))
+    return bool(st.session_state.get('user_id'))
 
 
 def render_subject_grid(columns: int = 4) -> str | None:
