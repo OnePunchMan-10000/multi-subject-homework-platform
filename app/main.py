@@ -11,11 +11,35 @@ from app.backend import backend_save_history, backend_get_history
 def main():
     init_db()
     
-    # Auth gate - if not logged in, show only login page
-    if not st.session_state.get("user_id"):
-        # No navigation on login page, keep it clean
+    # If the user requested to see the login page (from landing), show it first
+    if st.session_state.get("show_login"):
         if not auth_ui():
             return
+
+    # If not logged in, show public landing page (Start Learning will open login)
+    if not st.session_state.get("user_id"):
+        # Public landing hero (minimal, themed)
+        st.markdown("""
+        <style>
+        .landing-hero { background: linear-gradient(180deg,#111 0%, #222 60%); color: #fff; padding: 60px 40px; border-radius: 8px; }
+        .landing-cta { margin-top: 30px; }
+        .start-btn button { background: linear-gradient(90deg,#222 0%, #111 100%); color:#fff; padding:14px 28px; border-radius:10px; border:none; font-weight:700 }
+        </style>
+        """, unsafe_allow_html=True)
+
+        st.markdown('<div class="landing-hero">', unsafe_allow_html=True)
+        st.markdown('<h1 style="font-size:48px;margin:0 0 8px 0;">Edullm</h1>', unsafe_allow_html=True)
+        st.markdown('<p style="font-size:18px;margin:0 0 18px 0;">Your virtual study companion — clear, step-by-step homework solutions.</p>', unsafe_allow_html=True)
+        col1, col2 = st.columns([1,1])
+        with col1:
+            if st.button('Start Learning'):
+                st.session_state['show_login'] = True
+                st.rerun()
+        with col2:
+            # Remove demo button: keep empty or small placeholder
+            st.write('')
+        st.markdown('</div>', unsafe_allow_html=True)
+        return
 
     # User is logged in - show navigation
     render_navigation()
