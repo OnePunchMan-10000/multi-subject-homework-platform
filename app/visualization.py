@@ -68,7 +68,7 @@ def create_smart_visualization(question: str, subject: str):
 
     try:
         plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(5, 5), tight_layout=True)  # Restore to 5x5 for good diagram size
+        fig, ax = plt.subplots(figsize=(3, 3), tight_layout=True)  # Much smaller size to prevent screen domination
         fig.patch.set_facecolor('white')
 
         if subject == "Mathematics":
