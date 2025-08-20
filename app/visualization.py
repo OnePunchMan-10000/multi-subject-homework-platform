@@ -68,7 +68,7 @@ def create_smart_visualization(question: str, subject: str):
 
     try:
         plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(3, 2), tight_layout=True)  # Half size to prevent screen domination
+        fig, ax = plt.subplots(figsize=(2.5, 1.8), tight_layout=True)  # Even smaller size to prevent overlap
         fig.patch.set_facecolor('white')
 
         if subject == "Mathematics":
@@ -431,7 +431,7 @@ def create_smart_visualization(question: str, subject: str):
                 circ = next((p for p in ax.patches if isinstance(p, plt.Circle)), None)
                 if circ is not None:
                     c = circ.get_center(); r = circ.get_radius()
-                    pad = max(0.4 * r, 1.0)
+                    pad = max(0.2 * r, 0.5)  # Reduced padding from 0.4 to 0.2 and minimum from 1.0 to 0.5
                     ax.set_xlim(c[0] - r - pad, c[0] + r + pad)
                     ax.set_ylim(c[1] - r - pad, c[1] + r + pad)
                 else:
@@ -462,8 +462,8 @@ def create_smart_visualization(question: str, subject: str):
                     if x_all and y_all:
                         x_min, x_max = min(x_all), max(x_all)
                         y_min, y_max = min(y_all), max(y_all)
-                        pad_x = max((x_max - x_min) * 0.15, 1.0)
-                        pad_y = max((y_max - y_min) * 0.15, 1.0)
+                        pad_x = max((x_max - x_min) * 0.08, 0.5)  # Reduced from 0.15 to 0.08 and minimum from 1.0 to 0.5
+                        pad_y = max((y_max - y_min) * 0.08, 0.5)  # Reduced from 0.15 to 0.08 and minimum from 1.0 to 0.5
                         ax.set_xlim(x_min - pad_x, x_max + pad_x)
                         ax.set_ylim(y_min - pad_y, y_max + pad_y)
                     else:
@@ -520,7 +520,7 @@ def create_smart_visualization(question: str, subject: str):
             ax.legend()
 
         buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=180, facecolor='white', bbox_inches='tight', pad_inches=0.1)
+        plt.savefig(buf, format='png', dpi=180, facecolor='white', bbox_inches='tight', pad_inches=0.05)
         buf.seek(0)
         plt.close(fig)
         return buf
