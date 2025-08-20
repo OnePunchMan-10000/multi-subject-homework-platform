@@ -68,7 +68,7 @@ def create_smart_visualization(question: str, subject: str):
 
     try:
         plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)  # Much smaller size to prevent full screen domination
+        fig, ax = plt.subplots(figsize=(3, 2), tight_layout=True)  # Half size to prevent screen domination
         fig.patch.set_facecolor('white')
 
         if subject == "Mathematics":
