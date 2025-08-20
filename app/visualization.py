@@ -219,7 +219,7 @@ def create_smart_visualization(question: str, subject: str):
                 degree_circle_match = re.search(r'(\d+(?:\.\d+)?)\s*degree\s*circle', question_lower)
                 if degree_circle_match:
                     angle_degrees = float(degree_circle_match.group(1))
-                    radius = 4.0  # default radius
+                    radius = 2.5  # Reduced from 4.0 to 2.5 for better fit in 5x5 figure
                     
                     # Create circle with highlighted sector
                     stroke = '#000000'
@@ -272,7 +272,7 @@ def create_smart_visualization(question: str, subject: str):
                     circle_match = re.search(r'circle.*?radius\s*(\d+(?:\.\d+)?)|radius\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
                     if circle_match or 'circle' in question_lower:
                         # Extract radius simply
-                        radius = 4.0  # good default size
+                        radius = 2.5  # Reduced from 4.0 to 2.5 for better fit in 5x5 figure
                         if circle_match:
                             radius = float(circle_match.group(1) or circle_match.group(2))
                         
@@ -393,7 +393,7 @@ def create_smart_visualization(question: str, subject: str):
                         ax.set_title('Semicircle')
                     elif 'circle' in question_lower:
                         # Simple circle like triangle approach
-                        r = 4.0  # default radius
+                        r = 2.5  # Reduced from 4.0 to 2.5 for better fit in 5x5 figure
                         radius_match = re.search(r'radius\s*(\d+(?:\.\d+)?)', question_lower)
                         if radius_match:
                             r = float(radius_match.group(1))
