@@ -354,6 +354,37 @@ def auth_ui() -> bool:
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
+    # Aggressive: remove any top-floating rounded/box-shadow element after DOM loads (runs twice)
+    components.html("""
+    <script>
+    (function(){
+      function removeCandidates(){
+        try{
+          const els = Array.from(document.querySelectorAll('body *'));
+          const removed = [];
+          els.forEach(function(el){
+            if(el.classList && el.classList.contains('auth-container')) return; // keep auth container
+            const cs = window.getComputedStyle(el);
+            if(!cs) return;
+            const bs = cs.boxShadow || '';
+            const br = parseFloat(cs.borderRadius) || 0;
+            const rect = el.getBoundingClientRect();
+            // Candidate: visible shadow or strong radius, wide enough, near top or fixed
+            if((bs && bs !== 'none' || br > 6) && rect.width > 180 && (rect.top < window.innerHeight*0.25 || cs.position === 'fixed')){
+              removed.push({tag: el.tagName.toLowerCase(), class: el.className, id: el.id || null, top: rect.top, width: rect.width});
+              el.style.display = 'none';
+            }
+          });
+          if(removed.length) console.log('AUTH_REMOVED_CANDIDATES', removed);
+        }catch(e){console.warn('auth-remove-js', e)}
+      }
+      window.addEventListener('load', function(){ setTimeout(removeCandidates, 80); setTimeout(removeCandidates, 300); });
+      // run immediately in case DOM already loaded
+      setTimeout(removeCandidates, 50);
+    })();
+    </script>
+    """, height=0)
+
     return bool(st.session_state.get("user_id"))
 
 
