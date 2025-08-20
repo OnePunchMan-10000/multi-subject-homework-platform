@@ -26,7 +26,7 @@ def should_show_diagram(question: str, subject: str) -> bool:
         'median', 'altitude', 'parallel', 'perpendicular', 'circumcircle',
         'incenter', 'circumcenter', 'square', 'rectangle', 'circle',
         'semicircle', 'polygon', 'pentagon', 'hexagon', 'heptagon', 'octagon',
-        'geometry', 'tangent', 'tangents'
+        'geometry', 'tangent', 'tangents', 'degree'
     ]
     if any(t in q for t in geometry_terms):
         return True
@@ -68,7 +68,7 @@ def create_smart_visualization(question: str, subject: str):
 
     try:
         plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(8, 5))  # Reduced size for smaller images as requested
         fig.patch.set_facecolor('white')
 
         if subject == "Mathematics":
@@ -214,31 +214,85 @@ def create_smart_visualization(question: str, subject: str):
                         direction = perp(base) if kind == 'perpendicular' else base
                         draw_infinite_line_through(points[p], direction, linestyle='--', color='#4CAF50' if kind=='perpendicular' else '#90CAF9', linewidth=2, label=f'{kind.title()} to {x}{y} through {p}')
 
-                # Simple Circle Generation (like triangle approach)
-                circle_match = re.search(r'circle.*?radius\s*(\d+(?:\.\d+)?)|radius\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
-                if circle_match or 'circle' in question_lower:
-                    # Extract radius simply
-                    radius = 4.0  # good default size
-                    if circle_match:
-                        radius = float(circle_match.group(1) or circle_match.group(2))
+                # Enhanced Circle Generation with degree support (NEW FEATURE)
+                # Check for degree-based circle requests first (like "60 degree circle")
+                degree_circle_match = re.search(r'(\d+(?:\.\d+)?)\s*degree\s*circle', question_lower)
+                if degree_circle_match:
+                    angle_degrees = float(degree_circle_match.group(1))
+                    radius = 4.0  # default radius
                     
-                    # Simple circle at origin
+                    # Create circle with highlighted sector
                     stroke = '#000000'
-                    circle = plt.Circle((0, 0), radius, fill=False, edgecolor=stroke, linewidth=2)
+                    center = (0, 0)
+                    circle = plt.Circle(center, radius, fill=False, edgecolor=stroke, linewidth=2)
                     ax.add_patch(circle)
                     
                     # Center point
-                    ax.scatter([0], [0], color=stroke, s=30, zorder=3)
-                    ax.text(0, 0.3, 'O', ha='center', va='bottom', color=stroke, fontweight='bold')
+                    ax.scatter([center[0]], [center[1]], color=stroke, s=30, zorder=3)
+                    ax.text(center[0], center[1] + 0.3, 'O', ha='center', va='bottom', color=stroke, fontweight='bold')
                     
-                    # Radius line
-                    ax.plot([0, radius], [0, 0], color=stroke, linestyle='--', linewidth=1.5)
+                    # Draw the sector (highlighted)
+                    start_angle = 0  # Start from positive x-axis
+                    end_angle = np.radians(angle_degrees)
+                    
+                    # Draw sector boundary lines
+                    start_x = center[0] + radius * np.cos(start_angle)
+                    start_y = center[1] + radius * np.sin(start_angle)
+                    end_x = center[0] + radius * np.cos(end_angle)
+                    end_y = center[1] + radius * np.sin(end_angle)
+                    
+                    # Draw radius lines
+                    ax.plot([center[0], start_x], [center[1], start_y], color='red', linewidth=2, label=f'Start radius (0°)')
+                    ax.plot([center[0], end_x], [center[1], end_y], color='red', linewidth=2, label=f'End radius ({angle_degrees}°)')
+                    
+                    # Draw arc
+                    theta = np.linspace(start_angle, end_angle, 100)
+                    arc_x = center[0] + radius * np.cos(theta)
+                    arc_y = center[1] + radius * np.sin(theta)
+                    ax.plot(arc_x, arc_y, color='red', linewidth=3, label=f'{angle_degrees}° arc')
+                    
+                    # Mark the angle
+                    ax.text(center[0] + 0.5*radius*np.cos(end_angle/2), 
+                           center[1] + 0.5*radius*np.sin(end_angle/2), 
+                           f'{angle_degrees}°', color='red', ha='center', va='center', 
+                           fontweight='bold', fontsize=12)
+                    
+                    # Radius line for reference
+                    ax.plot([center[0], radius], [center[1], 0], color=stroke, linestyle='--', linewidth=1.5)
                     ax.text(radius/2, 0.2, f'r = {radius}', ha='center', va='bottom', color=stroke)
                     
-                    # Simple bounds like triangle
+                    # Set bounds
                     ax.set_xlim(-radius-1, radius+1)
                     ax.set_ylim(-radius-1, radius+1)
                     ax.set_aspect('equal')
+                    ax.set_title(f'Circle with {angle_degrees}° Sector Highlighted')
+
+                # Simple Circle Generation (like triangle approach) - FALLBACK
+                elif 'circle' in question_lower:
+                    circle_match = re.search(r'circle.*?radius\s*(\d+(?:\.\d+)?)|radius\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+                    if circle_match or 'circle' in question_lower:
+                        # Extract radius simply
+                        radius = 4.0  # good default size
+                        if circle_match:
+                            radius = float(circle_match.group(1) or circle_match.group(2))
+                        
+                        # Simple circle at origin
+                        stroke = '#000000'
+                        circle = plt.Circle((0, 0), radius, fill=False, edgecolor=stroke, linewidth=2)
+                        ax.add_patch(circle)
+                        
+                        # Center point
+                        ax.scatter([0], [0], color=stroke, s=30, zorder=3)
+                        ax.text(0, 0.3, 'O', ha='center', va='bottom', color=stroke, fontweight='bold')
+                        
+                        # Radius line
+                        ax.plot([0, radius], [0, 0], color=stroke, linestyle='--', linewidth=1.5)
+                        ax.text(radius/2, 0.2, f'r = {radius}', ha='center', va='bottom', color=stroke)
+                        
+                        # Simple bounds like triangle
+                        ax.set_xlim(-radius-1, radius+1)
+                        ax.set_ylim(-radius-1, radius+1)
+                        ax.set_aspect('equal')
 
                 # Improved pair of tangents to a circle with given angle between them
                 tan_match = re.search(r'tangents?\s+to\s+a?\s*circle.*?(?:inclined.*?at|angle.*?of)\s*(\d+(?:\.\d+)?)\s*degrees?', question, flags=re.IGNORECASE)
