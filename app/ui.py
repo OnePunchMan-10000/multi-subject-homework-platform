@@ -385,6 +385,32 @@ def auth_ui() -> bool:
     </script>
     """, height=0)
 
+    # EXTRA: specifically hide Streamlit emotion cache elements that appear as floating previews
+    components.html("""
+    <script>
+    (function(){
+      function hideEmotionPreviews(){
+        try{
+          const candidates = Array.from(document.querySelectorAll('[class*="st-emotion-cache"], [class*="st-emotion"]'));
+          const removed = [];
+          candidates.forEach(function(el){
+            const rect = el.getBoundingClientRect();
+            const cs = window.getComputedStyle(el);
+            // Heuristic: small banner near top or with top < 140 and width > 200
+            if(rect.top >= 0 && rect.top < 140 && rect.width > 200 && rect.height < window.innerHeight*0.6){
+              el.style.display = 'none';
+              removed.push({class: el.className, top: rect.top, width: rect.width, height: rect.height});
+            }
+          });
+          if(removed.length) console.log('HIDDEN_EMOTION_PREVIEWS', removed);
+        }catch(e){console.warn('hide-emotion-previews', e)}
+      }
+      window.addEventListener('load', function(){ setTimeout(hideEmotionPreviews, 80); setTimeout(hideEmotionPreviews, 400); });
+      setTimeout(hideEmotionPreviews, 60);
+    })();
+    </script>
+    """, height=0)
+
     return bool(st.session_state.get("user_id"))
 
 
