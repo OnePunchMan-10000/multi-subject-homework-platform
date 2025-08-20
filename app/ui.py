@@ -121,33 +121,21 @@ def render_about_page():
 
 
 def auth_ui() -> bool:
-    """Styled sign-in page matching the provided reference design.
+    """Minimal login page without wrapper divs or extra styles.
 
-    - Centered card with rounded corners and subtle shadow
-    - Email and password inputs, 'Get Started' button
-    - Social login buttons (visual only)
+    This removes the previous `.signin-card` and associated CSS that caused
+    stray empty boxes. The page displays plain inputs and a submit button.
     """
-    st.markdown("""
-    <style>
-    body, .stApp { background: linear-gradient(180deg,#eaf6ff 0%, #ffffff 100%) !important; }
-    .signin-card { max-width: 520px; margin: 6vh auto; background: #fff; border-radius: 18px; padding: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.12); }
-    .signin-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-    .signin-sub { color: #666; margin-bottom: 16px; }
-    .stTextInput>div>div>input { height:44px; border-radius:8px; }
-    .get-started button { background: #111; color: #fff; border-radius: 10px; padding: 12px 18px; }
-    .social-row { display:flex; gap:10px; margin-top:12px; }
-    .social-row button { flex:1; border-radius:8px; padding:10px 8px; }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="signin-card">', unsafe_allow_html=True)
-    st.markdown('<div class="signin-title">Sign in with email</div>', unsafe_allow_html=True)
-    st.markdown('<div class="signin-sub">Make a new account to bring your words, data, and teams together. For free</div>', unsafe_allow_html=True)
+    # No custom wrapper CSS — use Streamlit defaults for a simple form
+    st.title('Sign in')
+    st.write('Please enter your credentials to continue.')
 
     with st.form('signin_form'):
-        email = st.text_input('Email', placeholder='Email')
-        password = st.text_input('Password', type='password', placeholder='Password')
-        if st.form_submit_button('Get Started'):
+        email = st.text_input('Email')
+        password = st.text_input('Password', type='password')
+        submitted = st.form_submit_button('Get Started')
+
+        if submitted:
             if not email or not password:
                 st.error('Email and password required')
             else:
@@ -159,7 +147,6 @@ def auth_ui() -> bool:
                     if ok2:
                         st.session_state['user_id'] = me_or_err.get('id')
                         st.session_state['username'] = me_or_err.get('username')
-                        # clear show_login and continue
                         st.session_state.pop('show_login', None)
                         st.success('Logged in successfully!')
                         st.rerun()
@@ -167,18 +154,6 @@ def auth_ui() -> bool:
                         st.error('Login succeeded but fetching user failed.')
                 else:
                     st.error('Login failed.')
-
-    st.markdown('<div class="social-row">', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1,1,1])
-    with col1:
-        st.button('Google', key='s_google')
-    with col2:
-        st.button('Facebook', key='s_fb')
-    with col3:
-        st.button('Apple', key='s_apple')
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
     return bool(st.session_state.get('user_id'))
 
