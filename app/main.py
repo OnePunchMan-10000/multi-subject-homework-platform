@@ -132,7 +132,8 @@ def main():
                         st.markdown("### 📊 Visualization")
                         viz = create_smart_visualization(question, selected_subject)
                         if viz:
-                            st.image(viz, use_container_width=True)
+                            # Display visualization at a controlled width so it doesn't stretch full container
+                            st.image(viz, width=700)
                     
                     # Simple feedback
                     st.markdown("### Rate this solution")
