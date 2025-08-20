@@ -227,6 +227,8 @@ def auth_ui() -> bool:
         padding: 3.5rem 3rem;
         color: #ffffff;
         font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+        position: relative; /* ensure it sits above stray floating elements */
+        z-index: 99999;
     }}
 
     .brand-title {{ font-size: 48px; margin: 0 0 6px 0; font-weight: 700; color: #fff; letter-spacing: -0.5px }}
