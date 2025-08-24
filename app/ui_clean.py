@@ -94,6 +94,15 @@ def auth_ui():
                 st.session_state['user_id'] = username
                 st.session_state['username'] = username
                 st.session_state['show_login'] = False
+                # Try to force an immediate rerun if available so the app picks up
+                # the updated session state and doesn't lose the login result on
+                # the next automatic rerun.
+                if hasattr(st, 'experimental_rerun'):
+                    try:
+                        st.experimental_rerun()
+                    except Exception:
+                        # Fall back to returning True if experimental_rerun fails
+                        return True
                 return True
             else:
                 st.warning(data.get('detail') or data.get('message') or 'Invalid credentials')
