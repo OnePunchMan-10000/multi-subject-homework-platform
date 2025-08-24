@@ -11,20 +11,94 @@ import os
 import sqlite3
 import pandas as pd
 
-# Page CSS and styling
+# Page CSS and styling (global theme variables and utility classes)
 _GLOBAL_CSS = r"""
 <style>
-    /* Hide Streamlit default elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {visibility: hidden;}
-    
-    /* Navigation menu removed for minimalist layout */
+  /* Hide Streamlit default elements */
+  #MainMenu { visibility: hidden; }
+  footer { visibility: hidden; }
+  header { visibility: hidden; }
+
+  /* Theme variables */
+  :root {
+    --primary-100: #eef2ff;
+    --primary-500: #6366f1; /* indigo */
+    --primary-700: #4f46e5;
+    --accent-500: #f093fb;
+    --accent-600: #f5576c;
+    --text-900: #0f172a;
+    --muted-500: #6b7280;
+    --bg-100: #ffffff;
+    --card-bg: rgba(255,255,255,0.85);
+    --glass-bg: rgba(255,255,255,0.08);
+    --success: #10b981;
+    --danger: #ef4444;
+    --radius: 12px;
+    --shadow-sm: 0 4px 10px rgba(15,23,42,0.06);
+    --shadow-md: 0 10px 30px rgba(15,23,42,0.08);
+  }
+
+  /* Dark theme override (applied via data-theme="dark" on .stApp if desired) */
+  .stApp[data-theme="dark"] {
+    --text-900: #f8fafc;
+    --muted-500: #94a3b8;
+    --bg-100: #0b1220;
+    --card-bg: rgba(8,10,14,0.6);
+    --glass-bg: rgba(255,255,255,0.04);
+  }
+
+  /* Typography */
+  .stApp, .stApp * { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+  .brand-title { font-size: 2.2rem; font-weight: 800; color: var(--text-900); }
+  .brand-sub { color: var(--muted-500); margin-top: 6px; }
+
+  /* Buttons */
+  .stButton > button {
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    font-weight: 650;
+    box-shadow: var(--shadow-sm);
+    border: none;
+  }
+  .stButton > button[role="primary"] { background: linear-gradient(90deg,var(--primary-500),var(--primary-700)); color:white; }
+
+  /* Cards */
+  .card { background: var(--card-bg); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow-sm); }
+
+  /* Glass effect */
+  .glass { background: var(--glass-bg); backdrop-filter: blur(6px); border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); }
+
+  /* Hero styles */
+  .hero { padding: 56px 24px; border-radius: 14px; margin-bottom: 24px; }
+  .hero-title { font-size: 2.8rem; font-weight: 800; margin-bottom: 8px; }
+  .hero-sub { font-size: 1.1rem; color: var(--muted-500); }
+
+  /* Subject grid */
+  .subject-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 18px; }
+  .subject-card { padding: 18px; border-radius: 12px; background: var(--card-bg); transition: transform 0.22s ease, box-shadow 0.22s ease; }
+  .subject-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); }
+
+  /* Chat */
+  .chat-user { background: linear-gradient(90deg,var(--primary-500),var(--primary-700)); color: white; padding: 12px 16px; border-radius: 14px 14px 4px 14px; max-width:80%; margin-left:auto; }
+  .chat-assistant { background: var(--card-bg); color: var(--text-900); padding: 12px 16px; border-radius: 14px 14px 14px 4px; max-width:80%; }
+
+  /* Footer */
+  .app-footer { padding: 28px 12px; text-align:center; color:var(--muted-500); }
+
+  /* Utilities */
+  .muted { color: var(--muted-500); }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-24 { margin-bottom: 24px; }
+
+  @media (max-width: 768px) {
+    .hero-title { font-size: 2rem; }
+  }
+
 </style>
 """
 
 def render_global_css():
+    """Inject global CSS into the page. This is presentational only."""
     st.markdown(_GLOBAL_CSS, unsafe_allow_html=True)
 
 
@@ -54,6 +128,57 @@ def render_home_page():
     # Subject selection
     render_subject_grid()
 
+
+def render_landing_page():
+    """Render a modern landing page hero and feature highlights (presentational only)."""
+    render_global_css()
+
+    st.markdown("""
+    <div class="hero card mb-24" style="background: linear-gradient(90deg,#f5d76e,#d4af37);">
+        <div style="max-width:1000px; margin: 0 auto; padding: 48px; text-align:center;">
+            <div class="brand-title" style="color:#071033;">Edullm ✨</div>
+            <div class="hero-title" style="color:#071033;">Edullm — Your AI-Driven Study Companion</div>
+            <div class="hero-sub" style="color:#071033;">Smart, easy to understand, and personalized learning. Get clear, step-by-step homework solutions powered by AI — anytime, anywhere.</div>
+            <div style="margin-top:28px;">
+                <button onclick="window.streamlitRerun && window.streamlitRerun()" class="stButton" style="background:linear-gradient(90deg,#6366f1,#4f46e5); color:white; padding:12px 28px; border-radius:14px; font-weight:700;">👉 Start Learning Now</button>
+            </div>
+        </div>
+    </div>
+
+    <div style="max-width:1000px; margin: 0 auto;">
+        <div class="subject-grid">
+            <div class="subject-card">
+                <div style="font-size:28px;">🚀</div>
+                <div style="font-weight:700; margin-top:8px;">AI-Driven Assistance</div>
+                <div class="muted">Get contextual, step-by-step help across subjects.</div>
+            </div>
+            <div class="subject-card">
+                <div style="font-size:28px;">📘</div>
+                <div style="font-weight:700; margin-top:8px;">Step-by-Step Solutions</div>
+                <div class="muted">Clarity over answers — we show the process.</div>
+            </div>
+            <div class="subject-card">
+                <div style="font-size:28px;">🎯</div>
+                <div style="font-weight:700; margin-top:8px;">Personalized Learning</div>
+                <div class="muted">Adapt explanations to your level and style.</div>
+            </div>
+            <div class="subject-card">
+                <div style="font-size:28px;">🌐</div>
+                <div style="font-weight:700; margin-top:8px;">Multi-Subject Support</div>
+                <div class="muted">Mathematics, Science, Literature and more.</div>
+            </div>
+            <div class="subject-card">
+                <div style="font-size:28px;">⚡</div>
+                <div style="font-weight:700; margin-top:8px;">Fast & Reliable</div>
+                <div class="muted">Instant assistance whenever you need it.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-footer" style="margin-top:36px;">
+        <div class="footer-content">About &middot; Contact &middot; Privacy &middot; Terms</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 def render_profile_page():
     """Render the user profile page"""

@@ -1,7 +1,7 @@
 import streamlit as st
 from app.db import init_db, save_history, load_history
 from app.ui import render_navigation, render_footer, render_profile_page, render_about_page
-from app.ui import auth_ui, render_subject_grid
+from app.ui import auth_ui, render_subject_grid, render_global_css
 from app.llm import get_api_response
 from app.formatting import format_response
 from app.visualization import should_show_diagram, create_smart_visualization
@@ -10,6 +10,11 @@ from app.backend import backend_save_history, backend_get_history
 
 def main():
     init_db()
+    # Inject global CSS
+    try:
+        render_global_css()
+    except Exception:
+        pass
     
     # If the user requested to see the login page (from landing), show it first
     if st.session_state.get("show_login"):
