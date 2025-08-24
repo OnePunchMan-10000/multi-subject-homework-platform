@@ -325,14 +325,12 @@ def auth_ui():
             st.error(f"Login failed: {token_or_msg}")
             return False
 
-        # Store access token and fetch user profile
+        # Store access token and mark user as logged in immediately.
+        # Defer fetching the full profile to when it's actually needed to avoid
+        # adding extra latency to the login flow.
         st.session_state['access_token'] = token_or_msg
-        ok2, me_or_msg = backend_get_me(token_or_msg)
-        if ok2 and isinstance(me_or_msg, dict):
-            st.session_state['user_id'] = me_or_msg.get('id') or me_or_msg.get('username')
-            st.session_state['username'] = me_or_msg.get('username', '')
-        else:
-            st.warning(f"Signed in but couldn't fetch profile: {me_or_msg}")
+        st.session_state['user_id'] = token_or_msg  # placeholder to mark authenticated
+        st.session_state['username'] = ''
 
         # Hide login view and indicate success so caller can continue rendering
         st.session_state['show_login'] = False
