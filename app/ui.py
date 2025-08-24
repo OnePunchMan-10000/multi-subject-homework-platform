@@ -278,48 +278,71 @@ def render_about_page():
 
 
 def auth_ui():
-    """Render the authentication UI with glassmorphism and floating labels."""
+    """Render the authentication UI as a Streamlit form and perform login.
+
+    This replaces the previous raw HTML inputs with a proper `st.form` to ensure
+    the login action is triggered exactly once when the user clicks Sign In.
+    On success, stores `access_token`, `user_id`, and `username` in session_state
+    and returns True. On failure, returns False.
+    """
+
+    # Minimal styles (kept simple to avoid heavy rendering cost)
     st.markdown("""
     <style>
-        .login-card {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        .floating-label {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-        .floating-input {
-            border: 1px solid #ddd;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            width: 100%;
-        }
+      .auth-wrap { max-width:900px; margin: 16px auto; padding:18px; border-radius:12px; }
     </style>
     """, unsafe_allow_html=True)
 
-    with st.container():
-        st.markdown("""
-        <div class="login-card">
-            <h2>Welcome back! ✨</h2>
-            <div class="floating-label">
-                <input type="text" class="floating-input" placeholder="Email" required>
-            </div>
-            <div class="floating-label">
-                <input type="password" class="floating-input" placeholder="Password" required>
-            </div>
-            <button class="stButton" style="background:linear-gradient(90deg,#6366f1,#4f46e5); color:white; padding:12px 28px; border-radius:14px; font-weight:700;">Sign In</button>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown("<div class='auth-wrap'>", unsafe_allow_html=True)
 
-    # The original auth_ui function had a form-based login.
-    # This new version replaces it with a simple Streamlit container for a glassmorphism effect.
-    # The form-based login logic is removed as per the edit hint.
-    # The user will need to implement the backend_login call and session state management
-    # based on the new UI structure.
+    # Ensure session keys exist
+    if 'auth_in_progress' not in st.session_state:
+        st.session_state['auth_in_progress'] = False
+
+    with st.form(key='auth_form'):
+        username = st.text_input('Email or username', key='auth_username')
+        password = st.text_input('Password', type='password', key='auth_password')
+        submitted = st.form_submit_button('Sign In')
+
+    if submitted:
+        if st.session_state.get('auth_in_progress'):
+            st.info('Login already in progress...')
+            st.markdown('</div>', unsafe_allow_html=True)
+            return False
+
+        if not username or not password:
+            st.error('Please enter both username and password')
+            st.markdown('</div>', unsafe_allow_html=True)
+            return False
+
+        st.session_state['auth_in_progress'] = True
+        try:
+            with st.spinner('Signing in...'):
+                ok, token_or_msg = backend_login(username, password)
+        except Exception as e:
+            st.error(f'Login failed: {e}')
+            st.session_state['auth_in_progress'] = False
+            st.markdown('</div>', unsafe_allow_html=True)
+            return False
+        finally:
+            st.session_state['auth_in_progress'] = False
+
+        if not ok:
+            # token_or_msg contains error message
+            st.error(f'Login failed: {token_or_msg}')
+            st.markdown('</div>', unsafe_allow_html=True)
+            return False
+
+        # Successful login — store token and user info
+        st.session_state['access_token'] = token_or_msg
+        st.session_state['user_id'] = username
+        st.session_state['username'] = username
+        st.session_state['show_login'] = False
+        st.markdown('</div>', unsafe_allow_html=True)
+        return True
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    return False
 
 
 def render_subject_grid(columns: int = 4) -> str | None:
