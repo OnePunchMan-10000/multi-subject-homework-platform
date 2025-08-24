@@ -16,10 +16,12 @@ def main():
     except Exception:
         pass
     
-    # If the user requested to see the login page (from landing), show it first
+    # If the user requested to see the login page (from landing), render login only
     if st.session_state.get("show_login"):
-        if not auth_ui():
-            return
+        # auth_ui handles its own submit logic; always return after calling it so
+        # no other page content is rendered underneath the login UI.
+        auth_ui()
+        return
 
     # If not logged in, show the rich landing page (with fallback to simple header)
     if not st.session_state.get("user_id"):
