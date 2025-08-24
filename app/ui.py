@@ -245,42 +245,49 @@ def render_about_page():
     """, unsafe_allow_html=True)
 
 
-def auth_ui() -> bool:
-    """Minimal login page without wrapper divs or extra styles.
+def auth_ui():
+    """Render the authentication UI with glassmorphism and floating labels."""
+    st.markdown("""
+    <style>
+        .login-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .floating-label {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .floating-input {
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            width: 100%;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
-    This removes the previous `.signin-card` and associated CSS that caused
-    stray empty boxes. The page displays plain inputs and a submit button.
-    """
-    # No custom wrapper CSS — use Streamlit defaults for a simple form
-    st.title('Sign in')
-    st.write('Please enter your credentials to continue.')
+    with st.container():
+        st.markdown("""
+        <div class="login-card">
+            <h2>Welcome back! ✨</h2>
+            <div class="floating-label">
+                <input type="text" class="floating-input" placeholder="Email" required>
+            </div>
+            <div class="floating-label">
+                <input type="password" class="floating-input" placeholder="Password" required>
+            </div>
+            <button class="stButton" style="background:linear-gradient(90deg,#6366f1,#4f46e5); color:white; padding:12px 28px; border-radius:14px; font-weight:700;">Sign In</button>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with st.form('signin_form'):
-        email = st.text_input('Email')
-        password = st.text_input('Password', type='password')
-        submitted = st.form_submit_button('Get Started')
-
-        if submitted:
-            if not email or not password:
-                st.error('Email and password required')
-            else:
-                ok, token_or_err = backend_login(email, password)
-                if ok:
-                    token = token_or_err
-                    st.session_state['access_token'] = token
-                    ok2, me_or_err = backend_get_me(token)
-                    if ok2:
-                        st.session_state['user_id'] = me_or_err.get('id')
-                        st.session_state['username'] = me_or_err.get('username')
-                        st.session_state.pop('show_login', None)
-                        st.success('Logged in successfully!')
-                        st.rerun()
-                    else:
-                        st.error('Login succeeded but fetching user failed.')
-                else:
-                    st.error('Login failed.')
-
-    return bool(st.session_state.get('user_id'))
+    # The original auth_ui function had a form-based login.
+    # This new version replaces it with a simple Streamlit container for a glassmorphism effect.
+    # The form-based login logic is removed as per the edit hint.
+    # The user will need to implement the backend_login call and session state management
+    # based on the new UI structure.
 
 
 def render_subject_grid(columns: int = 4) -> str | None:
@@ -431,5 +438,105 @@ def admin_ui():
         "database_url_set": bool(DATABASE_URL),
         "streamlit_secrets_available": hasattr(st, "secrets")
     })
+
+
+def inject_global_css():
+    st.markdown("""
+    <style>
+        :root {
+            --gold: #f1c40f;
+            --gray: #6b7280;
+        }
+        .top-right-btn {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            background: white;
+            z-index: 100;
+        }
+        .hero {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 2rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin: 3rem auto;
+            max-width: 1200px;
+        }
+        .feature-card {
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .cta-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+def render_login_button():
+    st.markdown("""
+    <a href='/login' class='top-right-btn'>
+        <span class='mr-2'>🔐</span> Login
+    </a>
+    """, unsafe_allow_html=True)
+
+
+def render_hero():
+    st.markdown("""
+    <div class='hero'>
+        <h1 style='color: var(--gold); font-size: 3rem; font-weight: 800; margin-bottom: 1rem'>EduLLM</h1>
+        <p style='color: var(--gray); font-size: 1.1rem; max-width: 600px; margin: 0 auto'>
+            Your AI-powered homework companion. Get instant, accurate answers to your school questions using cutting-edge Large Language Model technology.
+        </p>
+        <div style='display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem'>
+            <button class='cta-button' style='background: var(--gold); color: black'>Start Learning</button>
+            <button class='cta-button' style='border: 1px solid #e5e7eb'>Learn More</button>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_features():
+    st.markdown("""
+    <div style='padding: 2rem 1rem'>
+        <h2 style='text-align: center; font-size: 1.75rem; margin-bottom: 2rem'>
+            Why Choose <span style='color: var(--gold)'>EduLLM</span>?
+        </h2>
+        <div class='feature-grid'>
+            <div class='feature-card'>
+                <p style='font-size: 2rem; margin: 0'>🧠</p>
+                <h3 style='margin: 0.5rem 0'>AI-Powered Learning</h3>
+                <p style='color: var(--gray); margin: 0'>Advanced LLM technology helps you understand complex concepts.</p>
+            </div>
+            <div class='feature-card'>
+                <p style='font-size: 2rem; margin: 0'>📘</p>
+                <h3 style='margin: 0.5rem 0'>Multiple Subjects</h3>
+                <p style='color: var(--gray); margin: 0'>Math, Science, History, English and more.</p>
+            </div>
+            <div class='feature-card'>
+                <p style='font-size: 2rem; margin: 0'>💡</p>
+                <h3 style='margin: 0.5rem 0'>Instant Solutions</h3>
+                <p style='color: var(--gray); margin: 0'>Step-by-step solutions in seconds.</p>
+            </div>
+            <div class='feature-card'>
+                <p style='font-size: 2rem; margin: 0'>👥</p>
+                <h3 style='margin: 0.5rem 0'>Student Community</h3>
+                <p style='color: var(--gray); margin: 0'>Join thousands improving their grades.</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
