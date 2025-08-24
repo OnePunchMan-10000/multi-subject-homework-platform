@@ -173,44 +173,59 @@ def render_landing_page():
     </style>
     """, unsafe_allow_html=True)
 
-    # Hero section
-    st.markdown("""
-    <div class='landing-bg'>
-        <div style='text-align:center; max-width:800px; margin:0 auto;'>
-            <h1 class='hero-title'>👑 EDULLM</h1>
-            <p class='hero-sub'>Your AI-Powered Study Companion</p>
-            <p style='color:white; opacity:0.8;'>Get instant, step-by-step homework solutions with personalized explanations from advanced AI.</p>
-            <div style='margin-top:2rem;'>
-                <button onclick="window.streamlitRerun && window.streamlitRerun()" class='stButton' 
-                    style='background:white; color:black; padding:12px 32px; border-radius:12px; font-weight:700; border:none;'>
-                    Start Learning Now
-                </button>
-            </div>
-        </div>
-    
-        <!-- Feature Cards -->
-        <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; margin:3rem auto; max-width:1000px;'>
-            <div class='feature-card'>
-                <h3 style='color:white;'>Smart AI Tutor</h3>
-                <p style='color:white; opacity:0.8;'>Adapts explanations to your unique learning style</p>
-            </div>
-            <div class='feature-card'>
-                <h3 style='color:white;'>Step-by-Step Solutions</h3>
-                <p style='color:white; opacity:0.8;'>Breaks down problems into clear, logical steps</p>
-            </div>
-            <div class='feature-card'>
-                <h3 style='color:white;'>Progress Tracking</h3>
-                <p style='color:white; opacity:0.8;'>Tracks your learning journey with detailed history</p>
-            </div>
-        </div>
-    
-        <!-- Footer -->
-        <div style='text-align:center; color:white; opacity:0.6; margin-top:4rem;'>
-            © 2025 by Praveen
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Render hero and feature cards using a raw HTML component to avoid markdown escaping
+    html_content = """
+<style>
+  .landing-inner { max-width:1000px; margin:0 auto; padding:48px 24px; text-align:center; }
+  .landing-hero { padding: 48px; border-radius: 12px; background: linear-gradient(135deg,#a67c00,#d4af37); color: #fff; }
+  .landing-hero h1 { margin: 0; font-size:48px; letter-spacing:2px; }
+  .landing-hero p { margin: 12px 0; opacity:0.95; }
+  .feature-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-top:24px; }
+  .feature-card { background: rgba(0,0,0,0.12); padding:18px; border-radius:12px; color:#fff; }
+</style>
 
+<div class='landing-inner'>
+  <div class='landing-hero'>
+    <div style='font-size:48px;'>👑</div>
+    <h1>EDULLM</h1>
+    <p style='font-weight:600; margin-top:8px;'>Your AI-Powered Study Companion</p>
+    <p style='max-width:720px; margin:12px auto 0;'>Get instant, step-by-step homework solutions with personalized explanations from advanced AI.</p>
+  </div>
+
+  <div class='feature-grid'>
+    <div class='feature-card'>
+      <h3>Smart AI Tutor</h3>
+      <p>Adapts explanations to your unique learning style</p>
+    </div>
+    <div class='feature-card'>
+      <h3>Step-by-Step Solutions</h3>
+      <p>Breaks down problems into clear, logical steps</p>
+    </div>
+    <div class='feature-card'>
+      <h3>Progress Tracking</h3>
+      <p>Tracks your learning journey with detailed history</p>
+    </div>
+  </div>
+
+  <div style='margin-top:28px; text-align:center;'>
+    <!-- Streamlit button placed below for functionality -->
+  </div>
+
+  <div style='text-align:center; color:rgba(255,255,255,0.75); margin-top:32px;'>© 2025 by Praveen</div>
+</div>
+"""
+
+    try:
+        components.html(html_content, height=520)
+    except Exception:
+        # Fallback: render as simple markdown header
+        st.header('Edullm')
+        st.write('Your virtual study companion — clear, step-by-step homework solutions.')
+
+    # Functional Streamlit button to trigger login flow
+    if st.button('Start Learning', key='landing_start'):
+        st.session_state['show_login'] = True
+        st.rerun()
 
 def render_profile_page():
     """Render the user profile page"""
