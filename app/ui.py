@@ -1,4 +1,21 @@
 import streamlit as st
+from app.ui_clean import render_landing_page, auth_ui, render_footer
+
+# Thin compatibility wrapper to use the cleaned UI implementation.
+
+def render_global_css():
+    # delegate to ui_clean's CSS via its render function
+    try:
+        render_landing_page()
+    except Exception:
+        pass
+
+
+def render_navigation():
+    return
+
+
+import streamlit as st
 import streamlit.components.v1 as components
 import re
 import html
