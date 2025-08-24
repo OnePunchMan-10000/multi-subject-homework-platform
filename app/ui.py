@@ -351,10 +351,21 @@ def auth_ui():
         st.session_state['access_token'] = token_or_msg
         st.session_state['user_id'] = username
         st.session_state['username'] = username
+        # Hide login UI flag
         st.session_state['show_login'] = False
         # show trace for debugging
         if 'last_login_trace' in st.session_state:
             st.success(f"Login succeeded in {st.session_state['last_login_trace']['duration_ms']} ms")
+
+        # Force an immediate rerun so main() picks up the new session state and
+        # navigates away from the login page in the same interaction. If
+        # experimental_rerun isn't available, fall back to continuing normally.
+        try:
+            if hasattr(st, 'experimental_rerun'):
+                st.experimental_rerun()
+        except Exception:
+            pass
+
         st.markdown('</div>', unsafe_allow_html=True)
         return True
 
