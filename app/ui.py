@@ -293,48 +293,51 @@ def render_about_page():
 
 
 def auth_ui():
-    """Render the authentication UI with glassmorphism and floating labels."""
+    """Render the authentication UI using Streamlit form and call backend_login/backend_get_me.
+
+    This replaces the previous purely-HTML UI so the Sign In button works and updates
+    Streamlit session state with `access_token`, `user_id`, and `username`.
+    """
     st.markdown("""
     <style>
-        .login-card {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        .floating-label {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-        .floating-input {
-            border: 1px solid #ddd;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            width: 100%;
-        }
+      .auth-container { max-width: 900px; margin: 40px auto; padding: 28px; border-radius: 12px; background: rgba(255,255,255,0.04); }
+      .auth-title { font-size: 2rem; margin-bottom: 12px; }
     </style>
     """, unsafe_allow_html=True)
 
     with st.container():
-        st.markdown("""
-        <div class="login-card">
-            <h2>Welcome back! ✨</h2>
-            <div class="floating-label">
-                <input type="text" class="floating-input" placeholder="Email" required>
-            </div>
-            <div class="floating-label">
-                <input type="password" class="floating-input" placeholder="Password" required>
-            </div>
-            <button class="stButton" style="background:linear-gradient(90deg,#6366f1,#4f46e5); color:white; padding:12px 28px; border-radius:14px; font-weight:700;">Sign In</button>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("<div class='auth-container'>", unsafe_allow_html=True)
+        st.markdown("<div class='auth-title'><strong>Welcome back!</strong> ✨</div>", unsafe_allow_html=True)
 
-    # The original auth_ui function had a form-based login.
-    # This new version replaces it with a simple Streamlit container for a glassmorphism effect.
-    # The form-based login logic is removed as per the edit hint.
-    # The user will need to implement the backend_login call and session state management
-    # based on the new UI structure.
+        # Use a proper Streamlit form so values are available to Python
+        with st.form(key='login_form'):
+            username = st.text_input('Email or username', value='')
+            password = st.text_input('Password', type='password')
+            submit = st.form_submit_button('Sign In')
+
+        if submit:
+            # Call backend to authenticate
+            with st.spinner('Signing in...'):
+                ok, token_or_msg = backend_login(username, password)
+                if not ok:
+                    st.error(f"Login failed: {token_or_msg}")
+                else:
+                    # Store access token and fetch user profile
+                    st.session_state['access_token'] = token_or_msg
+                    ok2, me_or_msg = backend_get_me(token_or_msg)
+                    if ok2 and isinstance(me_or_msg, dict):
+                        st.session_state['user_id'] = me_or_msg.get('id') or me_or_msg.get('username')
+                        st.session_state['username'] = me_or_msg.get('username', '')
+                    else:
+                        # If profile fetch fails, still allow login but warn
+                        st.warning(f"Signed in but couldn't fetch profile: {me_or_msg}")
+                    # Hide login view and rerun
+                    st.session_state['show_login'] = False
+                    st.experimental_rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    return True
 
 
 def render_subject_grid(columns: int = 4) -> str | None:
