@@ -337,7 +337,8 @@ def auth_ui():
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    return True
+    # Return False so main() will stop after rendering the login UI
+    return False
 
 
 def render_subject_grid(columns: int = 4) -> str | None:
