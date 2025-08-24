@@ -40,18 +40,27 @@ def render_landing_page():
 def auth_ui():
     """Minimal, fast auth UI. Returns True on success."""
     st.header('Welcome back!')
-    username = st.text_input('Email or username')
-    password = st.text_input('Password', type='password')
 
-    if st.session_state.get('auth_in_progress'):
-        with st.spinner('Signing in...'):
-            st.write('')
-        return False
+    # Use a Streamlit form to ensure a single reliable submit action.
+    with st.form(key='login_form'):
+        username = st.text_input('Email or username')
+        password = st.text_input('Password', type='password')
+        submit = st.form_submit_button('Sign In')
 
-    if st.button('Sign In'):
+    if submit:
+        # Prevent duplicates
+        if st.session_state.get('auth_in_progress'):
+            st.info('Login already in progress...')
+            return False
+
         st.session_state['auth_in_progress'] = True
         try:
-            ok, token_or_msg = backend_login(username, password)
+            with st.spinner('Signing in...'):
+                ok, token_or_msg = backend_login(username, password)
+        except Exception as e:
+            st.error(f'Login error: {e}')
+            st.session_state['auth_in_progress'] = False
+            return False
         finally:
             st.session_state['auth_in_progress'] = False
 
@@ -59,7 +68,7 @@ def auth_ui():
             st.error(f'Login failed: {token_or_msg}')
             return False
 
-        # mark authenticated quickly
+        # mark authenticated quickly and continue (defer profile fetch)
         st.session_state['access_token'] = token_or_msg
         st.session_state['user_id'] = token_or_msg
         st.session_state['show_login'] = False
