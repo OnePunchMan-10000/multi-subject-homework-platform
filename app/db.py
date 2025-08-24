@@ -199,19 +199,9 @@ def authenticate_user(username: str, password: str) -> tuple[bool, int | None, s
 
             matches, iterations_used = _verify_password(password, password_hash)
             if matches:
-                # If the stored hash used a slower/higher iteration count than our
-                # desired PBKDF2_ITERATIONS, re-hash the password with the faster
-                # parameter and update the DB so future logins are faster.
-                try:
-                    if iterations_used and iterations_used != PBKDF2_ITERATIONS:
-                        new_hash = _hash_password(password, iterations=PBKDF2_ITERATIONS)
-                        q_upd = _adjust_query("UPDATE users SET password_hash=? WHERE id=?")
-                        cur.execute(q_upd, (new_hash, user_id))
-                        conn.commit()
-                except Exception:
-                    # Non-fatal: if update fails, continue returning success.
-                    pass
-
+                # To avoid adding latency on login due to an extra DB write,
+                # we do NOT re-hash and update the stored password here.
+                # Migration to a new hash format can be done in a background job.
                 return True, int(user_id), "Login successful."
             return False, None, "Invalid username or password."
     except Exception as e:
