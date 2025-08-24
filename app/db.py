@@ -15,6 +15,12 @@ if IS_POSTGRES:
 
 DB_PATH = "app_data.db"
 
+# Performance/security tradeoff: reduce PBKDF2 iterations for faster login while
+# remaining backward-compatible with existing hashes. New hashes include the
+# iteration count as a prefix so we can migrate users transparently on login.
+PBKDF2_ITERATIONS = 30000  # new default for hashing (faster)
+LEGACY_PBKDF2_ITERATIONS = 100_000  # previous value used in older hashes
+
 
 def _adjust_query(query: str) -> str:
     """Convert sqlite-style placeholders (?) to psycopg2 (%s) when using Postgres."""
@@ -123,22 +129,40 @@ def get_or_create_user_from_email(email: str, display_name: str | None = None) -
         return False, None, f"Database error: {str(e)}"
 
 
-def _hash_password(password: str) -> str:
-    """Return salted hash using PBKDF2-HMAC-SHA256 as salt:hash (base64)."""
+def _hash_password(password: str, iterations: int = PBKDF2_ITERATIONS) -> str:
+    """Return salted hash using PBKDF2-HMAC-SHA256 with iteration count.
+
+    Stored format: "{iterations}${salt_b64}:{dk_b64}". Older entries may be in the
+    legacy format "{salt_b64}:{dk_b64}" which implies LEGACY_PBKDF2_ITERATIONS.
+    """
     salt = os.urandom(16)
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
-    return f"{base64.b64encode(salt).decode()}:{base64.b64encode(dk).decode()}"
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+    return f"{iterations}${base64.b64encode(salt).decode()}:{base64.b64encode(dk).decode()}"
 
 
-def _verify_password(password: str, stored: str) -> bool:
+def _verify_password(password: str, stored: str) -> tuple[bool, int]:
+    """Verify password and return (matches, iterations_used).
+
+    This returns the iteration count used to verify so callers can decide whether to
+    re-hash the password using the newer (faster) iterations and update the DB.
+    """
     try:
-        salt_b64, hash_b64 = stored.split(":", 1)
+        # Detect new stored format with iterations prefix
+        if "$" in stored:
+            iter_str, rest = stored.split("$", 1)
+            iterations = int(iter_str)
+            salt_b64, hash_b64 = rest.split(":", 1)
+        else:
+            iterations = LEGACY_PBKDF2_ITERATIONS
+            salt_b64, hash_b64 = stored.split(":", 1)
+
         salt = base64.b64decode(salt_b64)
         expected = base64.b64decode(hash_b64)
-        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
-        return hashlib.sha256(dk).digest() == hashlib.sha256(expected).digest()
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        matches = hashlib.sha256(dk).digest() == hashlib.sha256(expected).digest()
+        return matches, iterations
     except Exception:
-        return False
+        return False, 0
 
 
 def register_user(username: str, password: str) -> tuple[bool, str]:
@@ -172,7 +196,22 @@ def authenticate_user(username: str, password: str) -> tuple[bool, int | None, s
             if not row:
                 return False, None, "Invalid username or password."
             user_id, password_hash = row[0], row[1]
-            if _verify_password(password, password_hash):
+
+            matches, iterations_used = _verify_password(password, password_hash)
+            if matches:
+                # If the stored hash used a slower/higher iteration count than our
+                # desired PBKDF2_ITERATIONS, re-hash the password with the faster
+                # parameter and update the DB so future logins are faster.
+                try:
+                    if iterations_used and iterations_used != PBKDF2_ITERATIONS:
+                        new_hash = _hash_password(password, iterations=PBKDF2_ITERATIONS)
+                        q_upd = _adjust_query("UPDATE users SET password_hash=? WHERE id=?")
+                        cur.execute(q_upd, (new_hash, user_id))
+                        conn.commit()
+                except Exception:
+                    # Non-fatal: if update fails, continue returning success.
+                    pass
+
                 return True, int(user_id), "Login successful."
             return False, None, "Invalid username or password."
     except Exception as e:
