@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 import streamlit.components.v1 as components
 import re
 import html
@@ -185,9 +186,9 @@ def render_landing_page():
                     style='background:white; color:black; padding:12px 32px; border-radius:12px; font-weight:700; border:none;'>
                     Start Learning Now
                 </button>
-            </div>
         </div>
-    
+    </div>
+
         <!-- Feature Cards -->
         <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; margin:3rem auto; max-width:1000px;'>
             <div class='feature-card'>
@@ -201,9 +202,9 @@ def render_landing_page():
             <div class='feature-card'>
                 <h3 style='color:white;'>Progress Tracking</h3>
                 <p style='color:white; opacity:0.8;'>Tracks your learning journey with detailed history</p>
-            </div>
         </div>
-    
+    </div>
+
         <!-- Footer -->
         <div style='text-align:center; color:white; opacity:0.6; margin-top:4rem;'>
             © 2025 by Praveen
@@ -318,7 +319,17 @@ def auth_ui():
         st.session_state['auth_in_progress'] = True
         try:
             with st.spinner('Signing in...'):
+                t0 = time.time()
                 ok, token_or_msg = backend_login(username, password)
+                duration_ms = int((time.time() - t0) * 1000)
+                # record trace for debugging
+                st.session_state['last_login_trace'] = {
+                    'attempt': st.session_state.get('login_attempts', 0) + 1,
+                    'ok': ok,
+                    'msg': str(token_or_msg),
+                    'duration_ms': duration_ms,
+                }
+                st.session_state['login_attempts'] = st.session_state.get('login_attempts', 0) + 1
         except Exception as e:
             st.error(f'Login failed: {e}')
             st.session_state['auth_in_progress'] = False
@@ -330,6 +341,9 @@ def auth_ui():
         if not ok:
             # token_or_msg contains error message
             st.error(f'Login failed: {token_or_msg}')
+            # show trace for debugging
+            if 'last_login_trace' in st.session_state:
+                st.info(f"Last login trace: {st.session_state['last_login_trace']}")
             st.markdown('</div>', unsafe_allow_html=True)
             return False
 
@@ -338,6 +352,9 @@ def auth_ui():
         st.session_state['user_id'] = username
         st.session_state['username'] = username
         st.session_state['show_login'] = False
+        # show trace for debugging
+        if 'last_login_trace' in st.session_state:
+            st.success(f"Login succeeded in {st.session_state['last_login_trace']['duration_ms']} ms")
         st.markdown('</div>', unsafe_allow_html=True)
         return True
 
