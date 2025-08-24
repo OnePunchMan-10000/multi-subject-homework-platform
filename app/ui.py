@@ -171,7 +171,7 @@ def render_landing_page():
         }
     
     </style>
-    """, unsafe_esult_allow_html=True)
+    """, unsafe_allow_html=True)
 
     # Hero section
     st.markdown("""
@@ -191,7 +191,7 @@ def render_landing_page():
         <!-- Feature Cards -->
         <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; margin:3rem auto; max-width:1000px;'>
             <div class='feature-card'>
-                <h3 style='color:white;'>Smart AI Tutor</used_h3>
+                <h3 style='color:white;'>Smart AI Tutor</h3>
                 <p style='color:white; opacity:0.8;'>Adapts explanations to your unique learning style</p>
             </div>
             <div class='feature-card'>
@@ -209,7 +209,7 @@ def render_landing_page():
             © 2025 by Praveen
         </div>
     </div>
-    """, unsafe_esult_allow_html=True)
+    """, unsafe_allow_html=True)
 
 
 def render_profile_page():
