@@ -1,6 +1,7 @@
 import streamlit as st
 from app.backend import BACKEND_URL
 import requests
+import streamlit.components.v1 as components
 
 def render_global_css():
     st.markdown(r"""
@@ -43,6 +44,17 @@ def auth_ui():
     st.header('Welcome back!')
 
     # Use a Streamlit form to ensure a single reliable submit action.
+    # Insert hidden inputs to reduce browser password-manager prompts which
+    # can overlay the page and block the first submit click. These hidden
+    # fields help prevent the "change your password" popup on some browsers.
+    try:
+        components.html("""
+            <input type='text' autocomplete='username' style='position:absolute;left:-1000px;top:-1000px;' />
+            <input type='password' autocomplete='new-password' style='position:absolute;left:-1000px;top:-1000px;' />
+        """, height=0)
+    except Exception:
+        pass
+
     with st.form(key='login_form'):
         username = st.text_input('Email or username')
         password = st.text_input('Password', type='password')
