@@ -1,7 +1,7 @@
 import streamlit as st
 from app.db import init_db, save_history, load_history
 from app.ui import render_navigation, render_footer, render_profile_page, render_about_page
-from app.ui import auth_ui, render_subject_grid, render_global_css
+from app.ui import auth_ui, render_subject_grid, render_global_css, render_landing_page
 from app.llm import get_api_response
 from app.formatting import format_response
 from app.visualization import should_show_diagram, create_smart_visualization
@@ -21,14 +21,17 @@ def main():
         if not auth_ui():
             return
 
-    # If not logged in, show public landing page (Start Learning will open login)
+    # If not logged in, show the rich landing page (with fallback to simple header)
     if not st.session_state.get("user_id"):
-        # Simpler landing: heading + button without extra wrapper element
-        st.header('Edullm')
-        st.write('Your virtual study companion — clear, step-by-step homework solutions.')
-        if st.button('Start Learning'):
-            st.session_state['show_login'] = True
-            st.rerun()
+        try:
+            render_landing_page()
+        except Exception:
+            # Fallback to simple landing if render_landing_page fails
+            st.header('Edullm')
+            st.write('Your virtual study companion — clear, step-by-step homework solutions.')
+            if st.button('Start Learning'):
+                st.session_state['show_login'] = True
+                st.rerun()
         return
 
     # User is logged in - show navigation
