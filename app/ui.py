@@ -7,7 +7,7 @@ import secrets as pysecrets
 from app.subjects import SUBJECTS
 from app.backend import backend_register, backend_login, backend_get_me
 from app.backend import backend_save_history
-from app.db import get_or_create_user_from_email
+from app.db import get_or_create_user_from_email, authenticate_user, register_user
 import os
 import sqlite3
 import pandas as pd
@@ -279,98 +279,62 @@ def render_about_page():
 
 
 def auth_ui():
-    """Render the authentication UI as a Streamlit form and perform login.
+    """Simplified login + registration UI.
 
-    This replaces the previous raw HTML inputs with a proper `st.form` to ensure
-    the login action is triggered exactly once when the user clicks Sign In.
-    On success, stores `access_token`, `user_id`, and `username` in session_state
-    and returns True. On failure, returns False.
+    Requirements per user: plain background, separate login and registration forms,
+    no timers/spinners/fetching UI. If login credentials exist and match, log in
+    immediately; otherwise show a message to register first.
     """
 
-    # Minimal styles (kept simple to avoid heavy rendering cost)
-    st.markdown("""
-    <style>
-      .auth-wrap { max-width:900px; margin: 16px auto; padding:18px; border-radius:12px; }
-    </style>
-    """, unsafe_allow_html=True)
+    # Plain background section
+        st.markdown("""
+    <div style='background: #f8f8f8; padding: 24px 12px; border-radius: 8px; max-width:900px; margin: 16px auto;'>
+      <h2 style='margin: 0 0 8px 0;'>Sign In</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("<div class='auth-wrap'>", unsafe_allow_html=True)
+    # --- Login form (no spinner, no timers) ---
+    with st.form(key='simple_login'):
+        login_username = st.text_input('Username')
+        login_password = st.text_input('Password', type='password')
+        login_submit = st.form_submit_button('Login')
 
-    # Ensure session keys exist
-    if 'auth_in_progress' not in st.session_state:
-        st.session_state['auth_in_progress'] = False
-
-    with st.form(key='auth_form'):
-        username = st.text_input('Email or username', key='auth_username')
-        password = st.text_input('Password', type='password', key='auth_password')
-        submitted = st.form_submit_button('Sign In')
-
-    if submitted:
-        if st.session_state.get('auth_in_progress'):
-            st.info('Login already in progress...')
-            st.markdown('</div>', unsafe_allow_html=True)
-            return False
-
-        if not username or not password:
+    if login_submit:
+        if not login_username or not login_password:
             st.error('Please enter both username and password')
+            return False
+
+        ok, user_id, msg = authenticate_user(login_username, login_password)
+        if ok:
+            st.session_state['user_id'] = user_id
+            st.session_state['username'] = login_username
+            st.success('Logged in')
+            return True
+        else:
+            st.warning('User not found or invalid credentials. Please register first.')
+            return False
+
+    st.markdown('---')
+
+    # --- Registration form (no spinner) ---
+    st.markdown('<div style="max-width:900px; margin:16px auto;">', unsafe_allow_html=True)
+    st.subheader('Register')
+    with st.form(key='simple_register'):
+        reg_username = st.text_input('Choose a username')
+        reg_password = st.text_input('Choose a password', type='password')
+        reg_submit = st.form_submit_button('Register')
+
+    if reg_submit:
+        if not reg_username or not reg_password:
+            st.error('Please enter both fields')
             st.markdown('</div>', unsafe_allow_html=True)
             return False
 
-        st.session_state['auth_in_progress'] = True
-        try:
-            with st.spinner('Signing in...'):
-                t0 = time.time()
-                ok, token_or_msg = backend_login(username, password)
-                duration_ms = int((time.time() - t0) * 1000)
-                # record trace for debugging
-                st.session_state['last_login_trace'] = {
-                    'attempt': st.session_state.get('login_attempts', 0) + 1,
-                    'ok': ok,
-                    'msg': str(token_or_msg),
-                    'duration_ms': duration_ms,
-                }
-                st.session_state['login_attempts'] = st.session_state.get('login_attempts', 0) + 1
-        except Exception as e:
-            st.error(f'Login failed: {e}')
-            st.session_state['auth_in_progress'] = False
-            st.markdown('</div>', unsafe_allow_html=True)
-            return False
-        finally:
-            st.session_state['auth_in_progress'] = False
-
-        if not ok:
-            # token_or_msg contains error message
-            st.error(f'Login failed: {token_or_msg}')
-            # show trace for debugging
-            if 'last_login_trace' in st.session_state:
-                st.info(f"Last login trace: {st.session_state['last_login_trace']}")
-            st.markdown('</div>', unsafe_allow_html=True)
-            return False
-
-        # Successful login — store token and user info
-        st.session_state['access_token'] = token_or_msg
-        st.session_state['user_id'] = username
-        st.session_state['username'] = username
-        # Hide login UI flag
-        st.session_state['show_login'] = False
-        # Ensure the app navigates to the subjects page immediately after login
-        st.session_state['current_page'] = 'subjects'
-        st.session_state['selected_subject'] = None
-        # show trace for debugging
-        if 'last_login_trace' in st.session_state:
-            st.success(f"Login succeeded in {st.session_state['last_login_trace']['duration_ms']} ms")
-
-        # Force an immediate rerun so main() picks up the new session state and
-        # navigates away from the login page in the same interaction. If
-        # experimental_rerun isn't available, fall back to continuing normally.
-        try:
-            if hasattr(st, 'experimental_rerun'):
-                st.experimental_rerun()
-        except Exception:
-            pass
-
-        st.markdown('</div>', unsafe_allow_html=True)
-        return True
+        ok, msg = register_user(reg_username, reg_password)
+        if ok:
+            st.success('Registration successful — you can now login')
+        else:
+            st.error(f'Registration failed: {msg}')
 
     st.markdown('</div>', unsafe_allow_html=True)
     return False
