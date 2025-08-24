@@ -172,7 +172,7 @@ def render_landing_page():
         }
     
     </style>
-    """, unsafe_esult_allow_html=True)
+    """, unsafe_allow_html=True)
 
     # Hero section
     st.markdown("""
@@ -192,7 +192,7 @@ def render_landing_page():
         <!-- Feature Cards -->
         <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; margin:3rem auto; max-width:1000px;'>
             <div class='feature-card'>
-                <h3 style='color:white;'>Smart AI Tutor</used_h3>
+                <h3 style='color:white;'>Smart AI Tutor</h3>
                 <p style='color:white; opacity:0.8;'>Adapts explanations to your unique learning style</p>
             </div>
             <div class='feature-card'>
@@ -287,11 +287,11 @@ def auth_ui():
     """
 
     # Plain background section
-        st.markdown("""
+    st.markdown("""
     <div style='background: #f8f8f8; padding: 24px 12px; border-radius: 8px; max-width:900px; margin: 16px auto;'>
       <h2 style='margin: 0 0 8px 0;'>Sign In</h2>
-        </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
     # --- Login form (no spinner, no timers) ---
     with st.form(key='simple_login'):
@@ -308,6 +308,15 @@ def auth_ui():
         if ok:
             st.session_state['user_id'] = user_id
             st.session_state['username'] = login_username
+            # Navigate to the main app page after login without requiring a second click
+            st.session_state['show_login'] = False
+            st.session_state['current_page'] = 'subjects'
+            st.session_state['selected_subject'] = None
+            try:
+                if hasattr(st, 'experimental_rerun'):
+                    st.experimental_rerun()
+            except Exception:
+                pass
             st.success('Logged in')
             return True
         else:
