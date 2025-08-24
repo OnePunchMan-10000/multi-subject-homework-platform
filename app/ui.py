@@ -302,30 +302,41 @@ def auth_ui():
 
     st.header("Welcome back! ✨")
 
-    # Use a proper Streamlit form so values are available to Python
-    with st.form(key='login_form'):
-        username = st.text_input('Email or username', value='')
-        password = st.text_input('Password', type='password')
-        submit = st.form_submit_button('Sign In')
+    # Use simple Streamlit inputs and a real button to avoid form/submit quirks
+    username = st.text_input('Email or username', value='')
+    password = st.text_input('Password', type='password')
 
-    if submit:
+    # If a login is currently in progress, show a spinner and disable duplicate requests
+    if st.session_state.get('auth_in_progress'):
         with st.spinner('Signing in...'):
-            ok, token_or_msg = backend_login(username, password)
-            if not ok:
-                st.error(f"Login failed: {token_or_msg}")
-            else:
-                # Store access token and fetch user profile
-                st.session_state['access_token'] = token_or_msg
-                ok2, me_or_msg = backend_get_me(token_or_msg)
-                if ok2 and isinstance(me_or_msg, dict):
-                    st.session_state['user_id'] = me_or_msg.get('id') or me_or_msg.get('username')
-                    st.session_state['username'] = me_or_msg.get('username', '')
-                else:
-                    st.warning(f"Signed in but couldn't fetch profile: {me_or_msg}")
+            st.write('')
+        return False
 
-                # Hide login view and allow main() to continue
-                st.session_state['show_login'] = False
-                return True
+    if st.button('Sign In'):
+        # Mark in-progress to prevent duplicate clicks
+        st.session_state['auth_in_progress'] = True
+        try:
+            with st.spinner('Signing in...'):
+                ok, token_or_msg = backend_login(username, password)
+        finally:
+            st.session_state['auth_in_progress'] = False
+
+        if not ok:
+            st.error(f"Login failed: {token_or_msg}")
+            return False
+
+        # Store access token and fetch user profile
+        st.session_state['access_token'] = token_or_msg
+        ok2, me_or_msg = backend_get_me(token_or_msg)
+        if ok2 and isinstance(me_or_msg, dict):
+            st.session_state['user_id'] = me_or_msg.get('id') or me_or_msg.get('username')
+            st.session_state['username'] = me_or_msg.get('username', '')
+        else:
+            st.warning(f"Signed in but couldn't fetch profile: {me_or_msg}")
+
+        # Hide login view and indicate success so caller can continue rendering
+        st.session_state['show_login'] = False
+        return True
 
     # Return False so main() will stop after rendering the login UI
     return False
