@@ -130,55 +130,87 @@ def render_home_page():
 
 
 def render_landing_page():
-    """Render a modern landing page hero and feature highlights (presentational only)."""
-    render_global_css()
-
+    """Render a modern landing page with gold/black theme, feature cards, and new branding"""
+    # Gold/black gradient with geometric shapes
     st.markdown("""
-    <div class="hero card mb-24" style="background: linear-gradient(90deg,#f5d76e,#d4af37);">
-        <div style="max-width:1000px; margin: 0 auto; padding: 48px; text-align:center;">
-            <div class="brand-title" style="color:#071033;">Edullm ✨</div>
-            <div class="hero-title" style="color:#071033;">Edullm — Your AI-Driven Study Companion</div>
-            <div class="hero-sub" style="color:#071033;">Smart, easy to understand, and personalized learning. Get clear, step-by-step homework solutions powered by AI — anytime, anywhere.</div>
-            <div style="margin-top:28px;">
-                <button onclick="window.streamlitRerun && window.streamlitRerun()" class="stButton" style="background:linear-gradient(90deg,#6366f1,#4f46e5); color:white; padding:12px 28px; border-radius:14px; font-weight:700;">👉 Start Learning Now</button>
+    <style>
+        .landing-bg {
+            background: linear-gradient(135deg, #000000 0%, #d4af37 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            padding: 4rem 2rem;
+        }
+        @keyframes gradient {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .hero-sub {
+            color: white;
+            opacity: 0.9;
+            font-size: 1.2rem;
+            margin-top: 1rem;
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+    
+    </style>
+    """, unsafe_esult_allow_html=True)
+
+    # Hero section
+    st.markdown("""
+    <div class='landing-bg'>
+        <div style='text-align:center; max-width:800px; margin:0 auto;'>
+            <h1 class='hero-title'>👑 EDULLM</h1>
+            <p class='hero-sub'>Your AI-Powered Study Companion</p>
+            <p style='color:white; opacity:0.8;'>Get instant, step-by-step homework solutions with personalized explanations from advanced AI.</p>
+            <div style='margin-top:2rem;'>
+                <button onclick="window.streamlitRerun && window.streamlitRerun()" class='stButton' 
+                    style='background:white; color:black; padding:12px 32px; border-radius:12px; font-weight:700; border:none;'>
+                    Start Learning Now
+                </button>
             </div>
         </div>
-    </div>
-
-    <div style="max-width:1000px; margin: 0 auto;">
-        <div class="subject-grid">
-            <div class="subject-card">
-                <div style="font-size:28px;">🚀</div>
-                <div style="font-weight:700; margin-top:8px;">AI-Driven Assistance</div>
-                <div class="muted">Get contextual, step-by-step help across subjects.</div>
+    
+        <!-- Feature Cards -->
+        <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; margin:3rem auto; max-width:1000px;'>
+            <div class='feature-card'>
+                <h3 style='color:white;'>Smart AI Tutor</used_h3>
+                <p style='color:white; opacity:0.8;'>Adapts explanations to your unique learning style</p>
             </div>
-            <div class="subject-card">
-                <div style="font-size:28px;">📘</div>
-                <div style="font-weight:700; margin-top:8px;">Step-by-Step Solutions</div>
-                <div class="muted">Clarity over answers — we show the process.</div>
+            <div class='feature-card'>
+                <h3 style='color:white;'>Step-by-Step Solutions</h3>
+                <p style='color:white; opacity:0.8;'>Breaks down problems into clear, logical steps</p>
             </div>
-            <div class="subject-card">
-                <div style="font-size:28px;">🎯</div>
-                <div style="font-weight:700; margin-top:8px;">Personalized Learning</div>
-                <div class="muted">Adapt explanations to your level and style.</div>
-            </div>
-            <div class="subject-card">
-                <div style="font-size:28px;">🌐</div>
-                <div style="font-weight:700; margin-top:8px;">Multi-Subject Support</div>
-                <div class="muted">Mathematics, Science, Literature and more.</div>
-            </div>
-            <div class="subject-card">
-                <div style="font-size:28px;">⚡</div>
-                <div style="font-weight:700; margin-top:8px;">Fast & Reliable</div>
-                <div class="muted">Instant assistance whenever you need it.</div>
+            <div class='feature-card'>
+                <h3 style='color:white;'>Progress Tracking</h3>
+                <p style='color:white; opacity:0.8;'>Tracks your learning journey with detailed history</p>
             </div>
         </div>
+    
+        <!-- Footer -->
+        <div style='text-align:center; color:white; opacity:0.6; margin-top:4rem;'>
+            © 2025 by Praveen
+        </div>
     </div>
+    """, unsafe_esult_allow_html=True)
 
-    <div class="app-footer" style="margin-top:36px;">
-        <div class="footer-content">About &middot; Contact &middot; Privacy &middot; Terms</div>
-    </div>
-    """, unsafe_allow_html=True)
 
 def render_profile_page():
     """Render the user profile page"""
