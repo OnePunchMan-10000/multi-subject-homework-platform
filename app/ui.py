@@ -323,9 +323,9 @@ def auth_ui():
                 else:
                     st.warning(f"Signed in but couldn't fetch profile: {me_or_msg}")
 
-                # Hide login view and rerun the app
+                # Hide login view and allow main() to continue
                 st.session_state['show_login'] = False
-                st.experimental_rerun()
+                return True
 
     # Return False so main() will stop after rendering the login UI
     return False
