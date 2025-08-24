@@ -43,6 +43,12 @@ def auth_ui():
     """Minimal, fast auth UI. Returns True on success."""
     st.header('Welcome back!')
 
+    # Ensure session keys exist to avoid losing state on reruns
+    if 'auth_in_progress' not in st.session_state:
+        st.session_state['auth_in_progress'] = False
+    if 'access_token' not in st.session_state:
+        st.session_state['access_token'] = None
+
     # Use a Streamlit form to ensure a single reliable submit action.
     # Insert hidden inputs to reduce browser password-manager prompts which
     # can overlay the page and block the first submit click. These hidden
@@ -55,9 +61,10 @@ def auth_ui():
     except Exception:
         pass
 
+    # Use explicit keys so values persist across reruns reliably
     with st.form(key='login_form'):
-        username = st.text_input('Email or username')
-        password = st.text_input('Password', type='password')
+        username = st.text_input('Email or username', key='login_username')
+        password = st.text_input('Password', type='password', key='login_password')
         submit = st.form_submit_button('Sign In')
 
     if submit:
@@ -94,15 +101,8 @@ def auth_ui():
                 st.session_state['user_id'] = username
                 st.session_state['username'] = username
                 st.session_state['show_login'] = False
-                # Try to force an immediate rerun if available so the app picks up
-                # the updated session state and doesn't lose the login result on
-                # the next automatic rerun.
-                if hasattr(st, 'experimental_rerun'):
-                    try:
-                        st.experimental_rerun()
-                    except Exception:
-                        # Fall back to returning True if experimental_rerun fails
-                        return True
+                # No experimental rerun here; rely on Streamlit's normal rerun
+                # after form submit so state persists.
                 return True
             else:
                 st.warning(data.get('detail') or data.get('message') or 'Invalid credentials')
