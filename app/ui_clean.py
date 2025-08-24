@@ -1,5 +1,6 @@
 import streamlit as st
-from app.backend import backend_login
+from app.backend import BACKEND_URL
+import requests
 
 def render_global_css():
     st.markdown(r"""
@@ -48,31 +49,46 @@ def auth_ui():
         submit = st.form_submit_button('Sign In')
 
     if submit:
-        # Prevent duplicates
         if st.session_state.get('auth_in_progress'):
             st.info('Login already in progress...')
+            return False
+
+        if not username or not password:
+            st.error('Please enter both fields.')
             return False
 
         st.session_state['auth_in_progress'] = True
         try:
             with st.spinner('Signing in...'):
-                ok, token_or_msg = backend_login(username, password)
+                r = requests.post(f"{BACKEND_URL}/auth/login", json={"username": username, "password": password}, timeout=5)
         except Exception as e:
-            st.error(f'Login error: {e}')
+            st.error(f'Connection failed: {e}')
             st.session_state['auth_in_progress'] = False
             return False
         finally:
             st.session_state['auth_in_progress'] = False
 
-        if not ok:
-            st.error(f'Login failed: {token_or_msg}')
-            return False
+        if r.status_code == 200:
+            try:
+                data = r.json()
+            except Exception:
+                st.error('Invalid response from server.')
+                return False
 
-        # mark authenticated quickly and continue (defer profile fetch)
-        st.session_state['access_token'] = token_or_msg
-        st.session_state['user_id'] = token_or_msg
-        st.session_state['show_login'] = False
-        return True
+            token = data.get('access_token') or data.get('token')
+            if token:
+                st.success(f'✅ Welcome, {username}!')
+                st.session_state['access_token'] = token
+                st.session_state['user_id'] = username
+                st.session_state['username'] = username
+                st.session_state['show_login'] = False
+                return True
+            else:
+                st.warning(data.get('detail') or data.get('message') or 'Invalid credentials')
+                return False
+        else:
+            st.error('Server error. Try again later.')
+            return False
 
     return False
 
