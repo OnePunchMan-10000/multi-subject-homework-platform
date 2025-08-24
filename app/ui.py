@@ -353,6 +353,9 @@ def auth_ui():
         st.session_state['username'] = username
         # Hide login UI flag
         st.session_state['show_login'] = False
+        # Ensure the app navigates to the subjects page immediately after login
+        st.session_state['current_page'] = 'subjects'
+        st.session_state['selected_subject'] = None
         # show trace for debugging
         if 'last_login_trace' in st.session_state:
             st.success(f"Login succeeded in {st.session_state['last_login_trace']['duration_ms']} ms")
