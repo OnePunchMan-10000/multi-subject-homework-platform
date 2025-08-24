@@ -295,47 +295,37 @@ def render_about_page():
 def auth_ui():
     """Render the authentication UI using Streamlit form and call backend_login/backend_get_me.
 
-    This replaces the previous purely-HTML UI so the Sign In button works and updates
-    Streamlit session state with `access_token`, `user_id`, and `username`.
+    This version uses only Streamlit widgets (no HTML wrapper divs) to avoid markup
+    issues on the deployed site. Returns False so `main()` will stop after rendering
+    the login page.
     """
-    st.markdown("""
-    <style>
-      .auth-container { max-width: 900px; margin: 40px auto; padding: 28px; border-radius: 12px; background: rgba(255,255,255,0.04); }
-      .auth-title { font-size: 2rem; margin-bottom: 12px; }
-    </style>
-    """, unsafe_allow_html=True)
 
-    with st.container():
-        st.markdown("<div class='auth-container'>", unsafe_allow_html=True)
-        st.markdown("<div class='auth-title'><strong>Welcome back!</strong> ✨</div>", unsafe_allow_html=True)
+    st.header("Welcome back! ✨")
 
-        # Use a proper Streamlit form so values are available to Python
-        with st.form(key='login_form'):
-            username = st.text_input('Email or username', value='')
-            password = st.text_input('Password', type='password')
-            submit = st.form_submit_button('Sign In')
+    # Use a proper Streamlit form so values are available to Python
+    with st.form(key='login_form'):
+        username = st.text_input('Email or username', value='')
+        password = st.text_input('Password', type='password')
+        submit = st.form_submit_button('Sign In')
 
-        if submit:
-            # Call backend to authenticate
-            with st.spinner('Signing in...'):
-                ok, token_or_msg = backend_login(username, password)
-                if not ok:
-                    st.error(f"Login failed: {token_or_msg}")
+    if submit:
+        with st.spinner('Signing in...'):
+            ok, token_or_msg = backend_login(username, password)
+            if not ok:
+                st.error(f"Login failed: {token_or_msg}")
+            else:
+                # Store access token and fetch user profile
+                st.session_state['access_token'] = token_or_msg
+                ok2, me_or_msg = backend_get_me(token_or_msg)
+                if ok2 and isinstance(me_or_msg, dict):
+                    st.session_state['user_id'] = me_or_msg.get('id') or me_or_msg.get('username')
+                    st.session_state['username'] = me_or_msg.get('username', '')
                 else:
-                    # Store access token and fetch user profile
-                    st.session_state['access_token'] = token_or_msg
-                    ok2, me_or_msg = backend_get_me(token_or_msg)
-                    if ok2 and isinstance(me_or_msg, dict):
-                        st.session_state['user_id'] = me_or_msg.get('id') or me_or_msg.get('username')
-                        st.session_state['username'] = me_or_msg.get('username', '')
-                    else:
-                        # If profile fetch fails, still allow login but warn
-                        st.warning(f"Signed in but couldn't fetch profile: {me_or_msg}")
-                    # Hide login view and rerun
-                    st.session_state['show_login'] = False
-                    st.experimental_rerun()
+                    st.warning(f"Signed in but couldn't fetch profile: {me_or_msg}")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+                # Hide login view and rerun the app
+                st.session_state['show_login'] = False
+                st.experimental_rerun()
 
     # Return False so main() will stop after rendering the login UI
     return False
