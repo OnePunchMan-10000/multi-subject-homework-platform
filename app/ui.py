@@ -1,21 +1,4 @@
 import streamlit as st
-from app.ui_clean import render_landing_page, auth_ui, render_footer
-
-# Thin compatibility wrapper to use the cleaned UI implementation.
-
-def render_global_css():
-    # delegate to ui_clean's CSS via its render function
-    try:
-        render_landing_page()
-    except Exception:
-        pass
-
-
-def render_navigation():
-    return
-
-
-import streamlit as st
 import streamlit.components.v1 as components
 import re
 import html
@@ -188,61 +171,46 @@ def render_landing_page():
         }
     
     </style>
-    """, unsafe_allow_html=True)
+    """, unsafe_esult_allow_html=True)
 
-    # Render hero and feature cards using a raw HTML component to avoid markdown escaping
-    html_content = """
-<style>
-  .landing-inner { max-width:1000px; margin:0 auto; padding:48px 24px; text-align:center; }
-  .landing-hero { padding: 48px; border-radius: 12px; background: linear-gradient(135deg,#a67c00,#d4af37); color: #fff; }
-  .landing-hero h1 { margin: 0; font-size:48px; letter-spacing:2px; }
-  .landing-hero p { margin: 12px 0; opacity:0.95; }
-  .feature-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-top:24px; }
-  .feature-card { background: rgba(0,0,0,0.12); padding:18px; border-radius:12px; color:#fff; }
-</style>
-
-<div class='landing-inner'>
-  <div class='landing-hero'>
-    <div style='font-size:48px;'>👑</div>
-    <h1>EDULLM</h1>
-    <p style='font-weight:600; margin-top:8px;'>Your AI-Powered Study Companion</p>
-    <p style='max-width:720px; margin:12px auto 0;'>Get instant, step-by-step homework solutions with personalized explanations from advanced AI.</p>
-  </div>
-
-  <div class='feature-grid'>
-    <div class='feature-card'>
-      <h3>Smart AI Tutor</h3>
-      <p>Adapts explanations to your unique learning style</p>
+    # Hero section
+    st.markdown("""
+    <div class='landing-bg'>
+        <div style='text-align:center; max-width:800px; margin:0 auto;'>
+            <h1 class='hero-title'>👑 EDULLM</h1>
+            <p class='hero-sub'>Your AI-Powered Study Companion</p>
+            <p style='color:white; opacity:0.8;'>Get instant, step-by-step homework solutions with personalized explanations from advanced AI.</p>
+            <div style='margin-top:2rem;'>
+                <button onclick="window.streamlitRerun && window.streamlitRerun()" class='stButton' 
+                    style='background:white; color:black; padding:12px 32px; border-radius:12px; font-weight:700; border:none;'>
+                    Start Learning Now
+                </button>
+            </div>
+        </div>
+    
+        <!-- Feature Cards -->
+        <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; margin:3rem auto; max-width:1000px;'>
+            <div class='feature-card'>
+                <h3 style='color:white;'>Smart AI Tutor</used_h3>
+                <p style='color:white; opacity:0.8;'>Adapts explanations to your unique learning style</p>
+            </div>
+            <div class='feature-card'>
+                <h3 style='color:white;'>Step-by-Step Solutions</h3>
+                <p style='color:white; opacity:0.8;'>Breaks down problems into clear, logical steps</p>
+            </div>
+            <div class='feature-card'>
+                <h3 style='color:white;'>Progress Tracking</h3>
+                <p style='color:white; opacity:0.8;'>Tracks your learning journey with detailed history</p>
+            </div>
+        </div>
+    
+        <!-- Footer -->
+        <div style='text-align:center; color:white; opacity:0.6; margin-top:4rem;'>
+            © 2025 by Praveen
+        </div>
     </div>
-    <div class='feature-card'>
-      <h3>Step-by-Step Solutions</h3>
-      <p>Breaks down problems into clear, logical steps</p>
-    </div>
-    <div class='feature-card'>
-      <h3>Progress Tracking</h3>
-      <p>Tracks your learning journey with detailed history</p>
-    </div>
-  </div>
+    """, unsafe_esult_allow_html=True)
 
-  <div style='margin-top:28px; text-align:center;'>
-    <!-- Streamlit button placed below for functionality -->
-  </div>
-
-  <div style='text-align:center; color:rgba(255,255,255,0.75); margin-top:32px;'>© 2025 by Praveen</div>
-</div>
-"""
-
-    try:
-        components.html(html_content, height=520)
-    except Exception:
-        # Fallback: render as simple markdown header
-        st.header('Edullm')
-        st.write('Your virtual study companion — clear, step-by-step homework solutions.')
-
-    # Functional Streamlit button to trigger login flow
-    if st.button('Start Learning', key='landing_start'):
-        st.session_state['show_login'] = True
-        st.rerun()
 
 def render_profile_page():
     """Render the user profile page"""
@@ -310,51 +278,48 @@ def render_about_page():
 
 
 def auth_ui():
-    """Render the authentication UI using Streamlit form and call backend_login/backend_get_me.
+    """Render the authentication UI with glassmorphism and floating labels."""
+    st.markdown("""
+    <style>
+        .login-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .floating-label {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .floating-input {
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            width: 100%;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
-    This version uses only Streamlit widgets (no HTML wrapper divs) to avoid markup
-    issues on the deployed site. Returns False so `main()` will stop after rendering
-    the login page.
-    """
+    with st.container():
+        st.markdown("""
+        <div class="login-card">
+            <h2>Welcome back! ✨</h2>
+            <div class="floating-label">
+                <input type="text" class="floating-input" placeholder="Email" required>
+            </div>
+            <div class="floating-label">
+                <input type="password" class="floating-input" placeholder="Password" required>
+            </div>
+            <button class="stButton" style="background:linear-gradient(90deg,#6366f1,#4f46e5); color:white; padding:12px 28px; border-radius:14px; font-weight:700;">Sign In</button>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.header("Welcome back! ✨")
-
-    # Use simple Streamlit inputs and a real button to avoid form/submit quirks
-    username = st.text_input('Email or username', value='')
-    password = st.text_input('Password', type='password')
-
-    # If a login is currently in progress, show a spinner and disable duplicate requests
-    if st.session_state.get('auth_in_progress'):
-        with st.spinner('Signing in...'):
-            st.write('')
-        return False
-
-    if st.button('Sign In'):
-        # Mark in-progress to prevent duplicate clicks
-        st.session_state['auth_in_progress'] = True
-        try:
-            with st.spinner('Signing in...'):
-                ok, token_or_msg = backend_login(username, password)
-        finally:
-            st.session_state['auth_in_progress'] = False
-
-        if not ok:
-            st.error(f"Login failed: {token_or_msg}")
-            return False
-
-        # Store access token and mark user as logged in immediately.
-        # Defer fetching the full profile to when it's actually needed to avoid
-        # adding extra latency to the login flow.
-        st.session_state['access_token'] = token_or_msg
-        st.session_state['user_id'] = token_or_msg  # placeholder to mark authenticated
-        st.session_state['username'] = ''
-
-        # Hide login view and indicate success so caller can continue rendering
-        st.session_state['show_login'] = False
-        return True
-
-    # Return False so main() will stop after rendering the login UI
-    return False
+    # The original auth_ui function had a form-based login.
+    # This new version replaces it with a simple Streamlit container for a glassmorphism effect.
+    # The form-based login logic is removed as per the edit hint.
+    # The user will need to implement the backend_login call and session state management
+    # based on the new UI structure.
 
 
 def render_subject_grid(columns: int = 4) -> str | None:
