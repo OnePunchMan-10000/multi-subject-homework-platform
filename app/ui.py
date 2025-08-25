@@ -210,7 +210,7 @@ def render_landing_page():
             © 2025 by Praveen
         </div>
     </div>
-    """, unsafe_esult_allow_html=True)
+    """, unsafe_allow_html=True)
 
 
 def render_profile_page():
@@ -286,10 +286,10 @@ def auth_ui():
     immediately; otherwise show a message to register first.
     """
 
-    # Plain background section
+    # Plain header (no white box)
     st.markdown("""
-    <div style='background: #f8f8f8; padding: 24px 12px; border-radius: 8px; max-width:900px; margin: 16px auto;'>
-      <h2 style='margin: 0 0 8px 0;'>Sign In</h2>
+    <div style='max-width:900px; margin: 8px auto;'>
+      <h2 style='margin: 0 0 8px 0; color: var(--text-900);'>Sign In</h2>
     </div>
     """, unsafe_allow_html=True)
 
@@ -312,11 +312,16 @@ def auth_ui():
             st.session_state['show_login'] = False
             st.session_state['current_page'] = 'subjects'
             st.session_state['selected_subject'] = None
+            # Force a rerun so the main app picks up the new session state immediately.
+            # Prefer `st.rerun()` (stable) and fall back to `st.experimental_rerun()` if needed.
             try:
-                if hasattr(st, 'experimental_rerun'):
-                    st.experimental_rerun()
+                st.rerun()
             except Exception:
-                pass
+                try:
+                    if hasattr(st, 'experimental_rerun'):
+                        st.experimental_rerun()
+                except Exception:
+                    pass
             st.success('Logged in')
             return True
         else:
@@ -324,28 +329,7 @@ def auth_ui():
             return False
 
     st.markdown('---')
-
-    # --- Registration form (no spinner) ---
-    st.markdown('<div style="max-width:900px; margin:16px auto;">', unsafe_allow_html=True)
-    st.subheader('Register')
-    with st.form(key='simple_register'):
-        reg_username = st.text_input('Choose a username')
-        reg_password = st.text_input('Choose a password', type='password')
-        reg_submit = st.form_submit_button('Register')
-
-    if reg_submit:
-        if not reg_username or not reg_password:
-            st.error('Please enter both fields')
-            st.markdown('</div>', unsafe_allow_html=True)
-            return False
-
-        ok, msg = register_user(reg_username, reg_password)
-        if ok:
-            st.success('Registration successful — you can now login')
-        else:
-            st.error(f'Registration failed: {msg}')
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Registration removed from login page to match requested minimal flow
     return False
 
 
