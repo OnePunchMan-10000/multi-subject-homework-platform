@@ -482,23 +482,42 @@ def render_features():
 
 
 def render_landing_page():
-    """Used to render the landing page (with fallback to simple header)
-    if not st.session_state.get("user_id"):
-        try:
-            render_landing_page()
-        except Exception:
-            # Fallback to simple landing if render_landing_page fails
-            st.header('Edullm')
-            st.write('Your virtual study companion — clear, step-by-step homework solutions.')
-            if st.button('Start Learning'):
-                st.session_state['show_login'] = True
-                st.rerun()
-        return
+    """Render the modern landing page (hero + features) and a login CTA.
+
+    Also shows the current commit SHA (if available) to confirm the deployed
+    version matches the repository.
     """
-    st.header('Edullm')
-    st.write('Your virtual study companion — clear, step-by-step homework solutions.')
-    if st.button('Start Learning'):
+    # Use the cleaned, styled landing from ui_clean
+    try:
+        render_global_css()
+    except Exception:
+        pass
+
+    st.markdown("""
+    <div class='landing' style='background: linear-gradient(135deg,#0b0b0d,#221f1a); padding:36px 12px; color:#fff;'>
+      <div style='max-width:980px;margin:0 auto;text-align:center;'>
+        <div style='font-size:48px;'>👑</div>
+        <div class='brand'>EDULLM</div>
+        <div class='subtitle'>Demo · Your AI-powered study companion</div>
+        <div style='margin-top:8px; color:rgba(255,255,255,0.8)'>Clear, step-by-step homework solutions with concise explanations.</div>
+        <div class='cta'>
+          <button onclick="window.streamlitRerun && window.streamlitRerun()" class='stButton' style='background:white; color:black; padding:12px 32px; border-radius:12px; font-weight:700;'>Start Learning Now</button>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Safe fallback button that works without the JS hook
+    if st.button('Start Learning (open login)', key='start_learning_clean'):
         st.session_state['show_login'] = True
         st.rerun()
+
+    # Show deployed commit SHA for verification (if available)
+    try:
+        import subprocess, os
+        sha = os.environ.get('DEPLOY_COMMIT') or subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
+        st.markdown(f"<div style='text-align:center;color:var(--muted-500);font-size:0.9rem;margin-top:12px;'>Deployed commit: <code>{sha[:10]}</code></div>", unsafe_allow_html=True)
+    except Exception:
+        pass
 
 
