@@ -9,6 +9,7 @@ from app.backend import backend_register, backend_login, backend_get_me
 from app.backend import backend_save_history
 from app.db import get_or_create_user_from_email, authenticate_user, register_user
 import os
+import subprocess
 import sqlite3
 import pandas as pd
 
@@ -164,6 +165,10 @@ def render_landing_page():
         if st.button('Learn More', key='landing_learn'):
             st.session_state['current_page'] = 'about'
             st.experimental_rerun()
+
+    # Show deployed commit SHA to help verify which version is live
+    sha = get_deploy_commit_sha()
+    st.markdown(f"<div style='text-align:center;color:var(--muted-500);font-size:0.9rem;margin-top:12px;'>Deployed commit: <code>{sha}</code></div>", unsafe_allow_html=True)
 
 
 def render_profile_page():
@@ -479,6 +484,23 @@ def inject_global_css():
         }
     </style>
     """, unsafe_allow_html=True)
+
+
+def get_deploy_commit_sha() -> str:
+    """Return the current git commit SHA if available; return 'unknown' otherwise.
+
+    This reads from the local git HEAD; on the deployed environment it may be present.
+    """
+    try:
+        # Try environment variable first (some hosts expose it)
+        sha = os.environ.get('DEPLOY_COMMIT')
+        if sha:
+            return sha[:10]
+        # Fallback to local git
+        out = subprocess.check_output(['git', 'rev-parse', 'HEAD'], stderr=subprocess.DEVNULL).decode().strip()
+        return out[:10]
+    except Exception:
+        return 'unknown'
 
 
 def render_login_button():
