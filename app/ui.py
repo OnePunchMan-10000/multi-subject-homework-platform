@@ -131,29 +131,39 @@ def render_home_page():
 
 
 def render_landing_page():
-    """Render a plain landing page with a single Start Learning button."""
+    """Render a minimal, functional landing page.
+
+    - Centered brand title and subtitle
+    - Primary CTA: Start Learning (opens login)
+    - Secondary CTA: Learn More (navigates to About)
+    Uses Streamlit-native buttons to ensure reliable behavior in cloud deployments.
+    """
+    # Ensure global CSS is injected for consistent styling
+    try:
+        render_global_css()
+    except Exception:
+        pass
+
+    # Simple centered hero content
     st.markdown("""
-    <div style='max-width:900px; margin:6vh auto; text-align:center;'>
-        <h1 style='font-size:2.4rem; margin-bottom:0.25rem;'>Edullm</h1>
-        <p style='color: #6b7280; margin-top:0;'>Your AI-powered study companion</p>
-        <div style='margin-top:2rem;'>
-            <button id='start-learning' class='stButton' style='padding:10px 24px; font-weight:700;'>Start Learning</button>
+    <div style="max-width:900px; margin:6vh auto; text-align:center;">
+        <div style="font-size:28px; font-weight:700; color:var(--text-900);">EduLLM</div>
+        <div style="color:var(--muted-500); margin-top:6px;">Your AI-powered study companion</div>
+        <div style="color:var(--muted-500); margin-top:12px; max-width:700px; margin-left:auto; margin-right:auto;">
+            Get instant, accurate answers to your school questions with clear, step-by-step explanations.
         </div>
     </div>
-    <script>
-    // Make the button trigger Streamlit to show the login UI by setting a session flag via URL param
-    document.getElementById('start-learning').addEventListener('click', function(){
-        // Use window.location.hash to avoid full reload; Streamlit doesn't provide a direct JS bridge here.
-        // We rely on the existing server-side check of `show_login` which can be toggled by the Start button fallback.
-        window.streamlitRerun && window.streamlitRerun();
-    });
-    </script>
     """, unsafe_allow_html=True)
 
-    # Functional fallback button for environments where JS bridge isn't present
-    if st.button('Start Learning (open login)'):
-        st.session_state['show_login'] = True
-        st.rerun()
+    # CTAs using Streamlit buttons (reliable across deployments)
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        if st.button('Start Learning', key='landing_start'):
+            st.session_state['show_login'] = True
+            st.experimental_rerun()
+        if st.button('Learn More', key='landing_learn'):
+            st.session_state['current_page'] = 'about'
+            st.experimental_rerun()
 
 
 def render_profile_page():
