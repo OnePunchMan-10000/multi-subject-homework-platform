@@ -490,49 +490,12 @@ def render_login_button():
 
 
 def render_hero():
-    st.markdown("""
-    <div class='hero'>
-        <h1 style='color: var(--gold); font-size: 3rem; font-weight: 800; margin-bottom: 1rem'>EduLLM</h1>
-        <p style='color: var(--gray); font-size: 1.1rem; max-width: 600px; margin: 0 auto'>
-            Your AI-powered homework companion. Get instant, accurate answers to your school questions using cutting-edge Large Language Model technology.
-        </p>
-        <div style='display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem'>
-            <button class='cta-button' style='background: var(--gold); color: black'>Start Learning</button>
-            <button class='cta-button' style='border: 1px solid #e5e7eb'>Learn More</button>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    """Hero removed per request; landing page is minimal and functional via render_landing_page()."""
+    return
 
 
 def render_features():
-    st.markdown("""
-    <div style='padding: 2rem 1rem'>
-        <h2 style='text-align: center; font-size: 1.75rem; margin-bottom: 2rem'>
-            Why Choose <span style='color: var(--gold)'>EduLLM</span>?
-        </h2>
-        <div class='feature-grid'>
-            <div class='feature-card'>
-                <p style='font-size: 2rem; margin: 0'>🧠</p>
-                <h3 style='margin: 0.5rem 0'>AI-Powered Learning</h3>
-                <p style='color: var(--gray); margin: 0'>Advanced LLM technology helps you understand complex concepts.</p>
-            </div>
-            <div class='feature-card'>
-                <p style='font-size: 2rem; margin: 0'>📘</p>
-                <h3 style='margin: 0.5rem 0'>Multiple Subjects</h3>
-                <p style='color: var(--gray); margin: 0'>Math, Science, History, English and more.</p>
-            </div>
-            <div class='feature-card'>
-                <p style='font-size: 2rem; margin: 0'>💡</p>
-                <h3 style='margin: 0.5rem 0'>Instant Solutions</h3>
-                <p style='color: var(--gray); margin: 0'>Step-by-step solutions in seconds.</p>
-            </div>
-            <div class='feature-card'>
-                <p style='font-size: 2rem; margin: 0'>👥</p>
-                <h3 style='margin: 0.5rem 0'>Student Community</h3>
-                <p style='color: var(--gray); margin: 0'>Join thousands improving their grades.</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    """Features section removed per request. Use minimal landing page only."""
+    return
 
 
