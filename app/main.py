@@ -23,17 +23,13 @@ def main():
         auth_ui()
         return
 
-    # If not logged in, show the rich landing page (with fallback to simple header)
+    # If not logged in, show the simple landing page
     if not st.session_state.get("user_id"):
-        try:
-            render_landing_page()
-        except Exception:
-            # Fallback to simple landing if render_landing_page fails
-            st.header('Edullm')
-            st.write('Your virtual study companion — clear, step-by-step homework solutions.')
-            if st.button('Start Learning'):
-                st.session_state['show_login'] = True
-                st.rerun()
+        st.header('Welcome to EduLLM')
+        st.write('Your AI-powered study companion')
+        if st.button('Login to Continue'):
+            st.session_state['show1_login'] = True
+            st.rerun()
         return
 
     # User is logged in - show navigation

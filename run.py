@@ -6,15 +6,32 @@ Run with: streamlit run run.py
 # Import local config first to set up database connection
 import local_config
 
-# Prefer the known-working launcher in hw01.py (contains stable UI+logic)
-import hw01
 import streamlit as st
+from app import main as app_main
 
-# hw01 already sets page config; keep a safe default here as well
-st.set_page_config(page_title="Academic Assistant Pro", page_icon="🎓", layout="wide", initial_sidebar_state="collapsed")
+
+def main():
+    """Run the launcher UI (landing/login) then delegate to app.main."""
+    # Ensure page config is set before rendering any UI
+    st.set_page_config(page_title="Academic Assistant Pro", page_icon="🎓", layout="wide", initial_sidebar_state="collapsed")
+
+    # Show simple landing page if not logged in
+    if not st.session_state.get("user_id"):
+        st.header('Welcome to EduLLM')
+        st.write('Your AI-powered study companion')
+        if st.button('Login to Continue'):
+            st.session_state['show_login'] = True
+            st.rerun()
+        return
+
+    # Run the app's main entrypoint from app.main
+    try:
+        app_main.main()
+    except Exception as e:
+        st.error(f'Failed to start the main app: {e}')
+
 
 if __name__ == "__main__":
-    # Run the working main from hw01 which contains the stable UI flow
-    hw01.main()
+    main()
 
 

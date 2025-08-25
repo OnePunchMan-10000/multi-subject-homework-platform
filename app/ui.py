@@ -131,46 +131,6 @@ def render_home_page():
     render_subject_grid()
 
 
-def render_landing_page():
-    """Render a minimal, functional landing page.
-
-    - Centered brand title and subtitle
-    - Primary CTA: Start Learning (opens login)
-    - Secondary CTA: Learn More (navigates to About)
-    Uses Streamlit-native buttons to ensure reliable behavior in cloud deployments.
-    """
-    # Ensure global CSS is injected for consistent styling
-    try:
-        render_global_css()
-    except Exception:
-        pass
-
-    # Simple centered hero content
-    st.markdown("""
-    <div style="max-width:900px; margin:6vh auto; text-align:center;">
-        <div style="font-size:28px; font-weight:700; color:var(--text-900);">EduLLM</div>
-        <div style="color:var(--muted-500); margin-top:6px;">Your AI-powered study companion</div>
-        <div style="color:var(--muted-500); margin-top:12px; max-width:700px; margin-left:auto; margin-right:auto;">
-            Get instant, accurate answers to your school questions with clear, step-by-step explanations.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # CTAs using Streamlit buttons (reliable across deployments)
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c2:
-        if st.button('Start Learning', key='landing_start'):
-            st.session_state['show_login'] = True
-            st.experimental_rerun()
-        if st.button('Learn More', key='landing_learn'):
-            st.session_state['current_page'] = 'about'
-            st.experimental_rerun()
-
-    # Show deployed commit SHA to help verify which version is live
-    sha = get_deploy_commit_sha()
-    st.markdown(f"<div style='text-align:center;color:var(--muted-500);font-size:0.9rem;margin-top:12px;'>Deployed commit: <code>{sha}</code></div>", unsafe_allow_html=True)
-
-
 def render_profile_page():
     """Render the user profile page"""
     st.markdown('<div class="main-header">👤 User Profile</div>', unsafe_allow_html=True)
@@ -519,5 +479,26 @@ def render_hero():
 def render_features():
     """Features section removed per request. Use minimal landing page only."""
     return
+
+
+def render_landing_page():
+    """Used to render the landing page (with fallback to simple header)
+    if not st.session_state.get("user_id"):
+        try:
+            render_landing_page()
+        except Exception:
+            # Fallback to simple landing if render_landing_page fails
+            st.header('Edullm')
+            st.write('Your virtual study companion — clear, step-by-step homework solutions.')
+            if st.button('Start Learning'):
+                st.session_state['show_login'] = True
+                st.rerun()
+        return
+    """
+    st.header('Edullm')
+    st.write('Your virtual study companion — clear, step-by-step homework solutions.')
+    if st.button('Start Learning'):
+        st.session_state['show_login'] = True
+        st.rerun()
 
 
