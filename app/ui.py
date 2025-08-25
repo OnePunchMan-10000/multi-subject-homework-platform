@@ -131,86 +131,29 @@ def render_home_page():
 
 
 def render_landing_page():
-    """Render a modern landing page with gold/black theme, feature cards, and new branding"""
-    # Gold/black gradient with geometric shapes
+    """Render a plain landing page with a single Start Learning button."""
     st.markdown("""
-    <style>
-        .landing-bg {
-            background: linear-gradient(135deg, #000000 0%, #d4af37 100%);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
-            min-height: 100vh;
-            padding: 4rem 2rem;
-        }
-        @keyframes gradient {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
-        }
-        .hero-title {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .hero-sub {
-            color: white;
-            opacity: 0.9;
-            font-size: 1.2rem;
-            margin-top: 1rem;
-        }
-        .feature-card {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-    
-    </style>
+    <div style='max-width:900px; margin:6vh auto; text-align:center;'>
+        <h1 style='font-size:2.4rem; margin-bottom:0.25rem;'>Edullm</h1>
+        <p style='color: #6b7280; margin-top:0;'>Your AI-powered study companion</p>
+        <div style='margin-top:2rem;'>
+            <button id='start-learning' class='stButton' style='padding:10px 24px; font-weight:700;'>Start Learning</button>
+        </div>
+    </div>
+    <script>
+    // Make the button trigger Streamlit to show the login UI by setting a session flag via URL param
+    document.getElementById('start-learning').addEventListener('click', function(){
+        // Use window.location.hash to avoid full reload; Streamlit doesn't provide a direct JS bridge here.
+        // We rely on the existing server-side check of `show_login` which can be toggled by the Start button fallback.
+        window.streamlitRerun && window.streamlitRerun();
+    });
+    </script>
     """, unsafe_allow_html=True)
 
-    # Hero section
-    st.markdown("""
-    <div class='landing-bg'>
-        <div style='text-align:center; max-width:800px; margin:0 auto;'>
-            <h1 class='hero-title'>👑 EDULLM</h1>
-            <p class='hero-sub'>Your AI-Powered Study Companion</p>
-            <p style='color:white; opacity:0.8;'>Get instant, step-by-step homework solutions with personalized explanations from advanced AI.</p>
-            <div style='margin-top:2rem;'>
-                <button onclick="window.streamlitRerun && window.streamlitRerun()" class='stButton' 
-                    style='background:white; color:black; padding:12px 32px; border-radius:12px; font-weight:700; border:none;'>
-                    Start Learning Now
-                </button>
-        </div>
-    </div>
-
-        <!-- Feature Cards -->
-        <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; margin:3rem auto; max-width:1000px;'>
-            <div class='feature-card'>
-                <h3 style='color:white;'>Smart AI Tutor</h3>
-                <p style='color:white; opacity:0.8;'>Adapts explanations to your unique learning style</p>
-            </div>
-            <div class='feature-card'>
-                <h3 style='color:white;'>Step-by-Step Solutions</h3>
-                <p style='color:white; opacity:0.8;'>Breaks down problems into clear, logical steps</p>
-            </div>
-            <div class='feature-card'>
-                <h3 style='color:white;'>Progress Tracking</h3>
-                <p style='color:white; opacity:0.8;'>Tracks your learning journey with detailed history</p>
-        </div>
-    </div>
-
-        <!-- Footer -->
-        <div style='text-align:center; color:white; opacity:0.6; margin-top:4rem;'>
-            © 2025 by Praveen
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Functional fallback button for environments where JS bridge isn't present
+    if st.button('Start Learning (open login)'):
+        st.session_state['show_login'] = True
+        st.rerun()
 
 
 def render_profile_page():
