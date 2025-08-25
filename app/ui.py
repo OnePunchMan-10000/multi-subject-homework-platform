@@ -105,8 +105,34 @@ def render_global_css():
 
 def render_navigation():
     """Render the top navigation menu"""
-    # Navigation intentionally disabled for a minimal layout.
-    return
+    # Simple top navigation with four pages: Home, Subjects, Profile, About, plus Logout
+    cols = st.columns([1,1,1,1,1])
+    with cols[0]:
+        if st.button('Home'):
+            st.session_state['current_page'] = 'home'
+            st.session_state['selected_subject'] = None
+            st.rerun()
+    with cols[1]:
+        if st.button('Subjects'):
+            st.session_state['current_page'] = 'subjects'
+            st.session_state['selected_subject'] = None
+            st.rerun()
+    with cols[2]:
+        if st.button('Profile'):
+            st.session_state['current_page'] = 'profile'
+            st.rerun()
+    with cols[3]:
+        if st.button('About'):
+            st.session_state['current_page'] = 'about'
+            st.rerun()
+    with cols[4]:
+        if st.button('Logout'):
+            # Clear user session and go back to landing
+            for k in ['user_id', 'username', 'access_token', 'selected_subject', 'current_page']:
+                if k in st.session_state:
+                    del st.session_state[k]
+            st.session_state['show_login'] = False
+            st.rerun()
 
 
 def render_footer():

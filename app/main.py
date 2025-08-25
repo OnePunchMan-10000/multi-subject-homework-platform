@@ -43,6 +43,16 @@ def main():
     current_page = st.session_state.get('current_page', 'home')
     
     # Handle different pages
+    if current_page == 'home':
+        # Show a simple home/dashboard view
+        try:
+            render_home_page = __import__('app.ui', fromlist=['render_home_page']).render_home_page
+            render_home_page()
+        except Exception:
+            st.markdown('# Edullm')
+        render_footer()
+        return
+
     if current_page == 'profile':
         render_profile_page()
         render_footer()
