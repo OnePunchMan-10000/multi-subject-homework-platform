@@ -2021,66 +2021,87 @@ def render_subjects_page():
     st.markdown("# 📚 Choose Your Subject")
     st.markdown("Select a subject to get started with your homework questions. Our AI tutor is ready to help!")
 
-    # Subject data with enhanced descriptions and colors
+    # Subject data with enhanced descriptions and colors - All 9 subjects
     subjects_data = {
         "Mathematics": {
-            "icon": "🔢",
+            "icon": "📐",
             "description": "Algebra, Calculus, Geometry, Statistics",
             "color": "#667eea"
+        },
+        "Physics": {
+            "icon": "⚡",
+            "description": "Mechanics, Thermodynamics, Electromagnetism",
+            "color": "#ff6b6b"
         },
         "Chemistry": {
             "icon": "🧪",
             "description": "Organic, Inorganic, Physical Chemistry",
             "color": "#f093fb"
         },
-        "History": {
-            "icon": "🏛️",
-            "description": "World History, Ancient Civilizations",
-            "color": "#4facfe"
-        },
-        "English": {
-            "icon": "📖",
-            "description": "Literature, Grammar, Writing",
-            "color": "#43e97b"
-        },
         "Biology": {
             "icon": "🧬",
             "description": "Cell Biology, Genetics, Ecology",
             "color": "#fa709a"
         },
+        "English Literature": {
+            "icon": "📚",
+            "description": "Literature, Grammar, Writing",
+            "color": "#43e97b"
+        },
+        "History": {
+            "icon": "🏛️",
+            "description": "World History, Ancient Civilizations",
+            "color": "#4facfe"
+        },
         "Economics": {
             "icon": "💰",
             "description": "Micro, Macro, International Economics",
             "color": "#a8edea"
+        },
+        "Computer Science": {
+            "icon": "💻",
+            "description": "Programming, Algorithms, Data Structures",
+            "color": "#764abc"
+        },
+        "Geography": {
+            "icon": "🌍",
+            "description": "Physical, Human, Environmental",
+            "color": "#20bf6b"
         }
     }
 
-    # Create 3 columns for grid layout
+    # Create 3 columns for grid layout (9 subjects = 3 rows of 3)
     cols = st.columns(3)
 
     for idx, (subject, info) in enumerate(subjects_data.items()):
         with cols[idx % 3]:
-            # Create styled subject card with HTML
+            # Create styled subject card with integrated button
+            if st.button(f"Start Learning", key=f"select_{subject}", help=f"Start {subject} homework session", use_container_width=True):
+                st.session_state.selected_subject = subject
+                st.session_state.page = 'questions'
+                st.rerun()
+
+            # Create styled subject card with HTML (displayed above button)
             card_html = f"""
             <div class="subject-card" style="
                 background: linear-gradient(135deg, {info['color']} 0%, rgba(255,255,255,0.1) 100%);
-                padding: 2rem;
+                padding: 1.5rem;
                 border-radius: 20px;
                 text-align: center;
-                margin: 1rem 0;
+                margin: 0.5rem 0;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.3);
                 border: 1px solid rgba(255,255,255,0.2);
                 backdrop-filter: blur(10px);
-                min-height: 220px;
+                min-height: 200px;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 position: relative;
                 overflow: hidden;
             ">
-                <div style="font-size: 4rem; margin-bottom: 1rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">{info['icon']}</div>
-                <h2 style="color: white; font-weight: bold; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.5rem;">{subject}</h2>
-                <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); line-height: 1.4;">{info['description']}</p>
+                <div style="font-size: 3.5rem; margin-bottom: 0.8rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">{info['icon']}</div>
+                <h2 style="color: white; font-weight: bold; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.3rem;">{subject}</h2>
+                <p style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); line-height: 1.3;">{info['description']}</p>
                 <div style="
                     position: absolute;
                     top: -50%;
@@ -2093,12 +2114,6 @@ def render_subjects_page():
             </div>
             """
             st.markdown(card_html, unsafe_allow_html=True)
-
-            # Hidden button for functionality
-            if st.button(f"Select {subject}", key=f"select_{subject}", help=f"Start {subject} homework session"):
-                st.session_state.selected_subject = subject
-                st.session_state.page = 'questions'
-                st.rerun()
 
 def render_profile_page():
     """Profile page with user stats and achievements"""
