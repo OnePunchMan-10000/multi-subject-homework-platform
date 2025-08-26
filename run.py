@@ -1770,16 +1770,24 @@ def render_theme_toggle():
 
 # Page Components
 def render_navbar():
-    """Render responsive navigation bar"""
-    # Mobile-friendly navbar with hamburger menu concept
+    """Render horizontal navigation bar at top"""
     st.markdown("""
     <style>
-    .navbar-container {
+    .top-navbar {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 0.5rem 1rem;
-        border-radius: 10px;
-        margin-bottom: 1rem;
+        padding: 0.8rem 1rem;
+        margin: -1rem -1rem 1rem -1rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+    .navbar-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
     }
     .navbar-brand {
         display: flex;
@@ -1787,42 +1795,37 @@ def render_navbar():
         color: white;
         font-size: 1.5rem;
         font-weight: bold;
-        margin-bottom: 0.5rem;
     }
-    .navbar-nav {
+    .navbar-links {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        justify-content: center;
+        gap: 1rem;
+        align-items: center;
     }
     @media (max-width: 768px) {
-        .navbar-nav {
-            flex-direction: column;
-            align-items: stretch;
+        .navbar-links {
+            gap: 0.5rem;
         }
         .navbar-brand {
-            justify-content: center;
             font-size: 1.2rem;
         }
     }
     </style>
-    <div class="navbar-container">
-        <div class="navbar-brand">
-            <span style="margin-right: 10px;">👑</span>
-            <span style="color: #FFD700;">EduLLM</span>
+    <div class="top-navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">
+                <span style="margin-right: 10px;">👑</span>
+                <span style="color: #FFD700;">EduLLM</span>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Navigation buttons in a responsive grid
-    col1, col2, col3 = st.columns(3)
+    # Navigation buttons in horizontal layout
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
 
     with col1:
         if st.button("🏠 Home", key="nav_home", use_container_width=True):
             st.session_state.page = 'landing'
-            st.rerun()
-        if st.button("👤 Profile", key="nav_profile", use_container_width=True):
-            st.session_state.page = 'profile'
             st.rerun()
 
     with col2:
@@ -1830,18 +1833,166 @@ def render_navbar():
             st.session_state.page = 'subjects'
             st.session_state.selected_subject = None
             st.rerun()
-        if st.button("ℹ️ About Us", key="nav_about", use_container_width=True):
+
+    with col3:
+        if st.button("👤 Profile", key="nav_profile", use_container_width=True):
+            st.session_state.page = 'profile'
+            st.rerun()
+
+    with col4:
+        if st.button("ℹ️ About", key="nav_about", use_container_width=True):
             st.session_state.page = 'about'
             st.rerun()
 
-    with col3:
+    with col5:
         if st.button("🚪 Logout", key="nav_logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.page = 'landing'
             st.rerun()
 
-    # Add separator
     st.markdown("---")
+
+def render_hamburger_navbar():
+    """Render hamburger menu navbar for questions page"""
+    # Initialize menu state
+    if 'menu_open' not in st.session_state:
+        st.session_state.menu_open = False
+
+    st.markdown("""
+    <style>
+    .hamburger-container {
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 1001;
+    }
+    .hamburger-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    .hamburger-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .slide-menu {
+        position: fixed;
+        top: 0;
+        left: -300px;
+        width: 280px;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: left 0.3s ease;
+        z-index: 1000;
+        padding: 4rem 1rem 1rem 1rem;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    }
+    .slide-menu.open {
+        left: 0;
+    }
+    .menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    .menu-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+    .menu-brand {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255,255,255,0.3);
+        padding-bottom: 1rem;
+    }
+    .menu-item {
+        color: white;
+        padding: 0.8rem 1rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+    .menu-item:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: rgba(255,255,255,0.3);
+        transform: translateX(5px);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Hamburger button
+    col1, col2 = st.columns([1, 10])
+    with col1:
+        if st.button("⋯", key="hamburger_btn", help="Menu"):
+            st.session_state.menu_open = not st.session_state.menu_open
+            st.rerun()
+
+    # Sliding menu (only show if menu is open)
+    if st.session_state.menu_open:
+        # Create overlay and menu
+        st.markdown(f"""
+        <div class="menu-overlay open" onclick="document.querySelector('.slide-menu').classList.remove('open')"></div>
+        <div class="slide-menu open">
+            <div class="menu-brand">
+                <span style="margin-right: 10px;">👑</span>
+                <span style="color: #FFD700;">EduLLM</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Menu items in sidebar
+        with st.sidebar:
+            st.markdown("### Navigation")
+
+            if st.button("🏠 Home", key="ham_home", use_container_width=True):
+                st.session_state.page = 'landing'
+                st.session_state.menu_open = False
+                st.rerun()
+
+            if st.button("📚 Subjects", key="ham_subjects", use_container_width=True):
+                st.session_state.page = 'subjects'
+                st.session_state.selected_subject = None
+                st.session_state.menu_open = False
+                st.rerun()
+
+            if st.button("👤 Profile", key="ham_profile", use_container_width=True):
+                st.session_state.page = 'profile'
+                st.session_state.menu_open = False
+                st.rerun()
+
+            if st.button("ℹ️ About", key="ham_about", use_container_width=True):
+                st.session_state.page = 'about'
+                st.session_state.menu_open = False
+                st.rerun()
+
+            if st.button("🚪 Logout", key="ham_logout", use_container_width=True):
+                st.session_state.logged_in = False
+                st.session_state.page = 'landing'
+                st.session_state.menu_open = False
+                st.rerun()
+
+            if st.button("✕ Close Menu", key="close_menu", use_container_width=True):
+                st.session_state.menu_open = False
+                st.rerun()
 
 def render_landing_page():
     """Professional landing page with crown logo"""
@@ -2410,9 +2561,9 @@ def render_about_page():
     """, unsafe_allow_html=True)
 
 def render_questions_page():
-    """Questions page with navbar"""
+    """Questions page with hamburger menu"""
     render_theme_toggle()
-    render_navbar()
+    render_hamburger_navbar()
 
     subject = st.session_state.selected_subject
 
