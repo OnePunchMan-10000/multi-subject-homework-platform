@@ -34,17 +34,11 @@ if 'dark_mode' not in st.session_state:
 
 # Professional CSS Styling
 def load_css():
-    # Get theme colors - Study-themed with gold/silver/black
-    if st.session_state.dark_mode:
-        bg_color = "linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 25%, #2d2d2d 50%, #1a1a1a 75%, #0f0f0f 100%)"
-        text_color = "#ffffff"
-        card_bg = "rgba(30, 30, 30, 0.95)"
-        subtitle_color = "#c0c0c0"
-    else:
-        bg_color = "linear-gradient(135deg, #fafafa 0%, #f0f0f0 25%, #ffffff 50%, #f0f0f0 75%, #fafafa 100%)"
-        text_color = "#333333"
-        card_bg = "rgba(255, 255, 255, 0.95)"
-        subtitle_color = "#666666"
+    # Gold/Silver/Black gradient theme for all pages
+    bg_color = "linear-gradient(135deg, #FFD700 0%, #C0C0C0 25%, #2C2C2C 50%, #000000 75%, #FFD700 100%)"
+    text_color = "#FFFFFF"
+    card_bg = "rgba(255, 255, 255, 0.15)"
+    subtitle_color = "#F0F0F0"
 
     st.markdown(f"""
     <style>
@@ -54,12 +48,30 @@ def load_css():
     header {{visibility: hidden;}}
     .stDeployButton {{visibility: hidden;}}
 
-    /* Global Background */
+    /* Global Background with Gold/Silver/Black Gradient */
     .stApp {{
         background: {bg_color};
+        background-attachment: fixed;
         color: {text_color};
         margin-top: 0 !important;
         padding-top: 0 !important;
+        min-height: 100vh;
+    }}
+
+    /* Enhanced text readability with shadows */
+    .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, span, div {{
+        color: {text_color} !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+    }}
+
+    /* Main container with glass effect */
+    .main .block-container {{
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(15px) !important;
+        border-radius: 20px !important;
+        margin: 1rem !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
     }}
 
     /* Remove ALL Streamlit default spacing */
@@ -354,14 +366,103 @@ def load_css():
     .code-block pre {{ margin: 0; padding: 0.75rem; overflow-x: auto; }}
     .step-code {{ background: rgba(0,0,0,0.04); border: 1px dashed rgba(0,0,0,0.2); padding: 0.6rem; border-radius: 6px; margin: 0.4rem 0 0.8rem 0; }}
     .final-answer {{
-        background-color: rgba(76,175,80,0.2);
-        border: 2px solid #4CAF50;
+        background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+        border: 2px solid #FFD700 !important;
         padding: 1.5rem;
         margin: 1.5rem 0;
         border-radius: 8px;
         text-align: center;
         font-weight: bold;
         font-size: 1.2em;
+        color: #000000 !important;
+        text-shadow: none !important;
+        box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5) !important;
+    }}
+
+    /* Enhanced Button Styling */
+    .stButton > button {{
+        background: linear-gradient(45deg, #FFD700, #C0C0C0) !important;
+        color: #000000 !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 0.75rem 1.5rem !important;
+        font-weight: 600 !important;
+        text-shadow: none !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+    }}
+
+    .stButton > button:hover {{
+        background: linear-gradient(45deg, #FFA500, #E6E6FA) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
+    }}
+
+    /* Enhanced Input Field Styling */
+    .stTextInput > div > div > input {{
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #000000 !important;
+        border: 2px solid rgba(255, 215, 0, 0.5) !important;
+        border-radius: 10px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
+        text-shadow: none !important;
+    }}
+
+    .stTextInput > div > div > input:focus {{
+        border-color: #FFD700 !important;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.3) !important;
+    }}
+
+    .stTextArea > div > div > textarea {{
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #000000 !important;
+        border: 2px solid rgba(255, 215, 0, 0.5) !important;
+        border-radius: 10px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
+        text-shadow: none !important;
+    }}
+
+    .stTextArea > div > div > textarea:focus {{
+        border-color: #FFD700 !important;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.3) !important;
+    }}
+
+    /* Enhanced Subject Cards */
+    .subject-card {{
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(15px) !important;
+        border: 2px solid rgba(255, 215, 0, 0.3) !important;
+        border-radius: 15px !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        transition: all 0.3s ease !important;
+    }}
+
+    .subject-card:hover {{
+        transform: translateY(-5px) !important;
+        box-shadow: 0 12px 40px rgba(255, 215, 0, 0.4) !important;
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-color: #FFD700 !important;
+    }}
+
+    /* Solution Content with High Contrast */
+    .solution-content {{
+        background: rgba(255, 255, 255, 0.95) !important;
+        color: #000000 !important;
+        border-radius: 10px !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        border-left: 4px solid #FFD700 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+    }}
+
+    .solution-content * {{
+        color: #000000 !important;
+        text-shadow: none !important;
     }}
 
     </style>
