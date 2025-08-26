@@ -1039,6 +1039,155 @@ def create_smart_visualization(question: str, subject: str):
         plt.close('all')
         return None
 
+# ---------------------------
+# Backend helpers (HTTP)
+# ---------------------------
+try:
+    BACKEND_URL = st.secrets.get('BACKEND_URL', 'http://127.0.0.1:8000')
+except:
+    BACKEND_URL = 'http://127.0.0.1:8000'
+
+def backend_register(username: str, password: str) -> tuple[bool, str]:
+    try:
+        r = requests.post(f"{BACKEND_URL}/auth/register", json={"username": username, "password": password}, timeout=6)
+        if r.status_code in (200, 201):
+            return True, r.json().get('message', 'Account created')
+        # Attempt to read common error message
+        try:
+            return False, r.json().get('detail', r.text)
+        except Exception:
+            return False, r.text
+    except requests.RequestException as e:
+        return False, str(e)
+
+def backend_login(username: str, password: str) -> tuple[bool, str]:
+    try:
+        # backend expects form data for OAuth2PasswordRequestForm
+        r = requests.post(f"{BACKEND_URL}/auth/login", data={"username": username, "password": password}, timeout=6)
+        if r.status_code == 200:
+            return True, r.json().get('access_token')
+        try:
+            return False, r.json().get('detail', r.text)
+        except Exception:
+            return False, r.text
+    except requests.RequestException as e:
+        return False, str(e)
+
+def backend_get_me(token: str) -> tuple[bool, dict | str]:
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        r = requests.get(f"{BACKEND_URL}/auth/me", headers=headers, timeout=6)
+        if r.status_code == 200:
+            return True, r.json()
+        try:
+            return False, r.json().get('detail', r.text)
+        except Exception:
+            return False, r.text
+    except requests.RequestException as e:
+        return False, str(e)
+
+def backend_save_history(subject: str, question: str, answer: str) -> bool:
+    """Save question/answer to backend history"""
+    try:
+        token = st.session_state.get("access_token")
+        if not token:
+            return False
+
+        headers = {"Authorization": f"Bearer {token}"}
+        data = {
+            "subject": subject,
+            "question": question,
+            "answer": answer
+        }
+        r = requests.post(f"{BACKEND_URL}/history/save", json=data, headers=headers, timeout=6)
+        return r.status_code in (200, 201)
+    except:
+        return False
+
+def backend_get_history(limit: int = 20) -> list:
+    """Get user history from backend"""
+    try:
+        token = st.session_state.get("access_token")
+        if not token:
+            return []
+
+        headers = {"Authorization": f"Bearer {token}"}
+        r = requests.get(f"{BACKEND_URL}/history?limit={limit}", headers=headers, timeout=6)
+        if r.status_code == 200:
+            data = r.json()
+            return data.get("history", [])
+        return []
+    except:
+        return []
+
+# ---------------------------
+# Local Database helpers (SQLite)
+# ---------------------------
+import sqlite3
+
+DB_PATH = "homework_history.db"
+
+def init_db():
+    """Initialize the database with required tables"""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            # Users table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            # History table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    subject TEXT NOT NULL,
+                    question TEXT NOT NULL,
+                    answer TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (id)
+                )
+            """)
+            conn.commit()
+    except sqlite3.Error:
+        pass
+
+def save_history(user_id: int, subject: str, question: str, answer: str):
+    """Save question/answer to local database"""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO history (user_id, subject, question, answer) VALUES (?, ?, ?, ?)",
+                (user_id, subject, question, answer)
+            )
+            conn.commit()
+    except sqlite3.Error:
+        pass
+
+def load_history(user_id: int, limit: int = 20) -> list[tuple]:
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, subject, question, answer, created_at
+                FROM history
+                WHERE user_id=?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (user_id, limit),
+            )
+            return cur.fetchall()
+    except sqlite3.Error:
+        return []
+
 # Theme Toggle Component
 def render_theme_toggle():
     """Render theme toggle button"""
@@ -1345,18 +1494,13 @@ def render_questions_page():
                             st.image(viz, use_container_width=True)
 
                     # Save to history (backend first, fallback local)
-                    try:
-                        from app.backend import backend_save_history, backend_get_history
-                        from app.db import save_history, load_history
-
-                        # Use user_id directly from session state
+                    if backend_save_history(subject, question.strip(), formatted_response):
+                        pass  # Successfully saved
+                    else:
+                        # Fallback to local save if backend fails
                         user_id = st.session_state.get("user_id")
-
-                        saved = backend_save_history(subject, question.strip(), formatted_response)
-                        if not saved and user_id:
+                        if user_id:
                             save_history(user_id, subject, question.strip(), formatted_response)
-                    except Exception:
-                        pass
 
                     # Feedback
                     st.markdown("### Rate this solution")
@@ -1373,34 +1517,35 @@ def render_questions_page():
         else:
             st.warning("Please enter a question.")
 
-    # Recent History section (always visible below the page)
-    try:
-        from app.backend import backend_get_history
-        from app.db import load_history
-        st.markdown("---")
-        with st.expander("🕘 View your recent history"):
-            # Use user_id directly from session state
+    # History + footer
+    with st.expander("🕘 View your recent history"):
+        # Try to load from backend first, fallback to local
+        rows = backend_get_history(limit=25)
+        if not rows:
             user_id = st.session_state.get("user_id")
-
-            rows = backend_get_history(limit=25)
-            if not rows and user_id:
+            if user_id:
                 rows = load_history(user_id, limit=25)
-            if not rows:
-                st.info("No history yet.")
-            else:
-                for row in rows:
-                    if isinstance(row, dict):
-                        subj, q, created_at = row.get('subject'), row.get('question'), row.get('created_at')
-                    else:
-                        _id, subj, q, a, created_at = row
-                    st.markdown(f"**[{created_at}] {subj}**")
-                    st.markdown(f"- Question: {q}")
-                    st.markdown("---")
-    except Exception:
-        pass
+        if not rows:
+            st.info("No history yet.")
+        else:
+            for row in rows:
+                # Handle both backend format (dict) and local format (tuple)
+                if isinstance(row, dict):
+                    subj = row.get('subject', 'Unknown')
+                    q = row.get('question', 'No question')
+                    created_at = row.get('created_at', 'Unknown time')
+                else:
+                    # Local format: (id, subject, question, answer, created_at)
+                    _id, subj, q, a, created_at = row
+                st.markdown(f"**[{created_at}] {subj}**")
+                st.markdown(f"- Question: {q}")
+                st.markdown("---")
 
 def main():
     """Main application with complete workflow"""
+    # Initialize database
+    init_db()
+
     # Load CSS
     load_css()
 
