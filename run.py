@@ -2132,7 +2132,6 @@ def render_login_page():
         <div class="brand-letter" style="width: 80px; height: 80px; font-size: 2.5rem;">E</div>
     </div>
     <h1 style="font-size: 2rem; font-weight: 700; color: #FFD700; margin: 1rem 0;">Welcome to EduLLM</h1>
-    <p style="color: #666; font-size: 1rem; margin-bottom: 0;">Sign in to start learning</p>
     """, unsafe_allow_html=True)
 
     # Centered auth container (removed unnecessary wrapper)
@@ -2604,12 +2603,6 @@ def render_questions_page():
 
     subject = st.session_state.selected_subject
 
-    # Back button
-    col1, col2 = st.columns([4, 1])
-    with col2:
-        if st.button("← Back to Subjects", use_container_width=True):
-            st.session_state.page = 'subjects'
-            st.rerun()
 
     st.markdown("---")
 
