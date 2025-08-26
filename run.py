@@ -449,28 +449,40 @@ def get_api_response(question, subject):
         st.error(f"Network Error: {str(e)}")
         return None
 
+import re
+import html
+
 # Prefer rich HTML formatter from app.formatting if available
 try:
     from app.formatting import format_response as _rich_format_response
 except Exception:
     _rich_format_response = None
 
-def format_response(response):
+def format_response(response_text):
     """Format the AI response for better display (math-friendly).
-    Uses app.formatting if available; otherwise falls back to a simple formatter.
+    Uses app.formatting if available; otherwise uses hw01-style LaTeX cleanup.
     """
-    if not response:
+    if not response_text:
         return ""
     if _rich_format_response:
-        return _rich_format_response(response)
+        return _rich_format_response(response_text)
 
-    # Fallback basic formatting
-    lines = response.split('\n')
+    # hw01-style LaTeX cleanup (critical for math rendering)
+    # Clean up LaTeX notation to simple text but preserve fraction structure
+    response_text = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', response_text)
+    response_text = re.sub(r'\\[a-zA-Z]+\{?([^}]*)\}?', r'\1', response_text)
+
+    # Remove LaTeX display math delimiters
+    response_text = re.sub(r'\\\[([^\]]+)\\\]', r'\1', response_text)
+    response_text = re.sub(r'\\\(([^)]+)\\\)', r'\1', response_text)
+
+    # Basic formatting
+    lines = response_text.split('\n')
     formatted_lines = []
     for line in lines:
         line = line.strip()
         if not line:
-            formatted_lines.append('')
+            formatted_lines.append('<br>')
             continue
         if line.startswith('#'):
             formatted_lines.append(f"**{line.replace('#', '').strip()}**")
@@ -758,9 +770,16 @@ def render_questions_page():
                     try:
                         from app.backend import backend_save_history, backend_get_history
                         from app.db import save_history, load_history
+
+                        # Ensure consistent user_id (use email as fallback)
+                        user_id = st.session_state.get("user_id")
+                        if not user_id and st.session_state.get("logged_in"):
+                            user_id = hash(st.session_state.get("user_email", "anonymous")) % 1000000
+                            st.session_state["user_id"] = user_id
+
                         saved = backend_save_history(subject, question.strip(), formatted_response)
-                        if not saved:
-                            save_history(st.session_state.get("user_id") or 0, subject, question.strip(), formatted_response)
+                        if not saved and user_id:
+                            save_history(user_id, subject, question.strip(), formatted_response)
                     except Exception:
                         pass
 
@@ -785,9 +804,15 @@ def render_questions_page():
         from app.db import load_history
         st.markdown("---")
         with st.expander("🕘 View your recent history"):
+            # Use consistent user_id
+            user_id = st.session_state.get("user_id")
+            if not user_id and st.session_state.get("logged_in"):
+                user_id = hash(st.session_state.get("user_email", "anonymous")) % 1000000
+                st.session_state["user_id"] = user_id
+
             rows = backend_get_history(limit=25)
-            if not rows:
-                rows = load_history(st.session_state.get("user_id") or 0, limit=25)
+            if not rows and user_id:
+                rows = load_history(user_id, limit=25)
             if not rows:
                 st.info("No history yet.")
             else:
