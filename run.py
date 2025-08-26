@@ -1876,7 +1876,7 @@ def render_navbar():
     st.markdown(navbar_html, unsafe_allow_html=True)
 
 def render_hamburger_navbar():
-    """Render hamburger menu for questions page - EduLLM left, burger right"""
+    """Render hamburger menu for questions page - EduLLM left, burger right with side menu"""
     # Initialize menu state
     if 'menu_open' not in st.session_state:
         st.session_state.menu_open = False
@@ -1947,51 +1947,54 @@ def render_hamburger_navbar():
             <span style="margin-right: 10px;">👑</span>
             <span style="color: #FFD700;">EduLLM</span>
         </div>
-        <div class="hamburger-btn">{menu_icon}</div>
+        <div class="hamburger-btn" onclick="toggleMenu()">{menu_icon}</div>
     </div>
+
+    <script>
+    function toggleMenu() {{
+        window.parent.postMessage({{type: 'toggle_menu'}}, '*');
+    }}
+    </script>
     """
 
     st.markdown(navbar_html, unsafe_allow_html=True)
 
-    # Hamburger menu toggle button (invisible but functional)
+    # Invisible button for functionality (positioned over the visual hamburger)
     col1, col2, col3 = st.columns([8, 1, 1])
     with col3:
-        if st.button(menu_icon, key="hamburger_toggle", help="Menu"):
+        if st.button("☰", key="hamburger_toggle", help="Menu",
+                    label_visibility="hidden"):
             st.session_state.menu_open = not st.session_state.menu_open
             st.rerun()
 
-    # Menu items at bottom when open
+    # Side menu when open
     if st.session_state.menu_open:
-        st.markdown("---")
-        st.markdown("### Navigation")
+        with st.sidebar:
+            st.markdown("### 👑 Navigation Menu")
+            st.markdown("---")
 
-        col1, col2, col3, col4, col5 = st.columns(5)
-
-        with col1:
-            if st.button("✕", key="close_btn", help="Close", use_container_width=True):
+            if st.button("✕ Close", key="close_btn", use_container_width=True):
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col2:
+            st.markdown("---")
+
             if st.button("🏠 Home", key="ham_home", use_container_width=True):
                 st.session_state.page = 'landing'
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col3:
             if st.button("📚 Subjects", key="ham_subjects", use_container_width=True):
                 st.session_state.page = 'subjects'
                 st.session_state.selected_subject = None
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col4:
             if st.button("📞 Contact", key="ham_contact", use_container_width=True):
                 st.session_state.page = 'about'
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col5:
             if st.button("🚪 Logout", key="ham_logout", use_container_width=True):
                 st.session_state.logged_in = False
                 st.session_state.page = 'landing'
