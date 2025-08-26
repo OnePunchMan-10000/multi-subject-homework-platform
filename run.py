@@ -26,6 +26,7 @@ st.set_page_config(page_title="EduLLM - AI Study Assistant", page_icon="🎓", l
 
 def main():
     """Launcher that manages four pages: landing, login, home, profile/about."""
+    # Force refresh timestamp: 2025-01-27 - This should force Streamlit Cloud to reload
     init_db()
 
     # Inject global CSS if available
