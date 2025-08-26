@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "build": {
     "builder": "NIXPACKS"
@@ -8,3 +9,15 @@
     "restartPolicyMaxRetries": 10
   }
 }
+=======
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "python main.py",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
+>>>>>>> 1b483347e328bcc78652b1a0b4ad12102aaaee5c

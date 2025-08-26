@@ -1,5 +1,19 @@
+<<<<<<< HEAD
 streamlit==1.47.1
 requests==2.32.4
 matplotlib==3.10.5
 numpy==2.3.2
 pillow==11.3.0
+=======
+streamlit==1.47.1
+requests==2.32.4
+matplotlib==3.10.5
+numpy==2.3.2
+pillow==11.3.0
+psycopg2-binary==2.9.10
+
+# Force deployment refresh - updated timestamp: 2025-08-26 14:20
+# This should trigger Streamlit Cloud to rebuild completely
+
+
+>>>>>>> 1b483347e328bcc78652b1a0b4ad12102aaaee5c

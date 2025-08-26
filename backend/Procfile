@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 web: python main.py
+=======
+web: python main.py
+>>>>>>> 1b483347e328bcc78652b1a0b4ad12102aaaee5c
