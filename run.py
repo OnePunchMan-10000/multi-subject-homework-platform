@@ -32,12 +32,12 @@ if 'dark_mode' not in st.session_state:
 def load_css():
     # Get theme colors - Study-themed with gold/silver/black
     if st.session_state.dark_mode:
-        bg_color = "radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(192, 192, 192, 0.1) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 25%, #2d2d2d 50%, #1a1a1a 75%, #0f0f0f 100%)"
+        bg_color = "linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 25%, #2d2d2d 50%, #1a1a1a 75%, #0f0f0f 100%)"
         text_color = "#ffffff"
         card_bg = "rgba(30, 30, 30, 0.95)"
         subtitle_color = "#c0c0c0"
     else:
-        bg_color = "radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(192, 192, 192, 0.15) 0%, transparent 50%), linear-gradient(135deg, #fafafa 0%, #f0f0f0 25%, #ffffff 50%, #f0f0f0 75%, #fafafa 100%)"
+        bg_color = "linear-gradient(135deg, #fafafa 0%, #f0f0f0 25%, #ffffff 50%, #f0f0f0 75%, #fafafa 100%)"
         text_color = "#333333"
         card_bg = "rgba(255, 255, 255, 0.95)"
         subtitle_color = "#666666"
@@ -50,26 +50,10 @@ def load_css():
     header {{visibility: hidden;}}
     .stDeployButton {{visibility: hidden;}}
 
-    /* Global Background with Study Theme */
+    /* Global Background */
     .stApp {{
         background: {bg_color};
         color: {text_color};
-        position: relative;
-    }}
-
-    /* Study-themed decorative elements */
-    .stApp::before {{
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image:
-            radial-gradient(circle at 10% 20%, rgba(255, 215, 0, 0.05) 0%, transparent 20%),
-            radial-gradient(circle at 90% 80%, rgba(192, 192, 192, 0.05) 0%, transparent 20%);
-        pointer-events: none;
-        z-index: -1;
     }}
 
     /* Dark Mode Toggle */
