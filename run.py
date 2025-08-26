@@ -82,10 +82,10 @@ def load_css():
     /* Landing Page Styles */
     .landing-container {{
         text-align: center;
-        padding: 2rem 1rem;
+        padding: 0.5rem 1rem;
         max-width: 1200px;
         margin: 0 auto;
-        min-height: 80vh;
+        min-height: 60vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -95,7 +95,7 @@ def load_css():
     .crown-logo {{
         position: relative;
         display: inline-block;
-        margin-bottom: 2rem;
+        margin-bottom: 0.5rem;
     }}
 
     .crown-icon {{
@@ -108,14 +108,14 @@ def load_css():
     }}
 
     .brand-letter {{
-        width: 100px;
-        height: 100px;
+        width: 80px;
+        height: 80px;
         background: linear-gradient(135deg, #FFD700, #FFA500);
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 3.5rem;
+        font-size: 2.8rem;
         font-weight: 900;
         color: white;
         margin: 0 auto;
@@ -124,19 +124,19 @@ def load_css():
     }}
 
     .landing-title {{
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: 800;
         color: #FFD700;
-        margin: 2rem 0 1rem 0;
+        margin: 0.5rem 0 0.5rem 0;
         text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }}
 
     .landing-subtitle {{
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         color: {subtitle_color};
         max-width: 600px;
-        margin: 0 auto 2rem auto;
-        line-height: 1.6;
+        margin: 0 auto 1rem auto;
+        line-height: 1.5;
         text-align: center;
         display: block;
         width: 100%;
@@ -280,18 +280,18 @@ def load_css():
 
     /* Center login page */
     .login-page {{
-        min-height: 90vh;
+        min-height: 70vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 1rem;
-        margin-top: -2rem;
+        padding: 0.5rem;
+        margin-top: -3rem;
     }}
 
     .login-header {{
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
     }}
 
     .login-form-container {{
@@ -482,7 +482,7 @@ def render_landing_page():
 
     # Why Choose EduLLM Section
     st.markdown("""
-    <div style="text-align: center; margin: 4rem 0 2rem 0;">
+    <div style="text-align: center; margin: 2rem 0 1rem 0;">
         <h2 style="font-size: 2.5rem; font-weight: 700; color: #333; margin-bottom: 1rem;">
             Why Choose <span style="color: #FFD700;">EduLLM?</span>
         </h2>
@@ -517,7 +517,7 @@ def render_landing_page():
 
     # Ready to Ace Section
     st.markdown("""
-    <div style="text-align: center; margin: 4rem 0 2rem 0; padding: 3rem 2rem; background: rgba(255, 215, 0, 0.1); border-radius: 20px;">
+    <div style="text-align: center; margin: 2rem 0 1rem 0; padding: 2rem 1rem; background: rgba(255, 215, 0, 0.1); border-radius: 20px;">
         <h2 style="font-size: 2rem; font-weight: 700; color: #333; margin-bottom: 1rem;">
             Ready to Ace Your Homework?
         </h2>
