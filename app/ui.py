@@ -100,8 +100,8 @@ _GLOBAL_CSS = r"""
 """
 
 def render_global_css():
-    """Inject global CSS into the page. This is presentational only."""
-    st.markdown(_GLOBAL_CSS, unsafe_allow_html=True)
+    """Removed - using pure Streamlit components instead of custom CSS."""
+    pass
 
 
 def render_navigation():
@@ -150,83 +150,26 @@ def render_home_page():
         # Set selected_subject to None to show subject grid
         st.session_state["selected_subject"] = None
 
-    # Stage 1: Subject-only page (full width) with gold/silver theme override
+    # Stage 1: Subject-only page - clean and simple
     if not st.session_state.get("selected_subject"):
-        st.markdown(
-            """
-            <style>
-            .stApp { 
-                --g1: #d4af37; /* gold */
-                --g2: #c0c0c0; /* silver */
-                --g3: #e7cf7a; /* light gold */
-                --g4: #f5f5f5; /* near white */
-                background:
-                    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.16) 0, rgba(255,255,255,0) 40%),
-                    radial-gradient(circle at 20% 70%, rgba(255,255,255,0.12) 0, rgba(255,255,255,0) 45%),
-                    linear-gradient(135deg, var(--g1), var(--g2), var(--g3), var(--g4));
-            }
-            .subject-card { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); }
-            .subject-selected { border-color: rgba(255,255,255,0.85); box-shadow: 0 0 0 2px rgba(255,255,255,0.55) inset; }
-            .stButton>button { background: linear-gradient(135deg, #d4af37, #c0c0c0); }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        # Header for subjects page
-        st.markdown("""
-        <div class="main-header">
-            <h1 class="brand-title" style="margin:0.25rem 0;">Edullm</h1>
-            <p class="brand-sub" style="margin:0.1rem 0 0.25rem 0;">Clear, step-by-step homework solutions</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
         _ = render_subject_grid(columns=4)
         return
 
     # Stage 2: Question UI after subject selection
     selected_subject = st.session_state.get("selected_subject")
     
-    # Question page styling
-    st.markdown("""
-    <style>
-    .question-header {
-        text-align: center;
-        margin: 40px 0;
-    }
-    .question-title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 10px;
-    }
-    .question-subtitle {
-        font-size: 1.1rem;
-        color: #7f8c8d;
-        margin-bottom: 30px;
-    }
-    .solution-container {
-        background: #f8f9fa;
-        border-radius: 12px;
-        padding: 25px;
-        margin: 20px 0;
-        border-left: 4px solid #3498db;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Header using pure Streamlit
+    st.markdown(f"# ❓ {selected_subject} Question")
+    st.markdown("**Ask your question and get a detailed step-by-step solution**")
     
-    st.markdown(f"""
-    <div class='question-header'>
-        <div class='question-title'>❓ {selected_subject} Question</div>
-        <div class='question-subtitle'>Ask your question and get a detailed step-by-step solution</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Change subject button (top right)
+    # Change subject button
     col1, col2 = st.columns([4, 1])
     with col2:
         if st.button("← Back to Subjects", use_container_width=True):
             st.session_state["selected_subject"] = None
             st.rerun()
+    
+    st.markdown("---")
 
     # Question input
     question = st.text_area(
@@ -245,13 +188,10 @@ def render_home_page():
                     st.markdown("---")
                     st.markdown(f"## 📚 {selected_subject} Solution")
                     
-                    # Clean solution container
+                    # Display solution in a clean container
                     formatted_response = format_response(response)
-                    st.markdown(f"""
-                    <div class="solution-container">
-                        {formatted_response}
-                    </div>
-                    """, unsafe_allow_html=True)
+                    with st.container():
+                        st.markdown(formatted_response, unsafe_allow_html=True)
                     # Save to history (backend)
                     if backend_save_history(selected_subject, question.strip(), formatted_response):
                         pass  # Successfully saved
@@ -375,44 +315,19 @@ def render_about_page():
 
 
 def auth_ui():
-    """Clean login page that leads to subjects after successful login."""
+    """Clean login page using pure Streamlit components."""
     
-    # Login page styling
-    st.markdown("""
-    <style>
-    .login-container {
-        max-width: 400px;
-        margin: 80px auto;
-        padding: 40px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    .login-title {
-        text-align: center;
-        font-size: 2rem;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 30px;
-    }
-    .login-subtitle {
-        text-align: center;
-        color: #7f8c8d;
-        margin-bottom: 30px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class='login-container'>
-        <div class='login-title'>🔐 Sign In</div>
-        <div class='login-subtitle'>Welcome! Sign in to your account or create a new one below.</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Center the form
+    # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])
+    
     with col2:
+        # Title and subtitle
+        st.markdown("# 🔐 Sign In")
+        st.markdown("**Welcome back! Please sign in to continue.**")
+        
+        st.markdown("---")
+
+        # Login form
         with st.form(key='login_form'):
             st.text_input('Username', key='login_username', placeholder='Enter your username')
             st.text_input('Password', type='password', key='login_password', placeholder='Enter your password')
@@ -450,129 +365,42 @@ def auth_ui():
                 else:
                     st.error(f'Login failed: {token_or_err}')
 
+        st.markdown("---")
+        
         # Back to landing page option
-        if st.button('← Back to Home'):
+        if st.button('← Back to Home', use_container_width=True):
             st.session_state['show_login'] = False
             st.rerun()
-
-    # Registration section
-    st.markdown("---")
-    st.markdown("### 🆕 New User? Create Account")
-    
-    with col2:
-        with st.form(key='register_form'):
-            st.text_input('Choose Username', key='register_username', placeholder='Enter a username')
-            st.text_input('Choose Password', type='password', key='register_password', placeholder='Enter a password')
-            st.text_input('Confirm Password', type='password', key='confirm_password', placeholder='Confirm your password')
-            register_submit = st.form_submit_button('🎯 Create Account', type='secondary', use_container_width=True)
-
-        if register_submit:
-            username = st.session_state.get('register_username', '').strip()
-            password = st.session_state.get('register_password', '')
-            confirm_password = st.session_state.get('confirm_password', '')
-            
-            if not username or not password:
-                st.error('Please fill in all fields')
-            elif len(password) < 6:
-                st.error('Password must be at least 6 characters long')
-            elif password != confirm_password:
-                st.error('Passwords do not match')
-            else:
-                # Use backend registration like hw01.py does (this works!)
-                from app.backend import backend_register
-                success, message = backend_register(username, password)
-                
-                if success:
-                    st.success(f'✅ Account created successfully for {username}!')
-                    st.info('👆 Now you can log in with your new credentials above')
-                else:
-                    st.error(f'Registration failed: {message}')
 
     return False
 
 
 def render_subject_grid(columns: int = 4) -> str | None:
-    """Display subjects in a clean grid. Returns selected subject or None."""
-    # Subject grid styling
-    st.markdown("""
-    <style>
-    .subjects-header {
-        text-align: center;
-        margin: 40px 0;
-    }
-    .subjects-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 10px;
-    }
-    .subjects-subtitle {
-        font-size: 1.1rem;
-        color: #7f8c8d;
-        margin-bottom: 40px;
-    }
-    .subject-card {
-        background: white;
-        border: 2px solid #ecf0f1;
-        border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-        transition: all 0.3s ease;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .subject-card:hover {
-        border-color: #3498db;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    .subject-icon {
-        font-size: 2.5rem;
-        margin-bottom: 15px;
-        display: block;
-    }
-    .subject-name {
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 10px;
-    }
-    .subject-desc {
-        color: #7f8c8d;
-        font-size: 0.9rem;
-        line-height: 1.4;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class='subjects-header'>
-        <div class='subjects-title'>📚 Choose Your Subject</div>
-        <div class='subjects-subtitle'>Select a subject to get started with your homework questions</div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    """Display subjects using pure Streamlit components."""
+    
+    # Header
+    st.markdown("# 📚 Choose Your Subject")
+    st.markdown("**Select a subject to get started with your homework questions**")
+    st.markdown("---")
+    
     subject_names = list(SUBJECTS.keys())
     selected = st.session_state.get("selected_subject")
 
+    # Create subject grid using columns
     cols = st.columns(columns)
     for idx, name in enumerate(subject_names):
         info = SUBJECTS[name]
         with cols[idx % columns]:
-            st.markdown(
-                f"""
-                <div class='subject-card'>
-                    <div class='subject-icon'>{info['icon']}</div>
-                    <div class='subject-name'>{name}</div>
-                    <div class='subject-desc'>Get step-by-step solutions for {name.lower()} problems</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            if st.button(f"Select {name}", key=f"select_{name}", use_container_width=True):
+            # Subject card using native Streamlit components
+            st.markdown(f"### {info['icon']} {name}")
+            st.markdown(f"Get step-by-step solutions for {name.lower()} problems")
+            
+            if st.button(f"Select {name}", key=f"select_{name}", use_container_width=True, type="primary"):
                 st.session_state["selected_subject"] = name
                 selected = name
                 st.rerun()
+            
+            st.markdown("")  # Add space between cards
 
     return selected
 
@@ -776,75 +604,57 @@ def render_features():
 
 
 def render_landing_page():
-    """Basic landing page with description and Start Learning button."""
-    # Clean landing page styling
-    st.markdown("""
-    <style>
-    .landing-container {
-        text-align: center;
-        padding: 60px 20px;
-        max-width: 800px;
-        margin: 0 auto;
-    }
-    .landing-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        color: #2c3e50;
-        margin-bottom: 20px;
-    }
-    .landing-subtitle {
-        font-size: 1.3rem;
-        color: #7f8c8d;
-        margin-bottom: 30px;
-        line-height: 1.6;
-    }
-    .landing-description {
-        font-size: 1.1rem;
-        color: #34495e;
-        margin-bottom: 40px;
-        line-height: 1.8;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    .features-list {
-        text-align: left;
-        max-width: 500px;
-        margin: 30px auto 40px auto;
-    }
-    .features-list li {
-        margin: 10px 0;
-        font-size: 1rem;
-        color: #2c3e50;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class='landing-container'>
-        <div class='landing-title'>🎓 EduLLM</div>
-        <div class='landing-subtitle'>Your AI-Powered Study Assistant</div>
-        <div class='landing-description'>
-            Get clear, step-by-step solutions to your homework problems across multiple subjects. 
-            Our AI provides detailed explanations to help you understand and learn.
-        </div>
-        <div class='features-list'>
-            <ul>
-                <li>📚 <strong>Multiple Subjects:</strong> Math, Physics, Chemistry, Biology, Computer Science & more</li>
-                <li>🤖 <strong>AI-Powered:</strong> Get instant, accurate solutions</li>
-                <li>📝 <strong>Step-by-Step:</strong> Detailed explanations for better understanding</li>
-                <li>📊 <strong>Visual Learning:</strong> Diagrams and graphs when helpful</li>
-                <li>💾 <strong>Save History:</strong> Keep track of your solved problems</li>
-            </ul>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Center the button
-    col1, col2, col3 = st.columns([1, 2, 1])
+    """Clean landing page using pure Streamlit components."""
+    
+    # Center everything with columns
+    col1, col2, col3 = st.columns([1, 3, 1])
+    
     with col2:
-        if st.button('🚀 Start Learning', type='primary', use_container_width=True):
-            st.session_state['show_login'] = True
-            st.rerun()
+        # App title and subtitle
+        st.markdown("# 🎓 EduLLM")
+        st.markdown("## Your AI-Powered Study Assistant")
+        
+        st.markdown("---")
+        
+        # Description
+        st.markdown("""
+        **Get clear, step-by-step solutions** to your homework problems across multiple subjects. 
+        Our AI provides detailed explanations to help you understand and learn.
+        """)
+        
+        # Add some space
+        st.markdown("")
+        
+        # Features in a clean format
+        st.markdown("### ✨ Features")
+        
+        # Use columns for features
+        feat_col1, feat_col2 = st.columns(2)
+        
+        with feat_col1:
+            st.markdown("📚 **Multiple Subjects**")
+            st.markdown("Math, Physics, Chemistry, Biology, CS & more")
+            st.markdown("")
+            st.markdown("📝 **Step-by-Step Solutions**")
+            st.markdown("Detailed explanations for better understanding")
+        
+        with feat_col2:
+            st.markdown("🤖 **AI-Powered**")
+            st.markdown("Get instant, accurate solutions")
+            st.markdown("")
+            st.markdown("💾 **Save History**")
+            st.markdown("Keep track of your solved problems")
+        
+        st.markdown("---")
+        
+        # Call to action
+        st.markdown("### Ready to get started?")
+        
+        # Center the button
+        btn_col1, btn_col2, btn_col3 = st.columns([1, 2, 1])
+        with btn_col2:
+            if st.button('🚀 Start Learning', type='primary', use_container_width=True):
+                st.session_state['show_login'] = True
+                st.rerun()
 
 
