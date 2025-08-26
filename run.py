@@ -1177,26 +1177,253 @@ def create_smart_visualization(question: str, subject: str):
                 ax.legend()
 
         elif subject == "Physics":
-            t = np.linspace(0, 4*np.pi, 100)
-            y = np.sin(t)
-            ax.plot(t, y, 'b-', linewidth=2, label='Wave')
-            ax.set_title('Wave Function')
-            ax.set_xlabel('Time/Position')
-            ax.set_ylabel('Amplitude')
-            ax.grid(True, alpha=0.3)
-            ax.legend()
+            # Intelligent Physics diagram detection
+            question_lower = question.lower()
+
+            # Wave motion detection
+            if any(term in question_lower for term in ['wave', 'frequency', 'amplitude', 'wavelength', 'oscillation']):
+                # Extract wave parameters
+                freq_match = re.search(r'frequency.*?(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+                amp_match = re.search(r'amplitude.*?(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+
+                freq = float(freq_match.group(1)) if freq_match else 1.0
+                amp = float(amp_match.group(1)) if amp_match else 1.0
+
+                t = np.linspace(0, 4*np.pi/freq, 1000)
+                y = amp * np.sin(freq * t)
+                ax.plot(t, y, 'b-', linewidth=2, label=f'Wave (f={freq}Hz, A={amp})')
+                ax.set_title('Wave Motion')
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('Amplitude')
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.legend()
+
+            # Circuit diagram detection
+            elif any(term in question_lower for term in ['circuit', 'resistor', 'voltage', 'current', 'ohm']):
+                # Simple circuit representation
+                ax.plot([0, 2, 2, 0, 0], [0, 0, 1, 1, 0], 'k-', linewidth=2, label='Circuit')
+                ax.plot([0.5, 1.5], [0.5, 0.5], 'k-', linewidth=3, label='Resistor')
+                ax.text(1, 0.7, 'R', ha='center', fontweight='bold')
+                ax.text(1, -0.2, 'Circuit Diagram', ha='center', fontweight='bold')
+                ax.set_xlim(-0.5, 2.5)
+                ax.set_ylim(-0.5, 1.5)
+                ax.set_aspect('equal')
+                ax.axis('off')
+
+            # Motion/trajectory detection
+            elif any(term in question_lower for term in ['motion', 'trajectory', 'projectile', 'velocity', 'acceleration']):
+                # Extract motion parameters
+                vel_match = re.search(r'velocity.*?(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+                angle_match = re.search(r'angle.*?(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+
+                v0 = float(vel_match.group(1)) if vel_match else 20
+                angle = float(angle_match.group(1)) if angle_match else 45
+
+                g = 9.8
+                angle_rad = np.radians(angle)
+                t_max = 2 * v0 * np.sin(angle_rad) / g
+                t = np.linspace(0, t_max, 100)
+                x = v0 * np.cos(angle_rad) * t
+                y = v0 * np.sin(angle_rad) * t - 0.5 * g * t**2
+
+                ax.plot(x, y, 'r-', linewidth=2, label=f'Trajectory (v₀={v0}m/s, θ={angle}°)')
+                ax.set_title('Projectile Motion')
+                ax.set_xlabel('Horizontal Distance (m)')
+                ax.set_ylabel('Height (m)')
+                ax.grid(True, alpha=0.3)
+                ax.legend()
+
+            else:
+                # Default wave
+                t = np.linspace(0, 4*np.pi, 100)
+                y = np.sin(t)
+                ax.plot(t, y, 'b-', linewidth=2, label='Wave')
+                ax.set_title('Wave Function')
+                ax.set_xlabel('Time/Position')
+                ax.set_ylabel('Amplitude')
+                ax.grid(True, alpha=0.3)
+                ax.legend()
 
         elif subject == "Economics":
-            x = np.linspace(0, 10, 100)
-            supply = 2 * x
-            demand = 20 - x
-            ax.plot(x, supply, 'b-', linewidth=2, label='Supply')
-            ax.plot(x, demand, 'r-', linewidth=2, label='Demand')
-            ax.set_title('Supply and Demand')
-            ax.set_xlabel('Quantity')
-            ax.set_ylabel('Price')
-            ax.grid(True, alpha=0.3)
-            ax.legend()
+            # Intelligent Economics diagram detection
+            question_lower = question.lower()
+
+            # Supply and demand detection
+            if any(term in question_lower for term in ['supply', 'demand', 'equilibrium', 'market']):
+                # Extract economic parameters
+                price_match = re.search(r'price.*?(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+                quantity_match = re.search(r'quantity.*?(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+
+                max_q = float(quantity_match.group(1)) if quantity_match else 10
+                max_p = float(price_match.group(1)) if price_match else 20
+
+                x = np.linspace(0, max_q, 100)
+                supply = (max_p / max_q) * x  # Linear supply
+                demand = max_p - (max_p / max_q) * x  # Linear demand
+
+                ax.plot(x, supply, 'b-', linewidth=2, label='Supply')
+                ax.plot(x, demand, 'r-', linewidth=2, label='Demand')
+
+                # Find equilibrium
+                eq_q = max_q / 2
+                eq_p = max_p / 2
+                ax.plot(eq_q, eq_p, 'go', markersize=8, label=f'Equilibrium (Q={eq_q}, P={eq_p})')
+                ax.axhline(y=eq_p, color='gray', linestyle='--', alpha=0.5)
+                ax.axvline(x=eq_q, color='gray', linestyle='--', alpha=0.5)
+
+                ax.set_title('Supply and Demand')
+                ax.set_xlabel('Quantity')
+                ax.set_ylabel('Price')
+                ax.grid(True, alpha=0.3)
+                ax.legend()
+
+            # Cost curves detection
+            elif any(term in question_lower for term in ['cost', 'marginal', 'average', 'production']):
+                x = np.linspace(1, 10, 100)
+                mc = 2 * x  # Marginal cost
+                ac = x + 10/x  # Average cost (U-shaped)
+
+                ax.plot(x, mc, 'r-', linewidth=2, label='Marginal Cost')
+                ax.plot(x, ac, 'b-', linewidth=2, label='Average Cost')
+                ax.set_title('Cost Curves')
+                ax.set_xlabel('Quantity')
+                ax.set_ylabel('Cost')
+                ax.grid(True, alpha=0.3)
+                ax.legend()
+
+            else:
+                # Default supply and demand
+                x = np.linspace(0, 10, 100)
+                supply = 2 * x
+                demand = 20 - x
+                ax.plot(x, supply, 'b-', linewidth=2, label='Supply')
+                ax.plot(x, demand, 'r-', linewidth=2, label='Demand')
+                ax.set_title('Supply and Demand')
+                ax.set_xlabel('Quantity')
+                ax.set_ylabel('Price')
+                ax.grid(True, alpha=0.3)
+                ax.legend()
+
+        elif subject == "Chemistry":
+            # Intelligent Chemistry diagram detection
+            question_lower = question.lower()
+
+            # Molecular structure detection
+            if any(term in question_lower for term in ['molecule', 'bond', 'structure', 'lewis', 'electron']):
+                # Simple molecular representation
+                ax.scatter([0, 1, 2], [0, 0.5, 0], s=200, c=['red', 'blue', 'red'], alpha=0.7)
+                ax.plot([0, 1], [0, 0.5], 'k-', linewidth=2)
+                ax.plot([1, 2], [0.5, 0], 'k-', linewidth=2)
+                ax.text(0, -0.2, 'O', ha='center', fontweight='bold', fontsize=12)
+                ax.text(1, 0.7, 'C', ha='center', fontweight='bold', fontsize=12)
+                ax.text(2, -0.2, 'O', ha='center', fontweight='bold', fontsize=12)
+                ax.set_title('Molecular Structure')
+                ax.set_xlim(-0.5, 2.5)
+                ax.set_ylim(-0.5, 1)
+                ax.axis('off')
+
+            # Reaction kinetics detection
+            elif any(term in question_lower for term in ['reaction', 'rate', 'kinetics', 'concentration']):
+                t = np.linspace(0, 10, 100)
+                conc_A = np.exp(-0.5 * t)  # First-order decay
+                conc_B = 1 - np.exp(-0.5 * t)  # Product formation
+
+                ax.plot(t, conc_A, 'r-', linewidth=2, label='Reactant A')
+                ax.plot(t, conc_B, 'b-', linewidth=2, label='Product B')
+                ax.set_title('Reaction Kinetics')
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Concentration')
+                ax.grid(True, alpha=0.3)
+                ax.legend()
+
+            # pH curve detection
+            elif any(term in question_lower for term in ['ph', 'titration', 'acid', 'base']):
+                volume = np.linspace(0, 50, 100)
+                ph = 3 + 8 / (1 + np.exp(-(volume - 25) * 0.5))  # Sigmoid curve
+
+                ax.plot(volume, ph, 'purple', linewidth=2, label='pH vs Volume')
+                ax.axhline(y=7, color='gray', linestyle='--', alpha=0.5, label='Neutral pH')
+                ax.set_title('Titration Curve')
+                ax.set_xlabel('Volume of Titrant (mL)')
+                ax.set_ylabel('pH')
+                ax.grid(True, alpha=0.3)
+                ax.legend()
+
+            else:
+                # Default molecular diagram
+                ax.text(0.5, 0.5, 'Chemical Structure\nDiagram', ha='center', va='center',
+                       fontsize=14, fontweight='bold', transform=ax.transAxes)
+                ax.axis('off')
+
+        elif subject == "Biology":
+            # Intelligent Biology diagram detection
+            question_lower = question.lower()
+
+            # Cell structure detection
+            if any(term in question_lower for term in ['cell', 'membrane', 'nucleus', 'organelle']):
+                # Simple cell diagram
+                cell = plt.Circle((0.5, 0.5), 0.4, fill=False, edgecolor='black', linewidth=2)
+                nucleus = plt.Circle((0.5, 0.5), 0.15, fill=True, facecolor='lightblue', edgecolor='blue')
+                ax.add_patch(cell)
+                ax.add_patch(nucleus)
+                ax.text(0.5, 0.5, 'Nucleus', ha='center', va='center', fontsize=8)
+                ax.text(0.5, 0.1, 'Cell Membrane', ha='center', fontweight='bold')
+                ax.set_title('Cell Structure')
+                ax.set_xlim(0, 1)
+                ax.set_ylim(0, 1)
+                ax.set_aspect('equal')
+                ax.axis('off')
+
+            # Population growth detection
+            elif any(term in question_lower for term in ['population', 'growth', 'exponential', 'logistic']):
+                t = np.linspace(0, 10, 100)
+
+                if 'logistic' in question_lower:
+                    # Logistic growth
+                    K = 1000  # Carrying capacity
+                    r = 0.5   # Growth rate
+                    N0 = 10   # Initial population
+                    N = K / (1 + ((K - N0) / N0) * np.exp(-r * t))
+                    ax.plot(t, N, 'g-', linewidth=2, label='Logistic Growth')
+                    ax.axhline(y=K, color='red', linestyle='--', alpha=0.7, label='Carrying Capacity')
+                else:
+                    # Exponential growth
+                    N = 10 * np.exp(0.3 * t)
+                    ax.plot(t, N, 'g-', linewidth=2, label='Exponential Growth')
+
+                ax.set_title('Population Growth')
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Population Size')
+                ax.grid(True, alpha=0.3)
+                ax.legend()
+
+            # DNA/genetics detection
+            elif any(term in question_lower for term in ['dna', 'gene', 'chromosome', 'helix']):
+                # Simple DNA helix representation
+                t = np.linspace(0, 4*np.pi, 100)
+                x1 = np.cos(t)
+                y1 = t
+                x2 = np.cos(t + np.pi)
+                y2 = t
+
+                ax.plot(x1, y1, 'b-', linewidth=2, label='DNA Strand 1')
+                ax.plot(x2, y2, 'r-', linewidth=2, label='DNA Strand 2')
+
+                # Base pairs
+                for i in range(0, len(t), 10):
+                    ax.plot([x1[i], x2[i]], [y1[i], y2[i]], 'k-', alpha=0.5, linewidth=1)
+
+                ax.set_title('DNA Double Helix')
+                ax.set_xlabel('X')
+                ax.set_ylabel('Y')
+                ax.legend()
+
+            else:
+                # Default biological diagram
+                ax.text(0.5, 0.5, 'Biological\nDiagram', ha='center', va='center',
+                       fontsize=14, fontweight='bold', transform=ax.transAxes)
+                ax.axis('off')
 
         plt.tight_layout()
         buf = io.BytesIO()
