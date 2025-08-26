@@ -801,11 +801,29 @@ def create_smart_visualization(question: str, subject: str):
                 'angle bisector', 'parallel', 'perpendicular', 'circle', 'circumcircle', 'incenter', 'circumcenter',
                 'square', 'rectangle', 'polygon', 'semicircle', 'pentagon', 'hexagon', 'heptagon', 'octagon'
             ]):
-                # ---------- Helpers ----------
+                # ---------- Intelligent Detection Helpers ----------
                 def find_len(name: str):
-                    pattern = rf"{name}\s*=?\s*(\d+(?:\.\d+)?)\s*cm"
+                    """Extract length measurements from question text"""
+                    pattern = rf"{name}\s*=?\s*(\d+(?:\.\d+)?)\s*(?:cm|units?|m)?"
                     m = re.search(pattern, question, flags=re.IGNORECASE)
                     return float(m.group(1)) if m else None
+
+                def find_angle(description: str):
+                    """Extract angle measurements from question text"""
+                    pattern = rf"{description}.*?(\d+(?:\.\d+)?)\s*degrees?"
+                    m = re.search(pattern, question, flags=re.IGNORECASE)
+                    return float(m.group(1)) if m else None
+
+                def find_radius():
+                    """Extract radius from question text"""
+                    pattern = r"radius\s*=?\s*(\d+(?:\.\d+)?)\s*(?:cm|units?|m)?"
+                    m = re.search(pattern, question, flags=re.IGNORECASE)
+                    return float(m.group(1)) if m else None
+
+                def detect_points():
+                    """Detect point names mentioned in the question"""
+                    points_mentioned = re.findall(r'\b([A-Z])\b', question)
+                    return list(set(points_mentioned))  # Remove duplicates
 
                 def midpoint(p, q):
                     return ((p[0] + q[0]) / 2.0, (p[1] + q[1]) / 2.0)
@@ -826,48 +844,66 @@ def create_smart_visualization(question: str, subject: str):
                 def perp(v):
                     return (-v[1], v[0])
 
-                # ---------- Build baseline triangle if ABC mentioned or side lengths provided ----------
-                ab = find_len('AB')
-                bc = find_len('BC')
-                ac = find_len('AC')
+                # ---------- Intelligent Triangle Construction ----------
+                # Detect all possible side lengths mentioned
+                detected_points = detect_points()
+                side_lengths = {}
 
-                need_triangle = any(k in question_lower for k in ['triangle', ' abc', 'abc ', '△abc', '△ abc']) or any(v is not None for v in [ab, bc, ac])
+                # Try to find lengths for all possible sides
+                for i, p1 in enumerate(detected_points):
+                    for p2 in detected_points[i+1:]:
+                        side_name = f"{p1}{p2}"
+                        length = find_len(side_name)
+                        if length:
+                            side_lengths[side_name] = length
+
+                # Check if we need a triangle
+                need_triangle = (any(k in question_lower for k in ['triangle', ' abc', 'abc ', '△abc', '△ abc']) or
+                               len(side_lengths) > 0 or
+                               any(p in detected_points for p in ['A', 'B', 'C']))
 
                 points = {}
                 if need_triangle:
-                    if bc is None and ab is None and ac is None:
-                        ab, bc, ac = 5.0, 6.0, 4.0
-                    else:
-                        bc = 6.0 if bc is None else bc
-                        ab = 5.0 if ab is None else ab
-                        ac = 4.0 if ac is None else ac
+                    # Use detected measurements or defaults
+                    ab = side_lengths.get('AB') or side_lengths.get('BA') or find_len('AB') or 5.0
+                    bc = side_lengths.get('BC') or side_lengths.get('CB') or find_len('BC') or 6.0
+                    ac = side_lengths.get('AC') or side_lengths.get('CA') or find_len('AC') or 4.0
 
+                    # Construct triangle using circle-circle intersection
                     B = (0.0, 0.0)
                     C = (bc, 0.0)
-                    # circle-circle intersection to get A (choose upper solution)
+                    # Calculate A position
                     x_a = (ab**2 - ac**2 + bc**2) / (2 * bc if bc != 0 else 1e-6)
                     y_sq = max(ab**2 - x_a**2, 0.0)
                     y_a = float(np.sqrt(y_sq))
                     A = (x_a, y_a)
                     points.update({'A': A, 'B': B, 'C': C})
 
-                    # Draw triangle with black outlines for white background
+                    # Draw triangle with intelligent labeling
                     stroke = '#000000'
                     draw_line(B, C, color=stroke, linewidth=2)
                     draw_line(C, A, color=stroke, linewidth=2)
                     draw_line(A, B, color=stroke, linewidth=2)
                     ax.scatter([A[0], B[0], C[0]], [A[1], B[1], C[1]], color='#000000', zorder=3)
-                    ax.text(B[0], B[1] - 0.2, 'B', ha='center', va='top', color=stroke)
-                    ax.text(C[0], C[1] - 0.2, 'C', ha='center', va='top', color=stroke)
-                    ax.text(A[0], A[1] + 0.2, 'A', ha='center', va='bottom', color=stroke)
 
-                    # Side length labels
-                    def put_len(p, q, label):
-                        mx, my = (p[0]+q[0])/2.0, (p[1]+q[1])/2.0
-                        ax.text(mx, my + 0.15, label, color=stroke, ha='center', va='bottom')
-                    put_len(B, C, f'{bc} cm')
-                    put_len(A, B, f'{ab} cm')
-                    put_len(A, C, f'{ac} cm')
+                    # Label points based on what's mentioned in question
+                    if 'A' in detected_points or 'triangle' in question_lower:
+                        ax.text(A[0], A[1] + 0.2, 'A', ha='center', va='bottom', color=stroke, fontweight='bold')
+                    if 'B' in detected_points or 'triangle' in question_lower:
+                        ax.text(B[0], B[1] - 0.2, 'B', ha='center', va='top', color=stroke, fontweight='bold')
+                    if 'C' in detected_points or 'triangle' in question_lower:
+                        ax.text(C[0], C[1] - 0.2, 'C', ha='center', va='top', color=stroke, fontweight='bold')
+
+                    # Label side lengths only if mentioned in question
+                    def put_len(p, q, side_name, length):
+                        if side_name in side_lengths or f"{side_name[1]}{side_name[0]}" in side_lengths:
+                            mx, my = (p[0]+q[0])/2.0, (p[1]+q[1])/2.0
+                            unit = 'cm' if 'cm' in question else 'units'
+                            ax.text(mx, my + 0.15, f'{length} {unit}', color=stroke, ha='center', va='bottom')
+
+                    put_len(B, C, 'BC', bc)
+                    put_len(A, B, 'AB', ab)
+                    put_len(A, C, 'AC', ac)
 
                 # ---------- Constructions ----------
                 # Perpendicular bisector of a segment XY (e.g., BC)
@@ -937,30 +973,38 @@ def create_smart_visualization(question: str, subject: str):
                         direction = perp(base) if kind == 'perpendicular' else base
                         draw_infinite_line_through(points[p], direction, linestyle='--', color='#4CAF50' if kind=='perpendicular' else '#90CAF9', linewidth=2, label=f'{kind.title()} to {x}{y} through {p}')
 
-                # Simple Circle Generation (like triangle approach)
-                circle_match = re.search(r'circle.*?radius\s*(\d+(?:\.\d+)?)|radius\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
-                if circle_match or 'circle' in question_lower:
-                    # Extract radius simply
-                    radius = 4.0  # good default size
-                    if circle_match:
-                        radius = float(circle_match.group(1) or circle_match.group(2))
+                # Intelligent Circle Construction
+                if 'circle' in question_lower:
+                    # Detect radius from question
+                    radius = find_radius() or 4.0
 
-                    # Simple circle at origin
+                    # Detect center point if mentioned
+                    center = (0, 0)  # Default center
+                    center_match = re.search(r'center\s+([A-Z])', question, flags=re.IGNORECASE)
+                    if center_match:
+                        center_point = center_match.group(1)
+                        if center_point in points:
+                            center = points[center_point]
+
+                    # Draw circle
                     stroke = '#000000'
-                    circle = plt.Circle((0, 0), radius, fill=False, edgecolor=stroke, linewidth=2)
+                    circle = plt.Circle(center, radius, fill=False, edgecolor=stroke, linewidth=2)
                     ax.add_patch(circle)
 
-                    # Center point
-                    ax.scatter([0], [0], color=stroke, s=30, zorder=3)
-                    ax.text(0, 0.3, 'O', ha='center', va='bottom', color=stroke, fontweight='bold')
+                    # Label center
+                    ax.scatter([center[0]], [center[1]], color=stroke, s=30, zorder=3)
+                    center_label = center_match.group(1) if center_match else 'O'
+                    ax.text(center[0], center[1] + 0.3, center_label, ha='center', va='bottom', color=stroke, fontweight='bold')
 
-                    # Radius line
-                    ax.plot([0, radius], [0, 0], color=stroke, linestyle='--', linewidth=1.5)
-                    ax.text(radius/2, 0.2, f'r = {radius}', ha='center', va='bottom', color=stroke)
+                    # Show radius if mentioned in question
+                    if find_radius() or 'radius' in question_lower:
+                        ax.plot([center[0], center[0] + radius], [center[1], center[1]], color=stroke, linestyle='--', linewidth=1.5)
+                        unit = 'cm' if 'cm' in question else 'units'
+                        ax.text(center[0] + radius/2, center[1] + 0.2, f'r = {radius} {unit}', ha='center', va='bottom', color=stroke)
 
-                    # Simple bounds like triangle
-                    ax.set_xlim(-radius-1, radius+1)
-                    ax.set_ylim(-radius-1, radius+1)
+                    # Set bounds
+                    ax.set_xlim(center[0] - radius - 1, center[0] + radius + 1)
+                    ax.set_ylim(center[1] - radius - 1, center[1] + radius + 1)
                     ax.set_aspect('equal')
 
                 # Improved pair of tangents to a circle with given angle between them
@@ -1018,56 +1062,63 @@ def create_smart_visualization(question: str, subject: str):
                     ax.text(center[0], center[1]-r-0.5, f'Angle between tangents: {int(tangent_angle)}°',
                            color='#000000', ha='center', fontweight='bold')
 
-                # Specific angle construction (e.g., 60 degrees, 30 degrees, 45 degrees)
-                angle_construct_match = re.search(r'construct.*?(\d+)\s*degrees?|(\d+)\s*degrees?.*?angle', question, flags=re.IGNORECASE)
-                if angle_construct_match:
-                    angle_deg = float(angle_construct_match.group(1) or angle_construct_match.group(2))
+                # Dynamic angle detection and construction
+                angle_matches = re.findall(r'(\d+(?:\.\d+)?)\s*degrees?', question, flags=re.IGNORECASE)
+                if angle_matches and any(word in question_lower for word in ['construct', 'draw', 'angle']):
+                    for angle_str in angle_matches:
+                        angle_deg = float(angle_str)
 
-                    # Standard compass and straightedge construction
-                    stroke = '#000000'
+                        # Intelligent construction based on the angle
+                        stroke = '#000000'
 
-                    # Base line (horizontal)
-                    ax.plot([-2, 4], [0, 0], color=stroke, linewidth=2, label='Base line')
+                        # Base line (horizontal)
+                        ax.plot([-2, 4], [0, 0], color=stroke, linewidth=2, label='Base line')
 
-                    # Vertex point
-                    vertex = (0, 0)
-                    ax.scatter([vertex[0]], [vertex[1]], color=stroke, s=50, zorder=5)
-                    ax.text(vertex[0]-0.2, vertex[1]-0.3, 'O', color=stroke, ha='center', fontweight='bold')
+                        # Vertex point
+                        vertex = (0, 0)
+                        ax.scatter([vertex[0]], [vertex[1]], color=stroke, s=50, zorder=5)
+                        ax.text(vertex[0]-0.2, vertex[1]-0.3, 'O', color=stroke, ha='center', fontweight='bold')
 
-                    # Construct the angle
-                    angle_rad = np.radians(angle_deg)
-                    end_point = (3 * np.cos(angle_rad), 3 * np.sin(angle_rad))
+                        # Construct the angle
+                        angle_rad = np.radians(angle_deg)
+                        end_point = (3 * np.cos(angle_rad), 3 * np.sin(angle_rad))
 
-                    # Draw the angle ray
-                    ax.plot([vertex[0], end_point[0]], [vertex[1], end_point[1]], color='red', linewidth=2, label=f'{int(angle_deg)}° ray')
+                        # Draw the angle ray
+                        ax.plot([vertex[0], end_point[0]], [vertex[1], end_point[1]], color='red', linewidth=2, label=f'{angle_deg}° ray')
 
-                    # Mark the angle arc
-                    arc_radius = 1.0
-                    arc_angles = np.linspace(0, angle_rad, 50)
-                    arc_x = vertex[0] + arc_radius * np.cos(arc_angles)
-                    arc_y = vertex[1] + arc_radius * np.sin(arc_angles)
-                    ax.plot(arc_x, arc_y, color='blue', linewidth=2, label='Angle arc')
+                        # Mark the angle arc
+                        arc_radius = 1.0
+                        arc_angles = np.linspace(0, angle_rad, 50)
+                        arc_x = vertex[0] + arc_radius * np.cos(arc_angles)
+                        arc_y = vertex[1] + arc_radius * np.sin(arc_angles)
+                        ax.plot(arc_x, arc_y, color='blue', linewidth=2, label='Angle arc')
 
-                    # Label the angle
-                    label_angle = angle_rad / 2
-                    label_x = vertex[0] + (arc_radius + 0.3) * np.cos(label_angle)
-                    label_y = vertex[1] + (arc_radius + 0.3) * np.sin(label_angle)
-                    ax.text(label_x, label_y, f'{int(angle_deg)}°', color='blue', ha='center', fontweight='bold')
+                        # Label the angle
+                        label_angle = angle_rad / 2
+                        label_x = vertex[0] + (arc_radius + 0.3) * np.cos(label_angle)
+                        label_y = vertex[1] + (arc_radius + 0.3) * np.sin(label_angle)
+                        ax.text(label_x, label_y, f'{angle_deg}°', color='blue', ha='center', fontweight='bold')
 
-                    # For 60-degree angle, show the equilateral triangle construction
-                    if abs(angle_deg - 60) < 1:
-                        # Draw construction circles for 60-degree angle
-                        circle1 = plt.Circle(vertex, 2, fill=False, edgecolor='green', linewidth=1, linestyle='--', alpha=0.7)
-                        circle2 = plt.Circle((2, 0), 2, fill=False, edgecolor='green', linewidth=1, linestyle='--', alpha=0.7)
-                        ax.add_patch(circle1)
-                        ax.add_patch(circle2)
-                        ax.text(1, -2.5, 'Construction: Two intersecting circles of equal radius',
-                               color='green', ha='center', fontsize=10)
+                        # Show construction method for special angles
+                        if abs(angle_deg - 60) < 1:
+                            # Equilateral triangle construction for 60°
+                            circle1 = plt.Circle(vertex, 2, fill=False, edgecolor='green', linewidth=1, linestyle='--', alpha=0.7)
+                            circle2 = plt.Circle((2, 0), 2, fill=False, edgecolor='green', linewidth=1, linestyle='--', alpha=0.7)
+                            ax.add_patch(circle1)
+                            ax.add_patch(circle2)
+                            ax.text(1, -2.5, 'Construction: Equilateral triangle method', color='green', ha='center', fontsize=10)
+                        elif abs(angle_deg - 90) < 1:
+                            # Right angle construction
+                            ax.text(1, -2.5, 'Construction: Perpendicular lines', color='green', ha='center', fontsize=10)
+                        elif abs(angle_deg - 45) < 1:
+                            # 45° angle construction
+                            ax.text(1, -2.5, 'Construction: Angle bisector of 90°', color='green', ha='center', fontsize=10)
 
-                    # Set appropriate bounds
-                    ax.set_xlim(-2.5, 4.5)
-                    ax.set_ylim(-3, 3)
-                    ax.set_aspect('equal')
+                        # Set appropriate bounds
+                        ax.set_xlim(-2.5, 4.5)
+                        ax.set_ylim(-3, 3)
+                        ax.set_aspect('equal')
+                        break  # Only construct the first angle found
 
                 # Final styling and bounds
                 ax.set_aspect('equal', adjustable='datalim')
