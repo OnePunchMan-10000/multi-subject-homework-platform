@@ -1876,7 +1876,7 @@ def render_navbar():
     st.markdown(navbar_html, unsafe_allow_html=True)
 
 def render_hamburger_navbar():
-    """Render simple black hamburger button for questions page"""
+    """Render hamburger menu for questions page - EduLLM left, burger right"""
     # Initialize menu state
     if 'menu_open' not in st.session_state:
         st.session_state.menu_open = False
@@ -1898,140 +1898,103 @@ def render_hamburger_navbar():
         display: none;
     }
 
-    .hamburger-btn-container {
-        position: fixed;
-        top: 20px;
-        left: 20px;
+    /* Top navigation bar */
+    .questions-navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1rem 2rem;
+        margin: -1rem -1rem 1rem -1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
         z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
+
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
     .hamburger-btn {
-        background: rgba(0, 0, 0, 0.8);
-        border: none;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
         border-radius: 8px;
-        padding: 0.8rem;
+        padding: 0.6rem 0.8rem;
         color: white;
         cursor: pointer;
         transition: all 0.3s ease;
         font-size: 1.2rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px);
     }
     .hamburger-btn:hover {
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(255,255,255,0.2);
+        border-color: rgba(255,255,255,0.4);
         transform: scale(1.05);
-    }
-    .slide-menu {
-        position: fixed;
-        top: 0;
-        left: -300px;
-        width: 280px;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.95);
-        backdrop-filter: blur(15px);
-        transition: left 0.3s ease;
-        z-index: 1001;
-        padding: 2rem 1rem;
-        box-shadow: 2px 0 20px rgba(0,0,0,0.5);
-    }
-    .slide-menu.open {
-        left: 0;
-    }
-    .menu-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0,0,0,0.6);
-        z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-    .menu-overlay.open {
-        opacity: 1;
-        visibility: visible;
-    }
-    .menu-header {
-        color: white;
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: 2rem;
-        text-align: center;
-        border-bottom: 1px solid rgba(255,255,255,0.2);
-        padding-bottom: 1rem;
-    }
-    .menu-nav-item {
-        color: white;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 1px solid transparent;
-        background: rgba(255,255,255,0.05);
-        text-align: center;
-        font-size: 1.1rem;
-    }
-    .menu-nav-item:hover {
-        background: rgba(255,255,255,0.15);
-        border-color: rgba(255,255,255,0.3);
-        transform: translateX(5px);
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Hamburger button functionality
-    col1, col2, col3 = st.columns([1, 8, 1])
-    with col1:
-        if st.button("☰", key="hamburger_btn", help="Menu"):
+    # Top navbar with EduLLM left and hamburger right
+    menu_icon = "✕" if st.session_state.menu_open else "☰"
+    navbar_html = f"""
+    <div class="questions-navbar">
+        <div class="navbar-brand">
+            <span style="margin-right: 10px;">👑</span>
+            <span style="color: #FFD700;">EduLLM</span>
+        </div>
+        <div class="hamburger-btn">{menu_icon}</div>
+    </div>
+    """
+
+    st.markdown(navbar_html, unsafe_allow_html=True)
+
+    # Hamburger menu toggle button (invisible but functional)
+    col1, col2, col3 = st.columns([8, 1, 1])
+    with col3:
+        if st.button(menu_icon, key="hamburger_toggle", help="Menu"):
             st.session_state.menu_open = not st.session_state.menu_open
             st.rerun()
 
-    # Sliding menu with working buttons
+    # Menu items at bottom when open
     if st.session_state.menu_open:
-        st.markdown("""
-        <div class="menu-overlay open"></div>
-        <div class="slide-menu open">
-            <div class="menu-header">
-                <span style="margin-right: 10px;">👑</span>
-                <span style="color: #FFD700;">EduLLM</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown("### Navigation")
 
-        # Create menu buttons in sidebar
-        with st.sidebar:
-            st.markdown("### 🧭 Navigation")
+        col1, col2, col3, col4, col5 = st.columns(5)
 
+        with col1:
+            if st.button("✕", key="close_btn", help="Close", use_container_width=True):
+                st.session_state.menu_open = False
+                st.rerun()
+
+        with col2:
             if st.button("🏠 Home", key="ham_home", use_container_width=True):
                 st.session_state.page = 'landing'
                 st.session_state.menu_open = False
                 st.rerun()
 
+        with col3:
             if st.button("📚 Subjects", key="ham_subjects", use_container_width=True):
                 st.session_state.page = 'subjects'
                 st.session_state.selected_subject = None
                 st.session_state.menu_open = False
                 st.rerun()
 
-            if st.button("👤 Profile", key="ham_profile", use_container_width=True):
-                st.session_state.page = 'profile'
-                st.session_state.menu_open = False
-                st.rerun()
-
-            if st.button("ℹ️ About", key="ham_about", use_container_width=True):
+        with col4:
+            if st.button("📞 Contact", key="ham_contact", use_container_width=True):
                 st.session_state.page = 'about'
                 st.session_state.menu_open = False
                 st.rerun()
 
+        with col5:
             if st.button("🚪 Logout", key="ham_logout", use_container_width=True):
                 st.session_state.logged_in = False
                 st.session_state.page = 'landing'
-                st.session_state.menu_open = False
-                st.rerun()
-
-            st.markdown("---")
-            if st.button("✕ Close Menu", key="close_menu", use_container_width=True):
                 st.session_state.menu_open = False
                 st.rerun()
 
@@ -2603,8 +2566,19 @@ def render_questions_page():
 
     subject = st.session_state.selected_subject
 
+    # Welcome header with subject info
+    st.markdown(f"""
+    <div style="text-align: center; padding: 2rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                margin: -1rem -1rem 2rem -1rem; border-radius: 0 0 20px 20px; color: white;">
+        <h1 style="margin: 0; font-size: 2.5rem;">📚 {subject} Assistant</h1>
+        <p style="margin: 0.5rem 0 0 0; font-size: 1.2rem; opacity: 0.9;">
+            Get instant help with your {subject} questions from our AI tutor
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("### 🤔 What would you like to learn today?")
+    st.markdown(f"Ask any **{subject}** question and get detailed explanations, step-by-step solutions, and helpful visualizations.")
 
     # Question input
     question = st.text_area(
@@ -2614,101 +2588,127 @@ def render_questions_page():
         help="Be specific and include all relevant details"
     )
 
-    if st.button("🎯 Get Solution", type="primary"):
+    if st.button("🎯 Get Solution", type="primary", use_container_width=True):
         if question.strip():
-            with st.spinner("Getting solution..."):
-                response = get_api_response(question, subject)
+            with st.spinner("🤖 Getting solution..."):
+                try:
+                    response = get_api_response(question, subject)
 
-                if response:
-                    st.markdown("---")
-                    st.markdown(f"## 📚 {subject} Solution")
+                    if response:
+                        st.markdown("---")
+                        st.markdown(f"## 📚 {subject} Solution")
 
-                    # Display solution (render HTML for math/formatting)
-                    formatted_response = format_response(response)
-                    st.markdown(f"""
-                    <div class="solution-content">
-                        {formatted_response}
-                    </div>
-                    """, unsafe_allow_html=True)
+                        # Display solution (render HTML for math/formatting)
+                        formatted_response = format_response(response)
+                        st.markdown(f"""
+                        <div class="solution-content">
+                            {formatted_response}
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                    # Show diagram if needed
-                    if should_show_diagram(question, subject):
-                        st.markdown("### 📊 Visualization")
-                        viz = create_smart_visualization(question, subject)
-                        if viz:
-                            st.image(viz, use_container_width=True)
+                        # Show diagram if needed
+                        try:
+                            if should_show_diagram(question, subject):
+                                st.markdown("### 📊 Visualization")
+                                viz = create_smart_visualization(question, subject)
+                                if viz:
+                                    st.image(viz, use_container_width=True)
+                        except Exception as e:
+                            st.info("Visualization not available for this question.")
 
-                    # Save to history (backend first, fallback local)
-                    if backend_save_history(subject, question.strip(), formatted_response):
-                        pass  # Successfully saved
+                        # Save to history (backend first, fallback local)
+                        try:
+                            if backend_save_history(subject, question.strip(), formatted_response):
+                                pass  # Successfully saved
+                            else:
+                                # Fallback to local save if backend fails
+                                user_id = st.session_state.get("user_id")
+                                if user_id:
+                                    save_history(user_id, subject, question.strip(), formatted_response)
+                        except Exception as e:
+                            st.info("History save failed, but solution is ready!")
+
+                        # Feedback
+                        st.markdown("### 💭 Rate this solution")
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            if st.button("👍 Helpful", key="helpful_btn"):
+                                st.success("Thanks for your feedback!")
+                        with col_b:
+                            if st.button("👎 Needs work", key="needs_work_btn"):
+                                st.info("We'll work to improve!")
+                        with col_c:
+                            if st.button("🔄 Try again", key="try_again_btn"):
+                                st.rerun()
                     else:
-                        # Fallback to local save if backend fails
-                        user_id = st.session_state.get("user_id")
-                        if user_id:
-                            save_history(user_id, subject, question.strip(), formatted_response)
-
-                    # Feedback
-                    st.markdown("### Rate this solution")
-                    col_a, col_b, col_c = st.columns(3)
-                    with col_a:
-                        if st.button("👍 Helpful"):
-                            st.success("Thanks!")
-                    with col_b:
-                        if st.button("👎 Needs work"):
-                            st.info("We'll improve!")
-                    with col_c:
-                        if st.button("🔄 Try again"):
-                            st.rerun()
+                        st.error("❌ Failed to get solution. Please check your API configuration or try again.")
+                except Exception as e:
+                    st.error(f"❌ Error getting solution: {str(e)}")
+                    st.info("Please try again or contact support if the issue persists.")
         else:
-            st.warning("Please enter a question.")
+            st.warning("⚠️ Please enter a question before getting a solution.")
 
     # Subject-specific History
     with st.expander(f"🕘 View your {subject} history"):
-        # Try to load subject-specific history from backend first, fallback to local
-        rows = backend_get_history(limit=25, subject=subject)
-        if not rows:
-            user_id = st.session_state.get("user_id")
-            if user_id:
-                rows = load_history(user_id, limit=25, subject=subject)
-        if not rows:
-            st.info(f"No {subject} history yet.")
-        else:
-            for row in rows:
-                # Handle both backend format (dict) and local format (tuple)
-                if isinstance(row, dict):
-                    subj = row.get('subject', 'Unknown')
-                    q = row.get('question', 'No question')
-                    created_at = row.get('created_at', 'Unknown time')
-                else:
-                    # Local format: (id, subject, question, answer, created_at)
-                    _id, subj, q, a, created_at = row
-                st.markdown(f"**[{created_at}] {subj}**")
-                st.markdown(f"- Question: {q}")
-                st.markdown("---")
+        try:
+            # Try to load subject-specific history from backend first, fallback to local
+            rows = backend_get_history(limit=25, subject=subject)
+            if not rows:
+                user_id = st.session_state.get("user_id")
+                if user_id:
+                    rows = load_history(user_id, limit=25, subject=subject)
+
+            if not rows:
+                st.info(f"📝 No {subject} history yet. Start asking questions!")
+            else:
+                for row in rows:
+                    try:
+                        # Handle both backend format (dict) and local format (tuple)
+                        if isinstance(row, dict):
+                            subj = row.get('subject', 'Unknown')
+                            q = row.get('question', 'No question')
+                            created_at = row.get('created_at', 'Unknown time')
+                        else:
+                            # Local format: (id, subject, question, answer, created_at)
+                            _id, subj, q, a, created_at = row
+                        st.markdown(f"**[{created_at}] {subj}**")
+                        st.markdown(f"- Question: {q}")
+                        st.markdown("---")
+                    except Exception:
+                        continue  # Skip malformed entries
+        except Exception as e:
+            st.error(f"Error loading {subject} history: {str(e)}")
 
     # All subjects history
     with st.expander("📚 View all subjects history"):
-        # Try to load all history from backend first, fallback to local
-        rows = backend_get_history(limit=50)
-        if not rows:
-            user_id = st.session_state.get("user_id")
-            if user_id:
-                rows = load_history(user_id, limit=50)
-        if not rows:
-            st.info("No history yet.")
-        else:
-            for row in rows:
-                # Handle both backend format (dict) and local format (tuple)
-                if isinstance(row, dict):
-                    subj = row.get('subject', 'Unknown')
-                    q = row.get('question', 'No question')
-                    created_at = row.get('created_at', 'Unknown time')
-                else:
-                    # Local format: (id, subject, question, answer, created_at)
-                    _id, subj, q, a, created_at = row
-                st.markdown(f"**[{created_at}] {subj}**")
-                st.markdown(f"- Question: {q}")
-                st.markdown("---")
+        try:
+            # Try to load all history from backend first, fallback to local
+            rows = backend_get_history(limit=50)
+            if not rows:
+                user_id = st.session_state.get("user_id")
+                if user_id:
+                    rows = load_history(user_id, limit=50)
+
+            if not rows:
+                st.info("📝 No history yet. Start exploring subjects!")
+            else:
+                for row in rows:
+                    try:
+                        # Handle both backend format (dict) and local format (tuple)
+                        if isinstance(row, dict):
+                            subj = row.get('subject', 'Unknown')
+                            q = row.get('question', 'No question')
+                            created_at = row.get('created_at', 'Unknown time')
+                        else:
+                            # Local format: (id, subject, question, answer, created_at)
+                            _id, subj, q, a, created_at = row
+                        st.markdown(f"**[{created_at}] {subj}**")
+                        st.markdown(f"- Question: {q}")
+                        st.markdown("---")
+                    except Exception:
+                        continue  # Skip malformed entries
+        except Exception as e:
+            st.error(f"Error loading history: {str(e)}")
 
 def main():
     """Main application with complete workflow"""
