@@ -426,20 +426,31 @@ def auth_ui():
                 st.error('Please enter both username and password')
                 return False
 
-            ok, user_id, msg = authenticate_user(username, password)
+            # Use backend login like hw01.py does (this works!)
+            from app.backend import backend_login, backend_get_me
+            
+            ok, token_or_err = backend_login(username, password)
             if ok:
-                # Set session state for successful login
-                st.session_state['user_id'] = user_id
-                st.session_state['username'] = username
-                st.session_state['show_login'] = False
-                st.session_state['current_page'] = 'home'  # This will show subjects
-                st.session_state['selected_subject'] = None  # Start at subjects page
+                token = token_or_err
+                st.session_state["access_token"] = token
                 
-                st.success(f'✅ Welcome back, {username}!')
-                st.rerun()
-                return True
+                # Get user info like hw01.py does
+                ok2, me_or_err = backend_get_me(token)
+                if ok2:
+                    st.session_state["user_id"] = me_or_err.get("id")
+                    st.session_state["username"] = me_or_err.get("username")
+                    st.session_state['show_login'] = False
+                    st.session_state['current_page'] = 'home'  # This will show subjects
+                    st.session_state['selected_subject'] = None  # Start at subjects page
+                    
+                    st.success(f'✅ Welcome back, {username}!')
+                    st.rerun()
+                    return True
+                else:
+                    st.error(f"Login succeeded but fetching user failed: {me_or_err}")
+                    return False
             else:
-                st.error('Invalid username or password. Please try again.')
+                st.error(f'Login failed: {token_or_err}')
                 return False
 
         # Back to landing page option
@@ -470,9 +481,9 @@ def auth_ui():
             elif password != confirm_password:
                 st.error('Passwords do not match')
             else:
-                # Try to register the user
-                from app.db import register_user
-                success, message = register_user(username, password)
+                # Use backend registration like hw01.py does (this works!)
+                from app.backend import backend_register
+                success, message = backend_register(username, password)
                 
                 if success:
                     st.success(f'✅ Account created successfully for {username}!')
