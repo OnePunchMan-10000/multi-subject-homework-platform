@@ -32,20 +32,12 @@ if 'dark_mode' not in st.session_state:
 def load_css():
     # Get theme colors - Study-themed with gold/silver/black
     if st.session_state.dark_mode:
-        bg_color = """
-            radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(192, 192, 192, 0.1) 0%, transparent 50%),
-            linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 25%, #2d2d2d 50%, #1a1a1a 75%, #0f0f0f 100%)
-        """
+        bg_color = "radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(192, 192, 192, 0.1) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 25%, #2d2d2d 50%, #1a1a1a 75%, #0f0f0f 100%)"
         text_color = "#ffffff"
         card_bg = "rgba(30, 30, 30, 0.95)"
         subtitle_color = "#c0c0c0"
     else:
-        bg_color = """
-            radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(192, 192, 192, 0.15) 0%, transparent 50%),
-            linear-gradient(135deg, #fafafa 0%, #f0f0f0 25%, #ffffff 50%, #f0f0f0 75%, #fafafa 100%)
-        """
+        bg_color = "radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(192, 192, 192, 0.15) 0%, transparent 50%), linear-gradient(135deg, #fafafa 0%, #f0f0f0 25%, #ffffff 50%, #f0f0f0 75%, #fafafa 100%)"
         text_color = "#333333"
         card_bg = "rgba(255, 255, 255, 0.95)"
         subtitle_color = "#666666"
