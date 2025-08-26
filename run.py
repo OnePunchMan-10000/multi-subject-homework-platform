@@ -2075,20 +2075,14 @@ def render_subjects_page():
 
     for idx, (subject, info) in enumerate(subjects_data.items()):
         with cols[idx % 3]:
-            # Create styled subject card with integrated button
-            if st.button(f"Start Learning", key=f"select_{subject}", help=f"Start {subject} homework session", use_container_width=True):
-                st.session_state.selected_subject = subject
-                st.session_state.page = 'questions'
-                st.rerun()
-
-            # Create styled subject card with HTML (displayed above button)
+            # Create styled subject card with HTML
             card_html = f"""
             <div class="subject-card" style="
                 background: linear-gradient(135deg, {info['color']} 0%, rgba(255,255,255,0.1) 100%);
                 padding: 1.5rem;
                 border-radius: 20px;
                 text-align: center;
-                margin: 0.5rem 0;
+                margin: 0.5rem 0 1rem 0;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.3);
                 border: 1px solid rgba(255,255,255,0.2);
                 backdrop-filter: blur(10px);
@@ -2101,7 +2095,7 @@ def render_subjects_page():
             ">
                 <div style="font-size: 3.5rem; margin-bottom: 0.8rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">{info['icon']}</div>
                 <h2 style="color: white; font-weight: bold; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.3rem;">{subject}</h2>
-                <p style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); line-height: 1.3;">{info['description']}</p>
+                <p style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); line-height: 1.3; margin-bottom: 1rem;">{info['description']}</p>
                 <div style="
                     position: absolute;
                     top: -50%;
@@ -2114,6 +2108,12 @@ def render_subjects_page():
             </div>
             """
             st.markdown(card_html, unsafe_allow_html=True)
+
+            # Button positioned below the card
+            if st.button(f"Start Learning", key=f"select_{subject}", help=f"Start {subject} homework session", use_container_width=True, type="primary"):
+                st.session_state.selected_subject = subject
+                st.session_state.page = 'questions'
+                st.rerun()
 
 def render_profile_page():
     """Profile page with user stats and achievements"""
