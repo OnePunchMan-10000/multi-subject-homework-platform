@@ -1758,19 +1758,11 @@ def load_history(user_id: int, limit: int = 20, subject: str = None) -> list[tup
     except sqlite3.Error:
         return []
 
-# Theme Toggle Component
-def render_theme_toggle():
-    """Render theme toggle button"""
-    col1, col2, col3 = st.columns([8, 1, 1])
-    with col3:
-        theme_icon = "🌙" if st.session_state.dark_mode else "☀️"
-        if st.button(f"{theme_icon}", key="theme_toggle", help="Toggle Dark/Light Mode"):
-            st.session_state.dark_mode = not st.session_state.dark_mode
-            st.rerun()
+# Theme Toggle Component - REMOVED
 
 # Page Components
 def render_navbar():
-    """Render horizontal navigation bar at top"""
+    """Render horizontal navigation bar with integrated nav items"""
     st.markdown("""
     <style>
     .top-navbar {
@@ -1796,91 +1788,153 @@ def render_navbar():
         font-size: 1.5rem;
         font-weight: bold;
     }
-    .navbar-links {
+    .navbar-nav {
         display: flex;
-        gap: 1rem;
+        gap: 1.5rem;
         align-items: center;
     }
+    .nav-item {
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        background: rgba(255,255,255,0.1);
+    }
+    .nav-item:hover {
+        background: rgba(255,255,255,0.2);
+        border-color: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+    }
+    .nav-item.active {
+        background: rgba(255,215,0,0.3);
+        border-color: #FFD700;
+    }
     @media (max-width: 768px) {
-        .navbar-links {
+        .navbar-nav {
             gap: 0.5rem;
+        }
+        .nav-item {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.9rem;
         }
         .navbar-brand {
             font-size: 1.2rem;
         }
     }
     </style>
+    """, unsafe_allow_html=True)
+
+    # Create navbar with embedded navigation
+    current_page = st.session_state.get('page', 'landing')
+
+    navbar_html = f"""
     <div class="top-navbar">
         <div class="navbar-content">
             <div class="navbar-brand">
                 <span style="margin-right: 10px;">👑</span>
                 <span style="color: #FFD700;">EduLLM</span>
             </div>
+            <div class="navbar-nav">
+                <div class="nav-item {'active' if current_page == 'landing' else ''}" onclick="window.parent.postMessage({{type: 'nav', page: 'landing'}}, '*')">
+                    🏠 Home
+                </div>
+                <div class="nav-item {'active' if current_page == 'subjects' else ''}" onclick="window.parent.postMessage({{type: 'nav', page: 'subjects'}}, '*')">
+                    📚 Subjects
+                </div>
+                <div class="nav-item {'active' if current_page == 'profile' else ''}" onclick="window.parent.postMessage({{type: 'nav', page: 'profile'}}, '*')">
+                    👤 Profile
+                </div>
+                <div class="nav-item {'active' if current_page == 'about' else ''}" onclick="window.parent.postMessage({{type: 'nav', page: 'about'}}, '*')">
+                    ℹ️ About
+                </div>
+                <div class="nav-item" onclick="window.parent.postMessage({{type: 'nav', page: 'logout'}}, '*')">
+                    🚪 Logout
+                </div>
+            </div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """
 
-    # Navigation buttons in horizontal layout
+    st.markdown(navbar_html, unsafe_allow_html=True)
+
+    # Handle navigation with buttons (hidden but functional)
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
 
     with col1:
-        if st.button("🏠 Home", key="nav_home", use_container_width=True):
+        if st.button("Home", key="nav_home", label_visibility="hidden"):
             st.session_state.page = 'landing'
             st.rerun()
 
     with col2:
-        if st.button("📚 Subjects", key="nav_subjects", use_container_width=True):
+        if st.button("Subjects", key="nav_subjects", label_visibility="hidden"):
             st.session_state.page = 'subjects'
             st.session_state.selected_subject = None
             st.rerun()
 
     with col3:
-        if st.button("👤 Profile", key="nav_profile", use_container_width=True):
+        if st.button("Profile", key="nav_profile", label_visibility="hidden"):
             st.session_state.page = 'profile'
             st.rerun()
 
     with col4:
-        if st.button("ℹ️ About", key="nav_about", use_container_width=True):
+        if st.button("About", key="nav_about", label_visibility="hidden"):
             st.session_state.page = 'about'
             st.rerun()
 
     with col5:
-        if st.button("🚪 Logout", key="nav_logout", use_container_width=True):
+        if st.button("Logout", key="nav_logout", label_visibility="hidden"):
             st.session_state.logged_in = False
             st.session_state.page = 'landing'
             st.rerun()
 
-    st.markdown("---")
-
 def render_hamburger_navbar():
-    """Render hamburger menu navbar for questions page"""
+    """Render black transparent hamburger menu for questions page"""
     # Initialize menu state
     if 'menu_open' not in st.session_state:
         st.session_state.menu_open = False
 
     st.markdown("""
     <style>
-    .hamburger-container {
-        position: fixed;
-        top: 1rem;
-        left: 1rem;
-        z-index: 1001;
+    .hamburger-navbar {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 0.8rem 1rem;
+        margin: -1rem -1rem 1rem -1rem;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .hamburger-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
     }
     .hamburger-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
         color: white;
-        font-size: 1.2rem;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         transition: all 0.3s ease;
+        font-size: 1rem;
     }
     .hamburger-btn:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        background: rgba(255,255,255,0.2);
+        border-color: rgba(255,255,255,0.4);
+    }
+    .navbar-brand-ham {
+        display: flex;
+        align-items: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
     }
     .slide-menu {
         position: fixed;
@@ -1888,11 +1942,12 @@ def render_hamburger_navbar():
         left: -300px;
         width: 280px;
         height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(15px);
         transition: left 0.3s ease;
-        z-index: 1000;
-        padding: 4rem 1rem 1rem 1rem;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        z-index: 1001;
+        padding: 2rem 1rem;
+        box-shadow: 2px 0 20px rgba(0,0,0,0.5);
     }
     .slide-menu.open {
         left: 0;
@@ -1903,8 +1958,8 @@ def render_hamburger_navbar():
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0,0,0,0.5);
-        z-index: 999;
+        background: rgba(0,0,0,0.6);
+        z-index: 1000;
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease;
@@ -1913,86 +1968,108 @@ def render_hamburger_navbar():
         opacity: 1;
         visibility: visible;
     }
-    .menu-brand {
+    .menu-header {
         color: white;
         font-size: 1.5rem;
         font-weight: bold;
         margin-bottom: 2rem;
         text-align: center;
-        border-bottom: 1px solid rgba(255,255,255,0.3);
+        border-bottom: 1px solid rgba(255,255,255,0.2);
         padding-bottom: 1rem;
     }
-    .menu-item {
+    .menu-nav-item {
         color: white;
-        padding: 0.8rem 1rem;
+        padding: 1rem;
         margin: 0.5rem 0;
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.3s ease;
         border: 1px solid transparent;
+        background: rgba(255,255,255,0.05);
+        text-align: center;
+        font-size: 1.1rem;
     }
-    .menu-item:hover {
-        background: rgba(255,255,255,0.1);
+    .menu-nav-item:hover {
+        background: rgba(255,255,255,0.15);
         border-color: rgba(255,255,255,0.3);
         transform: translateX(5px);
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Hamburger button
-    col1, col2 = st.columns([1, 10])
-    with col1:
-        if st.button("⋯", key="hamburger_btn", help="Menu"):
-            st.session_state.menu_open = not st.session_state.menu_open
-            st.rerun()
-
-    # Sliding menu (only show if menu is open)
-    if st.session_state.menu_open:
-        # Create overlay and menu
-        st.markdown(f"""
-        <div class="menu-overlay open" onclick="document.querySelector('.slide-menu').classList.remove('open')"></div>
-        <div class="slide-menu open">
-            <div class="menu-brand">
+    # Top navbar with hamburger menu
+    navbar_html = f"""
+    <div class="hamburger-navbar">
+        <div class="hamburger-content">
+            <div class="hamburger-btn" onclick="toggleMenu()">
+                ☰ Menu
+            </div>
+            <div class="navbar-brand-ham">
                 <span style="margin-right: 10px;">👑</span>
                 <span style="color: #FFD700;">EduLLM</span>
             </div>
         </div>
+    </div>
+    """
+
+    st.markdown(navbar_html, unsafe_allow_html=True)
+
+    # Hamburger button functionality
+    col1, col2 = st.columns([1, 10])
+    with col1:
+        if st.button("☰", key="hamburger_btn", help="Menu", label_visibility="hidden"):
+            st.session_state.menu_open = not st.session_state.menu_open
+            st.rerun()
+
+    # Sliding menu
+    if st.session_state.menu_open:
+        st.markdown("""
+        <div class="menu-overlay open"></div>
+        <div class="slide-menu open">
+            <div class="menu-header">
+                <span style="margin-right: 10px;">👑</span>
+                <span style="color: #FFD700;">EduLLM</span>
+            </div>
+            <div class="menu-nav-item" onclick="closeMenu()">🏠 Home</div>
+            <div class="menu-nav-item" onclick="closeMenu()">📚 Subjects</div>
+            <div class="menu-nav-item" onclick="closeMenu()">👤 Profile</div>
+            <div class="menu-nav-item" onclick="closeMenu()">ℹ️ About</div>
+            <div class="menu-nav-item" onclick="closeMenu()">🚪 Logout</div>
+            <div class="menu-nav-item" onclick="closeMenu()" style="margin-top: 2rem; background: rgba(255,0,0,0.2);">✕ Close</div>
+        </div>
         """, unsafe_allow_html=True)
 
-        # Menu items in sidebar
-        with st.sidebar:
-            st.markdown("### Navigation")
+        # Hidden navigation buttons
+        if st.button("🏠 Home", key="ham_home", label_visibility="hidden"):
+            st.session_state.page = 'landing'
+            st.session_state.menu_open = False
+            st.rerun()
 
-            if st.button("🏠 Home", key="ham_home", use_container_width=True):
-                st.session_state.page = 'landing'
-                st.session_state.menu_open = False
-                st.rerun()
+        if st.button("📚 Subjects", key="ham_subjects", label_visibility="hidden"):
+            st.session_state.page = 'subjects'
+            st.session_state.selected_subject = None
+            st.session_state.menu_open = False
+            st.rerun()
 
-            if st.button("📚 Subjects", key="ham_subjects", use_container_width=True):
-                st.session_state.page = 'subjects'
-                st.session_state.selected_subject = None
-                st.session_state.menu_open = False
-                st.rerun()
+        if st.button("👤 Profile", key="ham_profile", label_visibility="hidden"):
+            st.session_state.page = 'profile'
+            st.session_state.menu_open = False
+            st.rerun()
 
-            if st.button("👤 Profile", key="ham_profile", use_container_width=True):
-                st.session_state.page = 'profile'
-                st.session_state.menu_open = False
-                st.rerun()
+        if st.button("ℹ️ About", key="ham_about", label_visibility="hidden"):
+            st.session_state.page = 'about'
+            st.session_state.menu_open = False
+            st.rerun()
 
-            if st.button("ℹ️ About", key="ham_about", use_container_width=True):
-                st.session_state.page = 'about'
-                st.session_state.menu_open = False
-                st.rerun()
+        if st.button("🚪 Logout", key="ham_logout", label_visibility="hidden"):
+            st.session_state.logged_in = False
+            st.session_state.page = 'landing'
+            st.session_state.menu_open = False
+            st.rerun()
 
-            if st.button("🚪 Logout", key="ham_logout", use_container_width=True):
-                st.session_state.logged_in = False
-                st.session_state.page = 'landing'
-                st.session_state.menu_open = False
-                st.rerun()
-
-            if st.button("✕ Close Menu", key="close_menu", use_container_width=True):
-                st.session_state.menu_open = False
-                st.rerun()
+        if st.button("✕ Close", key="close_menu", label_visibility="hidden"):
+            st.session_state.menu_open = False
+            st.rerun()
 
 def render_landing_page():
     """Professional landing page with crown logo"""
@@ -2197,7 +2274,6 @@ def render_login_page():
 
 def render_subjects_page():
     """Enhanced subjects page with proper grid layout"""
-    render_theme_toggle()
     render_navbar()
 
     # Subject data with enhanced descriptions and colors - All 9 subjects
@@ -2296,7 +2372,6 @@ def render_subjects_page():
 
 def render_profile_page():
     """Profile page with user stats and achievements"""
-    render_theme_toggle()
     render_navbar()
 
     st.markdown("# My Profile")
@@ -2426,7 +2501,6 @@ def render_profile_page():
 
 def render_about_page():
     """About Us page with company mission and info"""
-    render_theme_toggle()
     render_navbar()
 
     # Header with logo
@@ -2562,7 +2636,6 @@ def render_about_page():
 
 def render_questions_page():
     """Questions page with hamburger menu"""
-    render_theme_toggle()
     render_hamburger_navbar()
 
     subject = st.session_state.selected_subject
