@@ -1,5 +1,0 @@
-[33mc3123ea[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m  Complete UI overhaul: Modern landing page, navigation, and enhanced user experience
-[33md437bbb[m Remove signin-card wrapper and CSS; switch to minimal login form to avoid empty boxes
-[33mb7fbd81[m Remove landing-hero wrapper and CSS to prevent stray empty box; simplify landing
-[33me54e6da[m Disable render_navigation and nav-menu CSS to remove floating nav bar
-[33m43dfd36[m Add landing hero with Start Learning -> login flow; replace auth_ui with styled sign-in card

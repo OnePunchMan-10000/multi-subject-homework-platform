@@ -123,12 +123,190 @@ def render_footer():
 
 
 def render_home_page():
-    """Render the homepage with subject selection"""
-    st.markdown('<div class="main-header">Edullm</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-header">Clear, step-by-step homework solutions</div>', unsafe_allow_html=True)
+    """Render the homepage with subject selection and question interface"""
+    from app.llm import get_api_response
+    from app.formatting import format_response
+    from app.visualization import should_show_diagram, create_smart_visualization
+    from app.backend import backend_save_history, backend_get_history
+    from app.db import save_history, load_history
     
-    # Subject selection
-    render_subject_grid()
+    # Check current page (only after login)
+    current_page = st.session_state.get('current_page', 'home')
+    
+    # Handle different pages
+    if current_page == 'profile':
+        render_profile_page()
+        render_footer()
+        return
+    elif current_page == 'about':
+        render_about_page()
+        render_footer()
+        return
+    elif current_page == 'admin':
+        admin_ui()
+        render_footer()
+        return
+    elif current_page == 'subjects':
+        # Set selected_subject to None to show subject grid
+        st.session_state["selected_subject"] = None
+
+    # Stage 1: Subject-only page (full width) with gold/silver theme override
+    if not st.session_state.get("selected_subject"):
+        st.markdown(
+            """
+            <style>
+            .stApp { 
+                --g1: #d4af37; /* gold */
+                --g2: #c0c0c0; /* silver */
+                --g3: #e7cf7a; /* light gold */
+                --g4: #f5f5f5; /* near white */
+                background:
+                    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.16) 0, rgba(255,255,255,0) 40%),
+                    radial-gradient(circle at 20% 70%, rgba(255,255,255,0.12) 0, rgba(255,255,255,0) 45%),
+                    linear-gradient(135deg, var(--g1), var(--g2), var(--g3), var(--g4));
+            }
+            .subject-card { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); }
+            .subject-selected { border-color: rgba(255,255,255,0.85); box-shadow: 0 0 0 2px rgba(255,255,255,0.55) inset; }
+            .stButton>button { background: linear-gradient(135deg, #d4af37, #c0c0c0); }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        # Header for subjects page
+        st.markdown("""
+        <div class="main-header">
+            <h1 class="brand-title" style="margin:0.25rem 0;">Edullm</h1>
+            <p class="brand-sub" style="margin:0.1rem 0 0.25rem 0;">Clear, step-by-step homework solutions</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        _ = render_subject_grid(columns=4)
+        return
+
+    # Stage 2: Question UI after subject selection
+    selected_subject = st.session_state.get("selected_subject")
+    
+    # Question page styling
+    st.markdown("""
+    <style>
+    .question-header {
+        text-align: center;
+        margin: 40px 0;
+    }
+    .question-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    .question-subtitle {
+        font-size: 1.1rem;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+    }
+    .solution-container {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 25px;
+        margin: 20px 0;
+        border-left: 4px solid #3498db;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f"""
+    <div class='question-header'>
+        <div class='question-title'>❓ {selected_subject} Question</div>
+        <div class='question-subtitle'>Ask your question and get a detailed step-by-step solution</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Change subject button (top right)
+    col1, col2 = st.columns([4, 1])
+    with col2:
+        if st.button("← Back to Subjects", use_container_width=True):
+            st.session_state["selected_subject"] = None
+            st.rerun()
+
+    # Question input
+    question = st.text_area(
+        f"📝 Enter your {selected_subject} question:",
+        height=150,
+        placeholder=f"Example: Solve the equation 2x + 5 = 13, or explain photosynthesis...",
+        help="Be specific and include all relevant details for the best solution"
+    )
+    
+    if st.button("🎯 Get Solution", type="primary"):
+        if question.strip():
+            with st.spinner("Getting solution..."):
+                response = get_api_response(question, selected_subject)
+                
+                if response:
+                    st.markdown("---")
+                    st.markdown(f"## 📚 {selected_subject} Solution")
+                    
+                    # Clean solution container
+                    formatted_response = format_response(response)
+                    st.markdown(f"""
+                    <div class="solution-container">
+                        {formatted_response}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    # Save to history (backend)
+                    if backend_save_history(selected_subject, question.strip(), formatted_response):
+                        pass  # Successfully saved
+                    else:
+                        # Fallback to local save if backend fails
+                        save_history(
+                            st.session_state["user_id"],
+                            selected_subject,
+                            question.strip(),
+                            formatted_response,
+                        )
+                    
+                    # Show diagram if needed
+                    if should_show_diagram(question, selected_subject):
+                        st.markdown("### 📊 Visualization")
+                        viz = create_smart_visualization(question, selected_subject)
+                        if viz:
+                            # Display visualization at a controlled width so it doesn't stretch full container
+                            st.image(viz, width=700)
+                    
+                    # Simple feedback
+                    st.markdown("### Rate this solution")
+                    col_a, col_b, col_c = st.columns(3)
+                    with col_a:
+                        if st.button("👍 Helpful"):
+                            st.success("Thanks!")
+                    with col_b:
+                        if st.button("👎 Needs work"):
+                            st.info("We'll improve!")
+                    with col_c:
+                        if st.button("🔄 Try again"):
+                            st.rerun()
+        else:
+            st.warning("Please enter a question.")
+    
+    # History + footer
+    with st.expander("🕘 View your recent history"):
+        # Try to load from backend first, fallback to local
+        rows = backend_get_history(limit=25)
+        if not rows:
+            rows = load_history(st.session_state["user_id"], limit=25)
+        if not rows:
+            st.info("No history yet.")
+        else:
+            for row in rows:
+                # Handle both backend format (dict) and local format (tuple)
+                if isinstance(row, dict):
+                    subj, q, created_at = row['subject'], row['question'], row['created_at']
+                else:
+                    _id, subj, q, a, created_at = row
+                    
+                st.markdown(f"**[{created_at}] {subj}**")
+                st.markdown(f"- Question: {q}")
+                # Intentionally do not render the answer to reduce visual bloat and storage usage in UI
+                st.markdown("---")
 
 
 def render_profile_page():
@@ -197,63 +375,142 @@ def render_about_page():
 
 
 def auth_ui():
-    """Simplified login + registration UI.
-
-    Requirements per user: plain background, separate login and registration forms,
-    no timers/spinners/fetching UI. If login credentials exist and match, log in
-    immediately; otherwise show a message to register first.
-    """
-
-    # Plain header (no white box)
+    """Clean login page that leads to subjects after successful login."""
+    
+    # Login page styling
     st.markdown("""
-    <div style='max-width:900px; margin: 8px auto;'>
-      <h2 style='margin: 0 0 8px 0; color: var(--text-900);'>Sign In</h2>
+    <style>
+    .login-container {
+        max-width: 400px;
+        margin: 80px auto;
+        padding: 40px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .login-title {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 30px;
+    }
+    .login-subtitle {
+        text-align: center;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class='login-container'>
+        <div class='login-title'>🔐 Sign In</div>
+        <div class='login-subtitle'>Welcome back! Please sign in to continue.</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # --- Login form (no spinner, no timers) ---
-    with st.form(key='simple_login'):
-        login_username = st.text_input('Username')
-        login_password = st.text_input('Password', type='password')
-        login_submit = st.form_submit_button('Login')
+    # Center the form
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        with st.form(key='login_form'):
+            st.text_input('Username', key='login_username', placeholder='Enter your username')
+            st.text_input('Password', type='password', key='login_password', placeholder='Enter your password')
+            login_submit = st.form_submit_button('🚀 Login', type='primary', use_container_width=True)
 
-    if login_submit:
-        if not login_username or not login_password:
-            st.error('Please enter both username and password')
-            return False
+        if login_submit:
+            username = st.session_state.get('login_username', '')
+            password = st.session_state.get('login_password', '')
+            
+            if not username or not password:
+                st.error('Please enter both username and password')
+                return False
 
-        ok, user_id, msg = authenticate_user(login_username, login_password)
-        if ok:
-            st.session_state['user_id'] = user_id
-            st.session_state['username'] = login_username
-            # Navigate to the main app page after login without requiring a second click
-            st.session_state['show_login'] = False
-            st.session_state['current_page'] = 'subjects'
-            st.session_state['selected_subject'] = None
-            # Force a rerun so the main app picks up the new session state immediately.
-            # Prefer `st.rerun()` (stable) and fall back to `st.experimental_rerun()` if needed.
-            try:
+            ok, user_id, msg = authenticate_user(username, password)
+            if ok:
+                # Set session state for successful login
+                st.session_state['user_id'] = user_id
+                st.session_state['username'] = username
+                st.session_state['show_login'] = False
+                st.session_state['current_page'] = 'home'  # This will show subjects
+                st.session_state['selected_subject'] = None  # Start at subjects page
+                
+                st.success(f'✅ Welcome back, {username}!')
                 st.rerun()
-            except Exception:
-                try:
-                    if hasattr(st, 'experimental_rerun'):
-                        st.experimental_rerun()
-                except Exception:
-                    pass
-            st.success('Logged in')
-            return True
-        else:
-            st.warning('User not found or invalid credentials. Please register first.')
-            return False
+                return True
+            else:
+                st.error('Invalid username or password. Please try again.')
+                return False
 
-    st.markdown('---')
-    # Registration removed from login page to match requested minimal flow
+        # Back to landing page option
+        if st.button('← Back to Home'):
+            st.session_state['show_login'] = False
+            st.rerun()
+
     return False
 
 
 def render_subject_grid(columns: int = 4) -> str | None:
-    """Display subjects in a full-width card grid. Returns selected subject or None."""
-    st.markdown("### 📖 Choose a Subject")
+    """Display subjects in a clean grid. Returns selected subject or None."""
+    # Subject grid styling
+    st.markdown("""
+    <style>
+    .subjects-header {
+        text-align: center;
+        margin: 40px 0;
+    }
+    .subjects-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    .subjects-subtitle {
+        font-size: 1.1rem;
+        color: #7f8c8d;
+        margin-bottom: 40px;
+    }
+    .subject-card {
+        background: white;
+        border: 2px solid #ecf0f1;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .subject-card:hover {
+        border-color: #3498db;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .subject-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        display: block;
+    }
+    .subject-name {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    .subject-desc {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class='subjects-header'>
+        <div class='subjects-title'>📚 Choose Your Subject</div>
+        <div class='subjects-subtitle'>Select a subject to get started with your homework questions</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     subject_names = list(SUBJECTS.keys())
     selected = st.session_state.get("selected_subject")
 
@@ -261,24 +518,20 @@ def render_subject_grid(columns: int = 4) -> str | None:
     for idx, name in enumerate(subject_names):
         info = SUBJECTS[name]
         with cols[idx % columns]:
-            is_active = (name == selected)
-            active_cls = " subject-selected" if is_active else ""
             st.markdown(
                 f"""
-                <div class='subject-card{active_cls}'>
-                    <div><span class='subject-icon'>{info['icon']}</span><span class='subject-title'>{name}</span></div>
-                    <div class='subject-desc'>Focused, step-by-step help tailored for {name.lower()}.</div>
+                <div class='subject-card'>
+                    <div class='subject-icon'>{info['icon']}</div>
+                    <div class='subject-name'>{name}</div>
+                    <div class='subject-desc'>Get step-by-step solutions for {name.lower()} problems</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-            with st.container():
-                st.markdown("<div class='subject-cta'>", unsafe_allow_html=True)
-                if st.button("Start Learning", key=f"start_{name}"):
-                    st.session_state["selected_subject"] = name
-                    selected = name
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
+            if st.button(f"Select {name}", key=f"select_{name}", use_container_width=True):
+                st.session_state["selected_subject"] = name
+                selected = name
+                st.rerun()
 
     return selected
 
@@ -482,42 +735,75 @@ def render_features():
 
 
 def render_landing_page():
-    """Render the modern landing page (hero + features) and a login CTA.
-
-    Also shows the current commit SHA (if available) to confirm the deployed
-    version matches the repository.
-    """
-    # Use the cleaned, styled landing from ui_clean
-    try:
-        render_global_css()
-    except Exception:
-        pass
+    """Basic landing page with description and Start Learning button."""
+    # Clean landing page styling
+    st.markdown("""
+    <style>
+    .landing-container {
+        text-align: center;
+        padding: 60px 20px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .landing-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    .landing-subtitle {
+        font-size: 1.3rem;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+    .landing-description {
+        font-size: 1.1rem;
+        color: #34495e;
+        margin-bottom: 40px;
+        line-height: 1.8;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .features-list {
+        text-align: left;
+        max-width: 500px;
+        margin: 30px auto 40px auto;
+    }
+    .features-list li {
+        margin: 10px 0;
+        font-size: 1rem;
+        color: #2c3e50;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class='landing' style='background: linear-gradient(135deg,#0b0b0d,#221f1a); padding:36px 12px; color:#fff;'>
-      <div style='max-width:980px;margin:0 auto;text-align:center;'>
-        <div style='font-size:48px;'>👑</div>
-        <div class='brand'>EDULLM</div>
-        <div class='subtitle'>Demo · Your AI-powered study companion</div>
-        <div style='margin-top:8px; color:rgba(255,255,255,0.8)'>Clear, step-by-step homework solutions with concise explanations.</div>
-        <div class='cta'>
-          <button onclick="window.streamlitRerun && window.streamlitRerun()" class='stButton' style='background:white; color:black; padding:12px 32px; border-radius:12px; font-weight:700;'>Start Learning Now</button>
+    <div class='landing-container'>
+        <div class='landing-title'>🎓 EduLLM</div>
+        <div class='landing-subtitle'>Your AI-Powered Study Assistant</div>
+        <div class='landing-description'>
+            Get clear, step-by-step solutions to your homework problems across multiple subjects. 
+            Our AI provides detailed explanations to help you understand and learn.
         </div>
-      </div>
+        <div class='features-list'>
+            <ul>
+                <li>📚 <strong>Multiple Subjects:</strong> Math, Physics, Chemistry, Biology, Computer Science & more</li>
+                <li>🤖 <strong>AI-Powered:</strong> Get instant, accurate solutions</li>
+                <li>📝 <strong>Step-by-Step:</strong> Detailed explanations for better understanding</li>
+                <li>📊 <strong>Visual Learning:</strong> Diagrams and graphs when helpful</li>
+                <li>💾 <strong>Save History:</strong> Keep track of your solved problems</li>
+            </ul>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Safe fallback button that works without the JS hook
-    if st.button('Start Learning (open login)', key='start_learning_clean'):
-        st.session_state['show_login'] = True
-        st.rerun()
-
-    # Show deployed commit SHA for verification (if available)
-    try:
-        import subprocess, os
-        sha = os.environ.get('DEPLOY_COMMIT') or subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
-        st.markdown(f"<div style='text-align:center;color:var(--muted-500);font-size:0.9rem;margin-top:12px;'>Deployed commit: <code>{sha[:10]}</code></div>", unsafe_allow_html=True)
-    except Exception:
-        pass
+    # Center the button
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button('🚀 Start Learning', type='primary', use_container_width=True):
+            st.session_state['show_login'] = True
+            st.rerun()
 
 
