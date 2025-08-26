@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduLLM - AI Study Assistant</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/edullm-design.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Fallback styles in case CSS files don't load */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .loader {
+            text-align: center;
+        }
+        .loader i {
+            font-size: 3rem;
+            color: #F4C430;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40%, 43% {
+                transform: translateY(-15px);
+            }
+        }
+        .error-message {
+            color: red;
+            padding: 20px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Dynamic content will be loaded here -->
+        <div id="loading" class="loading-screen">
+            <div class="loader">
+                <i class="fas fa-graduation-cap"></i>
+                <p>Loading EduLLM...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files with error handling -->
+    <script>
+        // Add error handling for script loading
+        window.addEventListener('error', function(e) {
+            console.error('Script loading error:', e);
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.innerHTML = `
+                    <div class="error-message">
+                        <h2>⚠️ Loading Error</h2>
+                        <p>There was an issue loading the application.</p>
+                        <p>Please check that all files are in the correct location:</p>
+                        <ul style="text-align: left; display: inline-block;">
+                            <li>css/main.css</li>
+                            <li>css/components.css</li>
+                            <li>css/responsive.css</li>
+                            <li>css/edullm-design.css</li>
+                            <li>js/api.js</li>
+                            <li>js/components.js</li>
+                            <li>js/main.js</li>
+                        </ul>
+                        <p><strong>Error:</strong> ${e.message}</p>
+                        <button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px; background: #F4C430; color: white; border: none; border-radius: 5px; cursor: pointer;">Retry</button>
+                    </div>
+                `;
+            }
+        });
+
+        // Fallback initialization if main.js fails
+        setTimeout(function() {
+            if (!window.app) {
+                console.warn('Main app failed to initialize, showing fallback');
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.innerHTML = `
+                        <div style="text-align: center; padding: 40px; font-family: Arial, sans-serif;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #F4C430, #FFA500); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; color: white; margin-bottom: 20px; position: relative;">
+                                <span style="position: absolute; top: -15px; font-size: 2rem;">👑</span>
+                                E
+                            </div>
+                            <h1 style="color: #F4C430; font-size: 3rem; margin: 20px 0;">EduLLM</h1>
+                            <p style="color: #666; font-size: 1.2rem; margin-bottom: 30px;">Your AI-powered homework companion</p>
+                            <div style="margin: 30px 0;">
+                                <button onclick="showLogin()" style="background: linear-gradient(135deg, #F4C430, #FFA500); color: white; padding: 16px 32px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin: 0 10px;">Start Learning</button>
+                                <button style="background: transparent; color: #F4C430; padding: 16px 32px; border: 2px solid #F4C430; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin: 0 10px;">Learn More</button>
+                            </div>
+                            <p style="color: #999; font-size: 0.9rem; margin-top: 40px;">⚠️ Running in fallback mode - some features may be limited</p>
+                        </div>
+                    `;
+                }
+            }
+        }, 3000);
+
+        function showLogin() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div style="min-height: 100vh; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); padding: 40px 20px;">
+                    <div style="max-width: 400px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: hidden;">
+                        <div style="display: flex; background: #f8f9fa;">
+                            <button style="flex: 1; padding: 15px; background: white; border: none; font-weight: 600; color: #F4C430;">Login</button>
+                            <button style="flex: 1; padding: 15px; background: transparent; border: none; color: #666;">Sign Up</button>
+                        </div>
+                        <div style="padding: 30px;">
+                            <h2 style="margin-bottom: 10px;">Sign In</h2>
+                            <p style="color: #666; margin-bottom: 30px;">Enter your credentials to access your account</p>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Email</label>
+                                <input type="email" placeholder="student@example.com" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 30px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Password</label>
+                                <input type="password" placeholder="••••••••" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                            </div>
+                            
+                            <button onclick="showSubjects()" style="width: 100%; background: linear-gradient(135deg, #F4C430, #FFA500); color: white; padding: 15px; border: none; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer; margin-bottom: 20px;">Sign In</button>
+                            
+                            <p style="text-align: center; color: #999; font-size: 14px; margin: 20px 0;">OR CONTINUE WITH</p>
+                            <div style="display: flex; gap: 10px;">
+                                <button style="flex: 1; padding: 12px; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer;">Google</button>
+                                <button style="flex: 1; padding: 12px; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer;">Github</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showSubjects() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div style="min-height: 100vh; background: #1a1a1a; color: white; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 40px;">
+                        <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Choose Your <span style="color: #F4C430;">Subject</span></h1>
+                        <p style="color: #ccc;">Select a subject to get started with your homework questions</p>
+                    </div>
+                    
+                    <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <div style="background: #2d2d2d; border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">📐</div>
+                            <h3 style="margin-bottom: 10px;">Mathematics</h3>
+                            <p style="color: #ccc;">Algebra, Calculus, Geometry, Statistics</p>
+                        </div>
+                        
+                        <div style="background: #2d2d2d; border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">🧪</div>
+                            <h3 style="margin-bottom: 10px;">Chemistry</h3>
+                            <p style="color: #ccc;">Organic, Inorganic, Physical Chemistry</p>
+                        </div>
+                        
+                        <div style="background: #2d2d2d; border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">🏛️</div>
+                            <h3 style="margin-bottom: 10px;">History</h3>
+                            <p style="color: #ccc;">World History, Ancient Civilizations</p>
+                        </div>
+                        
+                        <div style="background: #2d2d2d; border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">📚</div>
+                            <h3 style="margin-bottom: 10px;">English</h3>
+                            <p style="color: #ccc;">Literature, Grammar, Writing</p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 40px;">
+                        <p style="color: #999;">⚠️ This is a simplified fallback version. For full functionality, please ensure all JavaScript files are loaded correctly.</p>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+
+    <script src="js/api.js" onerror="console.error('Failed to load api.js')"></script>
+    <script src="js/components.js" onerror="console.error('Failed to load components.js')"></script>
+    <script src="js/main.js" onerror="console.error('Failed to load main.js')"></script>
+</body>
+</html>
