@@ -1987,7 +1987,7 @@ def render_hamburger_navbar():
             st.session_state.menu_open = not st.session_state.menu_open
             st.rerun()
 
-    # Sliding menu
+    # Sliding menu with working buttons
     if st.session_state.menu_open:
         st.markdown("""
         <div class="menu-overlay open"></div>
@@ -1996,68 +1996,44 @@ def render_hamburger_navbar():
                 <span style="margin-right: 10px;">👑</span>
                 <span style="color: #FFD700;">EduLLM</span>
             </div>
-            <div class="menu-nav-item" onclick="closeMenu()">🏠 Home</div>
-            <div class="menu-nav-item" onclick="closeMenu()">📚 Subjects</div>
-            <div class="menu-nav-item" onclick="closeMenu()">👤 Profile</div>
-            <div class="menu-nav-item" onclick="closeMenu()">ℹ️ About</div>
-            <div class="menu-nav-item" onclick="closeMenu()">🚪 Logout</div>
-            <div class="menu-nav-item" onclick="closeMenu()" style="margin-top: 2rem; background: rgba(255,0,0,0.2);">✕ Close</div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Navigation buttons (hidden but functional)
-        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        # Create menu buttons in sidebar
+        with st.sidebar:
+            st.markdown("### 🧭 Navigation")
 
-        with col1:
-            if st.button("🏠", key="ham_home"):
+            if st.button("🏠 Home", key="ham_home", use_container_width=True):
                 st.session_state.page = 'landing'
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col2:
-            if st.button("📚", key="ham_subjects"):
+            if st.button("📚 Subjects", key="ham_subjects", use_container_width=True):
                 st.session_state.page = 'subjects'
                 st.session_state.selected_subject = None
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col3:
-            if st.button("👤", key="ham_profile"):
+            if st.button("👤 Profile", key="ham_profile", use_container_width=True):
                 st.session_state.page = 'profile'
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col4:
-            if st.button("ℹ️", key="ham_about"):
+            if st.button("ℹ️ About", key="ham_about", use_container_width=True):
                 st.session_state.page = 'about'
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col5:
-            if st.button("🚪", key="ham_logout"):
+            if st.button("🚪 Logout", key="ham_logout", use_container_width=True):
                 st.session_state.logged_in = False
                 st.session_state.page = 'landing'
                 st.session_state.menu_open = False
                 st.rerun()
 
-        with col6:
-            if st.button("✕", key="close_menu"):
+            st.markdown("---")
+            if st.button("✕ Close Menu", key="close_menu", use_container_width=True):
                 st.session_state.menu_open = False
                 st.rerun()
-
-        # Hide the buttons with CSS
-        st.markdown("""
-        <style>
-        .stButton > button {
-            opacity: 0;
-            height: 0;
-            padding: 0;
-            margin: 0;
-            border: none;
-            background: none;
-        }
-        </style>
-        """, unsafe_allow_html=True)
 
 def render_landing_page():
     """Professional landing page with crown logo"""
