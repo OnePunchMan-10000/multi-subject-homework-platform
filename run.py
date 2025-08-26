@@ -1,4 +1,5 @@
 """EduLLM - Complete AI Study Assistant with Professional UI"""
+# Updated: 2025-08-26 - Fixed UI spacing and centering issues
 
 import streamlit as st
 import requests
