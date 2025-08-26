@@ -31,6 +31,10 @@ if 'auth_tab' not in st.session_state:
     st.session_state.auth_tab = 'login'
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
+if 'loading' not in st.session_state:
+    st.session_state.loading = False
+if 'transitioning' not in st.session_state:
+    st.session_state.transitioning = False
 
 # Professional CSS Styling
 def load_css():
@@ -82,6 +86,58 @@ def load_css():
         padding-bottom: 0 !important;
         margin-top: 0 !important;
         max-width: 100%;
+        transition: opacity 0.3s ease-in-out !important;
+    }}
+
+    /* Smooth page transitions */
+    .stApp {{
+        transition: all 0.2s ease-in-out !important;
+    }}
+
+    /* Prevent flash during page transitions */
+    .main {{
+        transition: opacity 0.2s ease-in-out !important;
+    }}
+
+    /* Loading overlay */
+    .loading-overlay {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease-in-out;
+    }}
+
+    .loading-overlay.show {{
+        opacity: 1;
+        visibility: visible;
+    }}
+
+    .loading-content {{
+        text-align: center;
+        color: white;
+    }}
+
+    .loading-spinner {{
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #FFD700;
+        animation: spin 1s ease-in-out infinite;
+        margin: 0 auto 1rem auto;
+    }}
+
+    @keyframes spin {{
+        to {{ transform: rotate(360deg); }}
     }}
 
     /* Remove element container spacing */
@@ -1876,7 +1932,7 @@ def render_navbar():
     st.markdown(navbar_html, unsafe_allow_html=True)
 
 def render_hamburger_navbar():
-    """Render simple black hamburger button for questions page"""
+    """Render hamburger menu for questions page - EduLLM left, burger right with side menu"""
     # Initialize menu state
     if 'menu_open' not in st.session_state:
         st.session_state.menu_open = False
@@ -1898,110 +1954,116 @@ def render_hamburger_navbar():
         display: none;
     }
 
-    .hamburger-btn-container {
-        position: fixed;
-        top: 20px;
-        left: 20px;
+    /* Top navigation bar */
+    .questions-navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1rem 2rem;
+        margin: -1rem -1rem 1rem -1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
         z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
+
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
     .hamburger-btn {
-        background: rgba(0, 0, 0, 0.8);
-        border: none;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
         border-radius: 8px;
-        padding: 0.8rem;
+        padding: 0.6rem 0.8rem;
         color: white;
         cursor: pointer;
         transition: all 0.3s ease;
         font-size: 1.2rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px);
     }
     .hamburger-btn:hover {
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(255,255,255,0.2);
+        border-color: rgba(255,255,255,0.4);
         transform: scale(1.05);
     }
-    .slide-menu {
-        position: fixed;
-        top: 0;
-        left: -300px;
-        width: 280px;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.95);
-        backdrop-filter: blur(15px);
-        transition: left 0.3s ease;
-        z-index: 1001;
-        padding: 2rem 1rem;
-        box-shadow: 2px 0 20px rgba(0,0,0,0.5);
+
+    /* Style the Streamlit button to match hamburger design */
+    div[data-testid="column"]:nth-child(3) button {
+        background: rgba(255,255,255,0.1) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        border-radius: 8px !important;
+        color: white !important;
+        font-size: 1.2rem !important;
+        padding: 0.6rem 0.8rem !important;
+        position: fixed !important;
+        right: 2rem !important;
+        top: 1.2rem !important;
+        z-index: 1001 !important;
+        backdrop-filter: blur(10px) !important;
+        transition: all 0.3s ease !important;
+        width: auto !important;
+        height: auto !important;
     }
-    .slide-menu.open {
-        left: 0;
+
+    div[data-testid="column"]:nth-child(3) button:hover {
+        background: rgba(255,255,255,0.2) !important;
+        border-color: rgba(255,255,255,0.4) !important;
+        transform: scale(1.05) !important;
     }
-    .menu-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0,0,0,0.6);
-        z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-    .menu-overlay.open {
-        opacity: 1;
-        visibility: visible;
-    }
-    .menu-header {
-        color: white;
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: 2rem;
-        text-align: center;
-        border-bottom: 1px solid rgba(255,255,255,0.2);
-        padding-bottom: 1rem;
-    }
-    .menu-nav-item {
-        color: white;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 1px solid transparent;
-        background: rgba(255,255,255,0.05);
-        text-align: center;
-        font-size: 1.1rem;
-    }
-    .menu-nav-item:hover {
-        background: rgba(255,255,255,0.15);
-        border-color: rgba(255,255,255,0.3);
-        transform: translateX(5px);
+
+    /* Hide the visual hamburger when menu is open */
+    .hamburger-btn {
+        display: ${st.session_state.menu_open and 'none' or 'block'};
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Hamburger button functionality
-    col1, col2, col3 = st.columns([1, 8, 1])
-    with col1:
-        if st.button("☰", key="hamburger_btn", help="Menu"):
+    # Top navbar with EduLLM left and hamburger right
+    menu_icon = "✕" if st.session_state.menu_open else "☰"
+    navbar_html = f"""
+    <div class="questions-navbar">
+        <div class="navbar-brand">
+            <span style="margin-right: 10px;">👑</span>
+            <span style="color: #FFD700;">EduLLM</span>
+        </div>
+        <div class="hamburger-btn" onclick="toggleMenu()">{menu_icon}</div>
+    </div>
+
+    <script>
+    function toggleMenu() {{
+        window.parent.postMessage({{type: 'toggle_menu'}}, '*');
+    }}
+    </script>
+    """
+
+    st.markdown(navbar_html, unsafe_allow_html=True)
+
+    # Hamburger menu toggle button - positioned to overlay the visual hamburger
+    col1, col2, col3 = st.columns([6, 1, 3])
+    with col3:
+        # Create a button that overlays the visual hamburger
+        menu_button_text = "✕ Close" if st.session_state.menu_open else "☰ Menu"
+        if st.button(menu_button_text, key="hamburger_toggle", help="Toggle Navigation Menu"):
             st.session_state.menu_open = not st.session_state.menu_open
             st.rerun()
 
-    # Sliding menu with working buttons
+    # Side menu when open
     if st.session_state.menu_open:
-        st.markdown("""
-        <div class="menu-overlay open"></div>
-        <div class="slide-menu open">
-            <div class="menu-header">
-                <span style="margin-right: 10px;">👑</span>
-                <span style="color: #FFD700;">EduLLM</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Create menu buttons in sidebar
         with st.sidebar:
-            st.markdown("### 🧭 Navigation")
+            st.markdown("### 👑 Navigation Menu")
+            st.markdown("---")
+
+            if st.button("✕ Close", key="close_btn", use_container_width=True):
+                st.session_state.menu_open = False
+                st.rerun()
+
+            st.markdown("---")
 
             if st.button("🏠 Home", key="ham_home", use_container_width=True):
                 st.session_state.page = 'landing'
@@ -2014,12 +2076,7 @@ def render_hamburger_navbar():
                 st.session_state.menu_open = False
                 st.rerun()
 
-            if st.button("👤 Profile", key="ham_profile", use_container_width=True):
-                st.session_state.page = 'profile'
-                st.session_state.menu_open = False
-                st.rerun()
-
-            if st.button("ℹ️ About", key="ham_about", use_container_width=True):
+            if st.button("📞 Contact", key="ham_contact", use_container_width=True):
                 st.session_state.page = 'about'
                 st.session_state.menu_open = False
                 st.rerun()
@@ -2027,11 +2084,6 @@ def render_hamburger_navbar():
             if st.button("🚪 Logout", key="ham_logout", use_container_width=True):
                 st.session_state.logged_in = False
                 st.session_state.page = 'landing'
-                st.session_state.menu_open = False
-                st.rerun()
-
-            st.markdown("---")
-            if st.button("✕ Close Menu", key="close_menu", use_container_width=True):
                 st.session_state.menu_open = False
                 st.rerun()
 
@@ -2329,6 +2381,22 @@ def render_subjects_page():
 
             # Button positioned below the card
             if st.button(f"Start Learning", key=f"select_{subject}", help=f"Start {subject} homework session", use_container_width=True, type="primary"):
+                # Show loading overlay
+                st.markdown(f"""
+                <div class="loading-overlay show">
+                    <div class="loading-content">
+                        <div class="loading-spinner"></div>
+                        <h2>Loading {subject} Assistant...</h2>
+                        <p>Preparing your personalized learning experience</p>
+                    </div>
+                </div>
+                <script>
+                setTimeout(function() {{
+                    document.querySelector('.loading-overlay').classList.remove('show');
+                }}, 1000);
+                </script>
+                """, unsafe_allow_html=True)
+
                 st.session_state.selected_subject = subject
                 st.session_state.page = 'questions'
                 st.rerun()
@@ -2598,13 +2666,221 @@ def render_about_page():
     """, unsafe_allow_html=True)
 
 def render_questions_page():
-    """Questions page with hamburger menu"""
-    render_hamburger_navbar()
-
+    """Questions page with integrated navbar showing subject"""
     subject = st.session_state.selected_subject
 
+    # Initialize menu state
+    if 'menu_open' not in st.session_state:
+        st.session_state.menu_open = False
 
-    st.markdown("---")
+    st.markdown("""
+    <style>
+    /* Remove Streamlit's default padding */
+    .main > div {
+        padding-top: 0rem !important;
+    }
+    .block-container {
+        padding-top: 0rem !important;
+        margin-top: 0rem !important;
+    }
+    header[data-testid="stHeader"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+
+    /* Questions page navbar with subject info */
+    .questions-navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1rem 2rem;
+        margin: -1rem -1rem 1rem -1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .navbar-left {
+        display: flex;
+        align-items: center;
+        color: white;
+    }
+
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        margin-right: 2rem;
+    }
+
+    .subject-info {
+        display: flex;
+        align-items: center;
+        color: white;
+        opacity: 0.9;
+    }
+
+    .hamburger-btn {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+        backdrop-filter: blur(10px);
+    }
+    .hamburger-btn:hover {
+        background: rgba(255,255,255,0.2);
+        border-color: rgba(255,255,255,0.4);
+        transform: scale(1.05);
+    }
+
+    /* Style the Streamlit button */
+    div[data-testid="column"]:nth-child(3) button {
+        background: rgba(255,255,255,0.1) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        border-radius: 8px !important;
+        color: white !important;
+        font-size: 1.2rem !important;
+        padding: 0.6rem 0.8rem !important;
+        position: fixed !important;
+        right: 2rem !important;
+        top: 1.2rem !important;
+        z-index: 1001 !important;
+        backdrop-filter: blur(10px) !important;
+        transition: all 0.3s ease !important;
+        width: auto !important;
+        height: auto !important;
+    }
+
+    div[data-testid="column"]:nth-child(3) button:hover {
+        background: rgba(255,255,255,0.2) !important;
+        border-color: rgba(255,255,255,0.4) !important;
+        transform: scale(1.05) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Single navbar with EduLLM, subject info, and hamburger menu
+    menu_icon = "✕" if st.session_state.menu_open else "☰"
+    navbar_html = f"""
+    <div class="questions-navbar">
+        <div class="navbar-left">
+            <div class="navbar-brand">
+                <span style="margin-right: 10px; font-size: 1.5rem;">👑</span>
+                <span style="color: #FFD700; font-size: 1.5rem; font-weight: bold;">EduLLM</span>
+            </div>
+            <div class="subject-info">
+                <span style="margin-right: 10px; font-size: 1.3rem;">📚</span>
+                <span style="font-size: 1.2rem; font-weight: 500;">{subject} Assistant</span>
+            </div>
+        </div>
+        <div class="hamburger-btn" onclick="toggleMenu()">{menu_icon}</div>
+    </div>
+
+    <script>
+    function toggleMenu() {{
+        window.parent.postMessage({{type: 'toggle_menu'}}, '*');
+    }}
+    </script>
+    """
+
+    st.markdown(navbar_html, unsafe_allow_html=True)
+
+    # Hamburger menu toggle button
+    col1, col2, col3 = st.columns([6, 1, 3])
+    with col3:
+        menu_button_text = "✕ Close" if st.session_state.menu_open else "☰ Menu"
+        if st.button(menu_button_text, key="hamburger_toggle", help="Toggle Navigation Menu"):
+            st.session_state.menu_open = not st.session_state.menu_open
+            st.rerun()
+
+    # Side menu when open
+    if st.session_state.menu_open:
+        with st.sidebar:
+            st.markdown("### 👑 Navigation Menu")
+            st.markdown("---")
+
+            if st.button("✕ Close", key="close_btn", use_container_width=True):
+                st.session_state.menu_open = False
+                st.rerun()
+
+            st.markdown("---")
+
+            if st.button("🏠 Home", key="ham_home", use_container_width=True):
+                st.session_state.page = 'landing'
+                st.session_state.menu_open = False
+                st.rerun()
+
+            if st.button("📚 Subjects", key="ham_subjects", use_container_width=True):
+                st.session_state.page = 'subjects'
+                st.session_state.selected_subject = None
+                st.session_state.menu_open = False
+                st.rerun()
+
+            if st.button("📞 Contact", key="ham_contact", use_container_width=True):
+                st.session_state.page = 'about'
+                st.session_state.menu_open = False
+                st.rerun()
+
+            if st.button("🚪 Logout", key="ham_logout", use_container_width=True):
+                st.session_state.logged_in = False
+                st.session_state.page = 'landing'
+                st.session_state.menu_open = False
+                st.rerun()
+
+    st.markdown("### 🤔 What would you like to learn today?")
+
+    # Question input area
+    question = st.text_area(
+        "Ask your question here:",
+        placeholder=f"Enter your {subject} question here...",
+        height=100
+    )
+
+    if st.button("🚀 Get Answer", type="primary", use_container_width=True):
+        if question.strip():
+            with st.spinner("Thinking..."):
+                # Simulate AI response (replace with actual AI integration)
+                st.success("Great question! Here's how I can help:")
+                st.markdown(f"""
+                **Your Question:** {question}
+
+                **AI Response:** This is where the AI-generated answer for your {subject} question would appear.
+                The system would analyze your question and provide a detailed, step-by-step explanation.
+                """)
+        else:
+            st.warning("Please enter a question first!")
+
+    # Quick help topics for the subject
+    st.markdown("### 💡 Popular Topics")
+
+    # Subject-specific quick topics
+    topics = {
+        "Mathematics": ["Algebra", "Calculus", "Geometry", "Statistics"],
+        "Physics": ["Mechanics", "Thermodynamics", "Electromagnetism", "Quantum Physics"],
+        "Chemistry": ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", "Biochemistry"],
+        "Biology": ["Cell Biology", "Genetics", "Ecology", "Evolution"],
+        "History": ["World History", "Ancient Civilizations", "Modern History", "Historical Analysis"],
+        "English Literature": ["Poetry Analysis", "Novel Studies", "Grammar", "Creative Writing"],
+        "Geography": ["Physical Geography", "Human Geography", "Climate", "Cartography"],
+        "Economics": ["Microeconomics", "Macroeconomics", "Market Analysis", "Economic Theory"],
+        "Computer Science": ["Programming", "Data Structures", "Algorithms", "Software Engineering"]
+    }
+
+    subject_topics = topics.get(subject, ["General Topics", "Study Tips", "Problem Solving", "Exam Prep"])
+
+    cols = st.columns(2)
+    for i, topic in enumerate(subject_topics):
+        with cols[i % 2]:
+            if st.button(f"📖 {topic}", key=f"topic_{i}", use_container_width=True):
+                st.info(f"You selected {topic}! Ask me anything about this topic.")
+    st.markdown(f"Ask any **{subject}** question and get detailed explanations, step-by-step solutions, and helpful visualizations.")
 
     # Question input
     question = st.text_area(
@@ -2614,101 +2890,127 @@ def render_questions_page():
         help="Be specific and include all relevant details"
     )
 
-    if st.button("🎯 Get Solution", type="primary"):
+    if st.button("🎯 Get Solution", type="primary", use_container_width=True):
         if question.strip():
-            with st.spinner("Getting solution..."):
-                response = get_api_response(question, subject)
+            with st.spinner("🤖 Getting solution..."):
+                try:
+                    response = get_api_response(question, subject)
 
-                if response:
-                    st.markdown("---")
-                    st.markdown(f"## 📚 {subject} Solution")
+                    if response:
+                        st.markdown("---")
+                        st.markdown(f"## 📚 {subject} Solution")
 
-                    # Display solution (render HTML for math/formatting)
-                    formatted_response = format_response(response)
-                    st.markdown(f"""
-                    <div class="solution-content">
-                        {formatted_response}
-                    </div>
-                    """, unsafe_allow_html=True)
+                        # Display solution (render HTML for math/formatting)
+                        formatted_response = format_response(response)
+                        st.markdown(f"""
+                        <div class="solution-content">
+                            {formatted_response}
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                    # Show diagram if needed
-                    if should_show_diagram(question, subject):
-                        st.markdown("### 📊 Visualization")
-                        viz = create_smart_visualization(question, subject)
-                        if viz:
-                            st.image(viz, use_container_width=True)
+                        # Show diagram if needed
+                        try:
+                            if should_show_diagram(question, subject):
+                                st.markdown("### 📊 Visualization")
+                                viz = create_smart_visualization(question, subject)
+                                if viz:
+                                    st.image(viz, use_container_width=True)
+                        except Exception as e:
+                            st.info("Visualization not available for this question.")
 
-                    # Save to history (backend first, fallback local)
-                    if backend_save_history(subject, question.strip(), formatted_response):
-                        pass  # Successfully saved
+                        # Save to history (backend first, fallback local)
+                        try:
+                            if backend_save_history(subject, question.strip(), formatted_response):
+                                pass  # Successfully saved
+                            else:
+                                # Fallback to local save if backend fails
+                                user_id = st.session_state.get("user_id")
+                                if user_id:
+                                    save_history(user_id, subject, question.strip(), formatted_response)
+                        except Exception as e:
+                            st.info("History save failed, but solution is ready!")
+
+                        # Feedback
+                        st.markdown("### 💭 Rate this solution")
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            if st.button("👍 Helpful", key="helpful_btn"):
+                                st.success("Thanks for your feedback!")
+                        with col_b:
+                            if st.button("👎 Needs work", key="needs_work_btn"):
+                                st.info("We'll work to improve!")
+                        with col_c:
+                            if st.button("🔄 Try again", key="try_again_btn"):
+                                st.rerun()
                     else:
-                        # Fallback to local save if backend fails
-                        user_id = st.session_state.get("user_id")
-                        if user_id:
-                            save_history(user_id, subject, question.strip(), formatted_response)
-
-                    # Feedback
-                    st.markdown("### Rate this solution")
-                    col_a, col_b, col_c = st.columns(3)
-                    with col_a:
-                        if st.button("👍 Helpful"):
-                            st.success("Thanks!")
-                    with col_b:
-                        if st.button("👎 Needs work"):
-                            st.info("We'll improve!")
-                    with col_c:
-                        if st.button("🔄 Try again"):
-                            st.rerun()
+                        st.error("❌ Failed to get solution. Please check your API configuration or try again.")
+                except Exception as e:
+                    st.error(f"❌ Error getting solution: {str(e)}")
+                    st.info("Please try again or contact support if the issue persists.")
         else:
-            st.warning("Please enter a question.")
+            st.warning("⚠️ Please enter a question before getting a solution.")
 
     # Subject-specific History
     with st.expander(f"🕘 View your {subject} history"):
-        # Try to load subject-specific history from backend first, fallback to local
-        rows = backend_get_history(limit=25, subject=subject)
-        if not rows:
-            user_id = st.session_state.get("user_id")
-            if user_id:
-                rows = load_history(user_id, limit=25, subject=subject)
-        if not rows:
-            st.info(f"No {subject} history yet.")
-        else:
-            for row in rows:
-                # Handle both backend format (dict) and local format (tuple)
-                if isinstance(row, dict):
-                    subj = row.get('subject', 'Unknown')
-                    q = row.get('question', 'No question')
-                    created_at = row.get('created_at', 'Unknown time')
-                else:
-                    # Local format: (id, subject, question, answer, created_at)
-                    _id, subj, q, a, created_at = row
-                st.markdown(f"**[{created_at}] {subj}**")
-                st.markdown(f"- Question: {q}")
-                st.markdown("---")
+        try:
+            # Try to load subject-specific history from backend first, fallback to local
+            rows = backend_get_history(limit=25, subject=subject)
+            if not rows:
+                user_id = st.session_state.get("user_id")
+                if user_id:
+                    rows = load_history(user_id, limit=25, subject=subject)
+
+            if not rows:
+                st.info(f"📝 No {subject} history yet. Start asking questions!")
+            else:
+                for row in rows:
+                    try:
+                        # Handle both backend format (dict) and local format (tuple)
+                        if isinstance(row, dict):
+                            subj = row.get('subject', 'Unknown')
+                            q = row.get('question', 'No question')
+                            created_at = row.get('created_at', 'Unknown time')
+                        else:
+                            # Local format: (id, subject, question, answer, created_at)
+                            _id, subj, q, a, created_at = row
+                        st.markdown(f"**[{created_at}] {subj}**")
+                        st.markdown(f"- Question: {q}")
+                        st.markdown("---")
+                    except Exception:
+                        continue  # Skip malformed entries
+        except Exception as e:
+            st.error(f"Error loading {subject} history: {str(e)}")
 
     # All subjects history
     with st.expander("📚 View all subjects history"):
-        # Try to load all history from backend first, fallback to local
-        rows = backend_get_history(limit=50)
-        if not rows:
-            user_id = st.session_state.get("user_id")
-            if user_id:
-                rows = load_history(user_id, limit=50)
-        if not rows:
-            st.info("No history yet.")
-        else:
-            for row in rows:
-                # Handle both backend format (dict) and local format (tuple)
-                if isinstance(row, dict):
-                    subj = row.get('subject', 'Unknown')
-                    q = row.get('question', 'No question')
-                    created_at = row.get('created_at', 'Unknown time')
-                else:
-                    # Local format: (id, subject, question, answer, created_at)
-                    _id, subj, q, a, created_at = row
-                st.markdown(f"**[{created_at}] {subj}**")
-                st.markdown(f"- Question: {q}")
-                st.markdown("---")
+        try:
+            # Try to load all history from backend first, fallback to local
+            rows = backend_get_history(limit=50)
+            if not rows:
+                user_id = st.session_state.get("user_id")
+                if user_id:
+                    rows = load_history(user_id, limit=50)
+
+            if not rows:
+                st.info("📝 No history yet. Start exploring subjects!")
+            else:
+                for row in rows:
+                    try:
+                        # Handle both backend format (dict) and local format (tuple)
+                        if isinstance(row, dict):
+                            subj = row.get('subject', 'Unknown')
+                            q = row.get('question', 'No question')
+                            created_at = row.get('created_at', 'Unknown time')
+                        else:
+                            # Local format: (id, subject, question, answer, created_at)
+                            _id, subj, q, a, created_at = row
+                        st.markdown(f"**[{created_at}] {subj}**")
+                        st.markdown(f"- Question: {q}")
+                        st.markdown("---")
+                    except Exception:
+                        continue  # Skip malformed entries
+        except Exception as e:
+            st.error(f"Error loading history: {str(e)}")
 
 def main():
     """Main application with complete workflow"""
@@ -2731,6 +3033,9 @@ def main():
             st.rerun()
     elif st.session_state.page == 'questions':
         if st.session_state.logged_in and st.session_state.selected_subject:
+            # Clear transitioning state when we reach the questions page
+            if st.session_state.transitioning:
+                st.session_state.transitioning = False
             render_questions_page()
         else:
             st.session_state.page = 'subjects'
