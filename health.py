@@ -5,9 +5,18 @@ def get_deployment_info():
     return {
         "status": "healthy",
         "timestamp": datetime.datetime.now().isoformat(),
-        "version": "4-page-navigation-flow-v3-connection-test",
+        "version": "professional-frontend-v1-deployed",
         "commit": "latest",
-        "database": "postgresql-railway-connected"
+        "database": "postgresql-railway-connected",
+        "frontend": "professional-ui-with-exact-design-match",
+        "features": [
+            "Crown logo with golden theme",
+            "Dark theme subjects/questions/profile",
+            "Light theme landing/login",
+            "Tabbed login interface",
+            "Responsive design",
+            "Smooth animations"
+        ]
     }
 
 if __name__ == "__main__":
