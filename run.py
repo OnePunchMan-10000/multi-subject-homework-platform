@@ -6,6 +6,9 @@ import requests
 import json
 import os
 import hashlib
+import matplotlib.pyplot as plt
+import numpy as np
+import io
 
 # Set page config with crown branding
 st.set_page_config(
@@ -583,6 +586,318 @@ def format_response(response_text):
 
     return ''.join(formatted_content)
 
+def should_show_diagram(question: str, subject: str) -> bool:
+    """Return True only when the question explicitly asks for a visual/graph/geometry construction.
+
+    Policy:
+    - Require an explicit drawing intent for algebra/calculus/trig (draw/plot/graph/sketch/construct/diagram/illustrate/visualize)
+    - Always allow geometry constructions when common geometry terms appear
+    - Avoid diagrams for pure computational problems
+    """
+    question_lower = question.lower()
+
+    # Explicit drawing intent keywords
+    intent_keywords = [
+        'draw', 'plot', 'graph', 'sketch', 'construct', 'diagram', 'illustrate', 'visualize',
+        'show', 'display', 'picture', 'figure', 'image'
+    ]
+    intent = any(k in question_lower for k in intent_keywords)
+
+    # Geometry terms that often need visual representation
+    geometry_terms = [
+        'triangle', 'perpendicular bisector', 'angle bisector', 'median', 'altitude',
+        'circle', 'tangent', 'circumcircle', 'incenter', 'circumcenter',
+        'square', 'rectangle', 'polygon', 'semicircle', 'pentagon', 'hexagon'
+    ]
+    has_geometry = any(term in question_lower for term in geometry_terms)
+
+    # For Mathematics: require intent OR common geometry constructions
+    if subject == "Mathematics":
+        # Always show for explicit geometry constructions
+        if has_geometry:
+            return True
+        # For other math topics, require explicit intent
+        return intent
+
+    # For other subjects: require explicit intent
+    if subject in ["Physics", "Economics"]:
+        return intent
+
+    # Default: no diagram
+    return False
+
+def create_smart_visualization(question: str, subject: str):
+    """Create simple, clean visualizations.
+
+    Adds a basic geometry renderer for triangle construction tasks with
+    given side lengths and the perpendicular bisector of BC.
+    """
+    question_lower = question.lower()
+
+    try:
+        plt.style.use('default')
+        # Slightly smaller figure for generated diagrams to reduce UI footprint
+        fig, ax = plt.subplots(figsize=(7, 4))
+        fig.patch.set_facecolor('white')
+
+        if subject == "Mathematics":
+            # Lightweight geometry engine (shapes + graphs)
+            if any(k in question_lower for k in [
+                'triangle', 'abc', 'perpendicular bisector', 'bisector', 'median', 'altitude',
+                'angle bisector', 'parallel', 'perpendicular', 'circle', 'circumcircle', 'incenter', 'circumcenter',
+                'square', 'rectangle', 'polygon', 'semicircle', 'pentagon', 'hexagon', 'heptagon', 'octagon'
+            ]):
+                # ---------- Helpers ----------
+                def find_len(name: str):
+                    pattern = rf"{name}\s*=?\s*(\d+(?:\.\d+)?)\s*cm"
+                    m = re.search(pattern, question, flags=re.IGNORECASE)
+                    return float(m.group(1)) if m else None
+
+                def midpoint(p, q):
+                    return ((p[0] + q[0]) / 2.0, (p[1] + q[1]) / 2.0)
+
+                def draw_line(p, q, **kw):
+                    ax.plot([p[0], q[0]], [p[1], q[1]], **kw)
+
+                def draw_infinite_line_through(p, direction, length=20, **kw):
+                    d = np.array(direction, dtype=float)
+                    if np.linalg.norm(d) == 0:
+                        return
+                    d = d / np.linalg.norm(d)
+                    p = np.array(p, dtype=float)
+                    p1 = p - d * length
+                    p2 = p + d * length
+                    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], **kw)
+
+                def perp(v):
+                    return (-v[1], v[0])
+
+                # ---------- Build baseline triangle if ABC mentioned or side lengths provided ----------
+                ab = find_len('AB')
+                bc = find_len('BC')
+                ac = find_len('AC')
+
+                need_triangle = any(k in question_lower for k in ['triangle', ' abc', 'abc ', '△abc', '△ abc']) or any(v is not None for v in [ab, bc, ac])
+
+                points = {}
+                if need_triangle:
+                    if bc is None and ab is None and ac is None:
+                        ab, bc, ac = 5.0, 6.0, 4.0
+                    else:
+                        bc = 6.0 if bc is None else bc
+                        ab = 5.0 if ab is None else ab
+                        ac = 4.0 if ac is None else ac
+
+                    B = (0.0, 0.0)
+                    C = (bc, 0.0)
+                    # circle-circle intersection to get A (choose upper solution)
+                    x_a = (ab**2 - ac**2 + bc**2) / (2 * bc if bc != 0 else 1e-6)
+                    y_sq = max(ab**2 - x_a**2, 0.0)
+                    y_a = float(np.sqrt(y_sq))
+                    A = (x_a, y_a)
+                    points.update({'A': A, 'B': B, 'C': C})
+
+                    # Draw triangle with black outlines for white background
+                    stroke = '#000000'
+                    draw_line(B, C, color=stroke, linewidth=2)
+                    draw_line(C, A, color=stroke, linewidth=2)
+                    draw_line(A, B, color=stroke, linewidth=2)
+                    ax.scatter([A[0], B[0], C[0]], [A[1], B[1], C[1]], color='#000000', zorder=3)
+                    ax.text(B[0], B[1] - 0.2, 'B', ha='center', va='top', color=stroke)
+                    ax.text(C[0], C[1] - 0.2, 'C', ha='center', va='top', color=stroke)
+                    ax.text(A[0], A[1] + 0.2, 'A', ha='center', va='bottom', color=stroke)
+
+                    # Side length labels
+                    def put_len(p, q, label):
+                        mx, my = (p[0]+q[0])/2.0, (p[1]+q[1])/2.0
+                        ax.text(mx, my + 0.15, label, color=stroke, ha='center', va='bottom')
+                    put_len(B, C, f'{bc} cm')
+                    put_len(A, B, f'{ab} cm')
+                    put_len(A, C, f'{ac} cm')
+
+                # ---------- Constructions ----------
+                # Perpendicular bisector of a segment XY (e.g., BC)
+                seg_match = re.search(r'perpendicular\s+bisector\s+of\s+([A-Z])([A-Z])', question, flags=re.IGNORECASE)
+                if seg_match:
+                    x, y = seg_match.group(1).upper(), seg_match.group(2).upper()
+                    if x in points and y in points:
+                        P = points[x]; Q = points[y]
+                    else:
+                        # default segment on x-axis if points unknown
+                        P, Q = (0.0, 0.0), (6.0, 0.0)
+                    M = midpoint(P, Q)
+                    dir_vec = (Q[0] - P[0], Q[1] - P[1])
+                    draw_infinite_line_through(M, perp(dir_vec), linestyle='--', color='#4CAF50', linewidth=2, label=f'Perpendicular bisector of {x}{y}')
+
+                # Angle bisector at a vertex (e.g., angle ABC)
+                ang_match = re.search(r'(angle\s*)?bisector\s*(at|of)?\s*(angle\s*)?([A-Z])([A-Z])([A-Z])', question, flags=re.IGNORECASE)
+                if ang_match:
+                    a, b, c = ang_match.group(4).upper(), ang_match.group(5).upper(), ang_match.group(6).upper()
+                    if a in points and b in points and c in points:
+                        A, B, C = points[a], points[b], points[c]
+                        v1 = np.array([A[0] - B[0], A[1] - B[1]], dtype=float)
+                        v2 = np.array([C[0] - B[0], C[1] - B[1]], dtype=float)
+                        if np.linalg.norm(v1) and np.linalg.norm(v2):
+                            v1 /= np.linalg.norm(v1)
+                            v2 /= np.linalg.norm(v2)
+                            bis = v1 + v2
+                            if np.linalg.norm(bis) == 0:
+                                bis = perp(v1)
+                            draw_infinite_line_through(B, bis, linestyle='--', color='#00E5FF', linewidth=2, label=f'Angle bisector at {b}')
+
+                # Median from a vertex (e.g., median from A)
+                med_match = re.search(r'median\s+(from|of)\s+([A-Z])', question, flags=re.IGNORECASE)
+                if med_match and all(k in points for k in ['A', 'B', 'C']):
+                    v = med_match.group(2).upper()
+                    if v == 'A':
+                        m = midpoint(points['B'], points['C'])
+                        draw_line(points['A'], m, linestyle='--', color='#9C27B0', linewidth=2, label='Median from A')
+                    elif v == 'B':
+                        m = midpoint(points['A'], points['C'])
+                        draw_line(points['B'], m, linestyle='--', color='#9C27B0', linewidth=2, label='Median from B')
+                    elif v == 'C':
+                        m = midpoint(points['A'], points['B'])
+                        draw_line(points['C'], m, linestyle='--', color='#9C27B0', linewidth=2, label='Median from C')
+
+                # Altitude from a vertex (e.g., altitude from A to BC)
+                alt_match = re.search(r'altitude\s+(from)\s+([A-Z])', question, flags=re.IGNORECASE)
+                if alt_match and all(k in points for k in ['A', 'B', 'C']):
+                    v = alt_match.group(2).upper()
+                    if v == 'A':
+                        dir_bc = (points['C'][0] - points['B'][0], points['C'][1] - points['B'][1])
+                        draw_infinite_line_through(points['A'], perp(dir_bc), linestyle='--', color='#FF9100', linewidth=2, label='Altitude from A')
+                    elif v == 'B':
+                        dir_ac = (points['C'][0] - points['A'][0], points['C'][1] - points['A'][1])
+                        draw_infinite_line_through(points['B'], perp(dir_ac), linestyle='--', color='#FF9100', linewidth=2, label='Altitude from B')
+                    elif v == 'C':
+                        dir_ab = (points['B'][0] - points['A'][0], points['B'][1] - points['A'][1])
+                        draw_infinite_line_through(points['C'], perp(dir_ab), linestyle='--', color='#FF9100', linewidth=2, label='Altitude from C')
+
+                # Perpendicular/Parallel to a line through a given point (e.g., perpendicular to BC through A)
+                through_match = re.search(r'(perpendicular|parallel)\s+to\s+([A-Z])([A-Z])\s+(through|from)\s+([A-Z])', question, flags=re.IGNORECASE)
+                if through_match:
+                    kind = through_match.group(1).lower()
+                    x, y, p = through_match.group(2).upper(), through_match.group(3).upper(), through_match.group(5).upper()
+                    if x in points and y in points and p in points:
+                        base = (points[y][0] - points[x][0], points[y][1] - points[x][1])
+                        direction = perp(base) if kind == 'perpendicular' else base
+                        draw_infinite_line_through(points[p], direction, linestyle='--', color='#4CAF50' if kind=='perpendicular' else '#90CAF9', linewidth=2, label=f'{kind.title()} to {x}{y} through {p}')
+
+                # Simple Circle Generation (like triangle approach)
+                circle_match = re.search(r'circle.*?radius\s*(\d+(?:\.\d+)?)|radius\s*(\d+(?:\.\d+)?)', question, flags=re.IGNORECASE)
+                if circle_match or 'circle' in question_lower:
+                    # Extract radius simply
+                    radius = 4.0  # good default size
+                    if circle_match:
+                        radius = float(circle_match.group(1) or circle_match.group(2))
+
+                    # Simple circle at origin
+                    stroke = '#000000'
+                    circle = plt.Circle((0, 0), radius, fill=False, edgecolor=stroke, linewidth=2)
+                    ax.add_patch(circle)
+
+                    # Center point
+                    ax.scatter([0], [0], color=stroke, s=30, zorder=3)
+                    ax.text(0, 0.3, 'O', ha='center', va='bottom', color=stroke, fontweight='bold')
+
+                    # Radius line
+                    ax.plot([0, radius], [0, 0], color=stroke, linestyle='--', linewidth=1.5)
+                    ax.text(radius/2, 0.2, f'r = {radius}', ha='center', va='bottom', color=stroke)
+
+                    # Simple bounds like triangle
+                    ax.set_xlim(-radius-1, radius+1)
+                    ax.set_ylim(-radius-1, radius+1)
+                    ax.set_aspect('equal')
+
+                # Final styling and bounds
+                ax.set_aspect('equal', adjustable='datalim')
+
+                # PRIORITIZE CIRCLE-FRIENDLY BOUNDS
+                # If a circle exists, frame the view around it so it is always clearly visible.
+                circ = next((p for p in ax.patches if isinstance(p, plt.Circle)), None)
+                if circ is not None:
+                    c = circ.get_center(); r = circ.get_radius()
+                    pad = max(0.4 * r, 1.0)
+                    ax.set_xlim(c[0] - r - pad, c[0] + r + pad)
+                    ax.set_ylim(c[1] - r - pad, c[1] + r + pad)
+                else:
+                    # Generic autoscaling when no circle is present
+                    x_all, y_all = [], []
+                    # Lines
+                    for line in ax.get_lines():
+                        xdata = line.get_xdata(); ydata = line.get_ydata()
+                        x_all.extend(list(xdata)); y_all.extend(list(ydata))
+                    if x_all and y_all:
+                        x_min, x_max = min(x_all), max(x_all)
+                        y_min, y_max = min(y_all), max(y_all)
+                        pad_x = max((x_max - x_min) * 0.15, 1.0)
+                        pad_y = max((y_max - y_min) * 0.15, 1.0)
+                        ax.set_xlim(x_min - pad_x, x_max + pad_x)
+                        ax.set_ylim(y_min - pad_y, y_max + pad_y)
+                    else:
+                        # Safe default frame
+                        ax.set_xlim(-5, 5)
+                        ax.set_ylim(-5, 5)
+                ax.axis('off')
+                ax.legend(loc='upper right')
+            else:
+                # Existing math plots
+                if any(term in question_lower for term in ['quadratic', 'parabola', 'x²', 'x^2']):
+                    x = np.linspace(-5, 5, 100)
+                    y = x**2
+                    ax.plot(x, y, 'b-', linewidth=2, label='y = x²')
+                    ax.set_title('Quadratic Function')
+                elif any(term in question_lower for term in ['linear', 'y=', 'slope']):
+                    x = np.linspace(-5, 5, 100)
+                    y = 2*x + 1
+                    ax.plot(x, y, 'r-', linewidth=2, label='Linear Function')
+                    ax.set_title('Linear Function')
+                elif any(term in question_lower for term in ['sin', 'cos']):
+                    x = np.linspace(-2*np.pi, 2*np.pi, 100)
+                    ax.plot(x, np.sin(x), 'b-', linewidth=2, label='sin(x)')
+                    ax.plot(x, np.cos(x), 'r-', linewidth=2, label='cos(x)')
+                    ax.set_title('Trigonometric Functions')
+
+                ax.grid(True, alpha=0.3)
+                ax.axhline(y=0, color='k', linewidth=0.5)
+                ax.axvline(x=0, color='k', linewidth=0.5)
+                ax.set_xlabel('x')
+                ax.set_ylabel('y')
+                ax.legend()
+
+        elif subject == "Physics":
+            t = np.linspace(0, 4*np.pi, 100)
+            y = np.sin(t)
+            ax.plot(t, y, 'b-', linewidth=2, label='Wave')
+            ax.set_title('Wave Function')
+            ax.set_xlabel('Time/Position')
+            ax.set_ylabel('Amplitude')
+            ax.grid(True, alpha=0.3)
+            ax.legend()
+
+        elif subject == "Economics":
+            x = np.linspace(0, 10, 100)
+            supply = 2 * x
+            demand = 20 - x
+            ax.plot(x, supply, 'b-', linewidth=2, label='Supply')
+            ax.plot(x, demand, 'r-', linewidth=2, label='Demand')
+            ax.set_title('Supply and Demand')
+            ax.set_xlabel('Quantity')
+            ax.set_ylabel('Price')
+            ax.grid(True, alpha=0.3)
+            ax.legend()
+
+        plt.tight_layout()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+        buf.seek(0)
+        plt.close(fig)
+        return buf
+
+    except Exception:
+        plt.close('all')
+        return None
+
 # Theme Toggle Component
 def render_theme_toggle():
     """Render theme toggle button"""
@@ -880,6 +1195,13 @@ def render_questions_page():
                         {formatted_response}
                     </div>
                     """, unsafe_allow_html=True)
+
+                    # Show diagram if needed
+                    if should_show_diagram(question, subject):
+                        st.markdown("### 📊 Visualization")
+                        viz = create_smart_visualization(question, subject)
+                        if viz:
+                            st.image(viz, use_container_width=True)
 
                     # Save to history (backend first, fallback local)
                     try:
