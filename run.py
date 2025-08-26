@@ -1900,22 +1900,26 @@ def render_login_page():
     """Professional centered login/register page"""
     # No theme toggle on login page for cleaner look
 
-    # Centered login container (removed unnecessary outer wrapper)
+    # Add vertical spacing to center content
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
 
-    # Crown logo and title - more compact
+    # Crown logo and title - more compact and centered
     st.markdown("""
-    <div class="crown-logo" style="margin-bottom: 1rem;">
-        <div class="crown-icon">👑</div>
-        <div class="brand-letter" style="width: 80px; height: 80px; font-size: 2.5rem;">E</div>
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div class="crown-logo" style="margin-bottom: 0.5rem;">
+            <div class="crown-icon">👑</div>
+            <div class="brand-letter" style="width: 60px; height: 60px; font-size: 2rem;">E</div>
+        </div>
+        <h1 style="font-size: 1.8rem; font-weight: 700; color: #FFD700; margin: 0.5rem 0;">Welcome to EduLLM</h1>
+        <p style="color: #666; font-size: 0.9rem; margin-bottom: 0;">Sign in to start learning</p>
     </div>
-    <h1 style="font-size: 2rem; font-weight: 700; color: #FFD700; margin: 1rem 0;">Welcome to EduLLM</h1>
-    <p style="color: #666; font-size: 1rem; margin-bottom: 0;">Sign in to start learning</p>
     """, unsafe_allow_html=True)
 
-    # Centered auth container (removed unnecessary wrapper)
-    col1, col2, col3 = st.columns([0.5, 2, 0.5])
+    # More centered auth container - narrower for compact look
+    col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        # Tabs
+
+        # Tabs - more compact
         tab_col1, tab_col2 = st.columns(2)
         with tab_col1:
             if st.button("Login", use_container_width=True, key="login_tab",
@@ -1926,17 +1930,13 @@ def render_login_page():
                         type="primary" if st.session_state.auth_tab == 'register' else "secondary"):
                 st.session_state.auth_tab = 'register'
 
-        st.markdown("---")
-
         if st.session_state.auth_tab == 'login':
-            st.markdown("### Sign In")
+            st.markdown("#### Sign In")
             st.markdown("*Enter your credentials to access your account*")
-            st.markdown("")
 
             email = st.text_input("Email", placeholder="student@example.com", key="login_email")
             password = st.text_input("Password", type="password", placeholder="••••••••", key="login_password")
 
-            st.markdown("")
             if st.button("Sign In", type="primary", use_container_width=True):
                 if email and password:
                     # Try backend authentication first
@@ -1969,8 +1969,7 @@ def render_login_page():
                 else:
                     st.error("Please fill in all fields")
 
-            st.markdown("---")
-            st.markdown("**OR CONTINUE WITH**")
+            st.markdown("<div style='margin: 1rem 0; text-align: center; color: #666; font-size: 0.9rem;'>OR CONTINUE WITH</div>", unsafe_allow_html=True)
 
             google_col, github_col = st.columns(2)
             with google_col:
@@ -1981,16 +1980,14 @@ def render_login_page():
                     st.info("GitHub login coming soon!")
 
         else:  # register
-            st.markdown("### Create Account")
+            st.markdown("#### Create Account")
             st.markdown("*Join thousands of students improving their grades*")
-            st.markdown("")
 
             name = st.text_input("Full Name", placeholder="Enter your full name", key="reg_name")
             email = st.text_input("Email", placeholder="student@example.com", key="reg_email")
             password = st.text_input("Password", type="password", placeholder="Create a password", key="reg_password")
             confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password", key="reg_confirm")
 
-            st.markdown("")
             if st.button("Create Account", type="primary", use_container_width=True):
                 if name and email and password and confirm_password:
                     if password == confirm_password:
@@ -2006,15 +2003,15 @@ def render_login_page():
                 else:
                     st.error("Please fill in all fields")
 
-        st.markdown("")
-        # Back to landing
+        # Back to landing - more compact
+        st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
         if st.button('← Back to Home', use_container_width=True):
             st.session_state.page = 'landing'
             st.rerun()
 
 
 def render_subjects_page():
-    """Enhanced subjects page with proper grid layout"""
+    """Enhanced subjects page with clean grid layout"""
     render_theme_toggle()
     render_navbar()
 
@@ -2026,76 +2023,153 @@ def render_subjects_page():
         "Mathematics": {
             "icon": "🔢",
             "description": "Algebra, Calculus, Geometry, Statistics",
-            "color": "#667eea"
+            "color": "#4285f4"
         },
         "Chemistry": {
             "icon": "🧪",
             "description": "Organic, Inorganic, Physical Chemistry",
-            "color": "#f093fb"
+            "color": "#34a853"
         },
         "History": {
             "icon": "🏛️",
             "description": "World History, Ancient Civilizations",
-            "color": "#4facfe"
+            "color": "#ea4335"
         },
         "English": {
             "icon": "📖",
             "description": "Literature, Grammar, Writing",
-            "color": "#43e97b"
+            "color": "#fbbc04"
         },
         "Biology": {
             "icon": "🧬",
             "description": "Cell Biology, Genetics, Ecology",
-            "color": "#fa709a"
+            "color": "#9c27b0"
         },
         "Economics": {
             "icon": "💰",
             "description": "Micro, Macro, International Economics",
-            "color": "#a8edea"
+            "color": "#ff9800"
         }
     }
 
-    # Create 3 columns for grid layout
-    cols = st.columns(3)
+    # Add custom CSS for responsive grid
+    st.markdown("""
+    <style>
+    .subject-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 20px 0;
+    }
 
-    for idx, (subject, info) in enumerate(subjects_data.items()):
-        with cols[idx % 3]:
-            # Create styled subject card with HTML
-            card_html = f"""
-            <div class="subject-card" style="
-                background: linear-gradient(135deg, {info['color']} 0%, rgba(255,255,255,0.1) 100%);
-                padding: 2rem;
-                border-radius: 20px;
-                text-align: center;
-                margin: 1rem 0;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-                border: 1px solid rgba(255,255,255,0.2);
-                backdrop-filter: blur(10px);
-                min-height: 220px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                position: relative;
-                overflow: hidden;
-            ">
-                <div style="font-size: 4rem; margin-bottom: 1rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">{info['icon']}</div>
-                <h2 style="color: white; font-weight: bold; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.5rem;">{subject}</h2>
-                <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); line-height: 1.4;">{info['description']}</p>
-                <div style="
-                    position: absolute;
-                    top: -50%;
-                    right: -50%;
-                    width: 100%;
-                    height: 100%;
-                    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-                    pointer-events: none;
-                "></div>
+    .subject-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .subject-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .subject-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .subject-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .subject-description {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.4;
+        margin-bottom: 16px;
+    }
+
+    .subject-button {
+        background: linear-gradient(135deg, var(--subject-color) 0%, var(--subject-color-dark) 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        width: 100%;
+    }
+
+    .subject-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    @media (max-width: 768px) {
+        .subject-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+            padding: 16px 0;
+        }
+
+        .subject-card {
+            min-height: 180px;
+            padding: 20px;
+        }
+
+        .subject-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .subject-title {
+            font-size: 18px;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Create grid container
+    grid_html = '<div class="subject-grid">'
+
+    for subject, info in subjects_data.items():
+        grid_html += f"""
+        <div class="subject-card" style="--subject-color: {info['color']}; --subject-color-dark: {info['color']}dd;">
+            <div>
+                <div class="subject-icon">{info['icon']}</div>
+                <div class="subject-title">{subject}</div>
+                <div class="subject-description">{info['description']}</div>
             </div>
-            """
-            st.markdown(card_html, unsafe_allow_html=True)
+        </div>
+        """
 
-            # Hidden button for functionality
-            if st.button(f"Select {subject}", key=f"select_{subject}", help=f"Start {subject} homework session"):
+    grid_html += '</div>'
+    st.markdown(grid_html, unsafe_allow_html=True)
+
+    # Create buttons in columns for functionality
+    cols = st.columns(3)
+    subjects_list = list(subjects_data.keys())
+
+    for idx, subject in enumerate(subjects_list):
+        with cols[idx % 3]:
+            if st.button(f"Start Learning", key=f"select_{subject}", help=f"Start {subject} homework session", use_container_width=True):
                 st.session_state.selected_subject = subject
                 st.session_state.page = 'questions'
                 st.rerun()
