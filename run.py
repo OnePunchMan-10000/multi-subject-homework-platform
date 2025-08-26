@@ -1860,32 +1860,40 @@ def render_navbar():
 
     st.markdown(navbar_html, unsafe_allow_html=True)
 
-    # Handle navigation with buttons (hidden but functional)
+    # Handle navigation with buttons (using CSS to hide them)
+    st.markdown("""
+    <style>
+    .stButton > button[data-testid="baseButton-secondary"] {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
 
     with col1:
-        if st.button("Home", key="nav_home", label_visibility="hidden"):
+        if st.button("Home", key="nav_home"):
             st.session_state.page = 'landing'
             st.rerun()
 
     with col2:
-        if st.button("Subjects", key="nav_subjects", label_visibility="hidden"):
+        if st.button("Subjects", key="nav_subjects"):
             st.session_state.page = 'subjects'
             st.session_state.selected_subject = None
             st.rerun()
 
     with col3:
-        if st.button("Profile", key="nav_profile", label_visibility="hidden"):
+        if st.button("Profile", key="nav_profile"):
             st.session_state.page = 'profile'
             st.rerun()
 
     with col4:
-        if st.button("About", key="nav_about", label_visibility="hidden"):
+        if st.button("About", key="nav_about"):
             st.session_state.page = 'about'
             st.rerun()
 
     with col5:
-        if st.button("Logout", key="nav_logout", label_visibility="hidden"):
+        if st.button("Logout", key="nav_logout"):
             st.session_state.logged_in = False
             st.session_state.page = 'landing'
             st.rerun()
@@ -2017,7 +2025,7 @@ def render_hamburger_navbar():
     # Hamburger button functionality
     col1, col2 = st.columns([1, 10])
     with col1:
-        if st.button("☰", key="hamburger_btn", help="Menu", label_visibility="hidden"):
+        if st.button("☰", key="hamburger_btn", help="Menu"):
             st.session_state.menu_open = not st.session_state.menu_open
             st.rerun()
 
@@ -2039,35 +2047,43 @@ def render_hamburger_navbar():
         </div>
         """, unsafe_allow_html=True)
 
-        # Hidden navigation buttons
-        if st.button("🏠 Home", key="ham_home", label_visibility="hidden"):
+        # Hidden navigation buttons (using CSS to hide them)
+        st.markdown("""
+        <style>
+        .stButton > button[data-testid="baseButton-secondary"] {
+            display: none !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        if st.button("🏠 Home", key="ham_home"):
             st.session_state.page = 'landing'
             st.session_state.menu_open = False
             st.rerun()
 
-        if st.button("📚 Subjects", key="ham_subjects", label_visibility="hidden"):
+        if st.button("📚 Subjects", key="ham_subjects"):
             st.session_state.page = 'subjects'
             st.session_state.selected_subject = None
             st.session_state.menu_open = False
             st.rerun()
 
-        if st.button("👤 Profile", key="ham_profile", label_visibility="hidden"):
+        if st.button("👤 Profile", key="ham_profile"):
             st.session_state.page = 'profile'
             st.session_state.menu_open = False
             st.rerun()
 
-        if st.button("ℹ️ About", key="ham_about", label_visibility="hidden"):
+        if st.button("ℹ️ About", key="ham_about"):
             st.session_state.page = 'about'
             st.session_state.menu_open = False
             st.rerun()
 
-        if st.button("🚪 Logout", key="ham_logout", label_visibility="hidden"):
+        if st.button("🚪 Logout", key="ham_logout"):
             st.session_state.logged_in = False
             st.session_state.page = 'landing'
             st.session_state.menu_open = False
             st.rerun()
 
-        if st.button("✕ Close", key="close_menu", label_visibility="hidden"):
+        if st.button("✕ Close", key="close_menu"):
             st.session_state.menu_open = False
             st.rerun()
 
