@@ -1,5 +1,6 @@
-"""Launcher for the Edullm Streamlit app (independent four-page launcher).
+"""Launcher for the EduLLM Streamlit app (clean 4-page navigation flow).
 
+Navigation Flow: Landing → Login → Subjects → Questions
 Run with: streamlit run run.py
 """
 
@@ -20,7 +21,7 @@ from app.ui import (
 )
 
 # Ensure page config is set
-st.set_page_config(page_title="Academic Assistant Pro", page_icon="🎓", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="EduLLM - AI Study Assistant", page_icon="🎓", layout="wide", initial_sidebar_state="collapsed")
 
 
 def main():
