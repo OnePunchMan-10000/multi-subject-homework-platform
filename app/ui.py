@@ -406,7 +406,7 @@ def auth_ui():
     st.markdown("""
     <div class='login-container'>
         <div class='login-title'>🔐 Sign In</div>
-        <div class='login-subtitle'>Welcome back! Please sign in to continue.</div>
+        <div class='login-subtitle'>Welcome! Sign in to your account or create a new one below.</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -446,6 +446,39 @@ def auth_ui():
         if st.button('← Back to Home'):
             st.session_state['show_login'] = False
             st.rerun()
+
+    # Registration section
+    st.markdown("---")
+    st.markdown("### 🆕 New User? Create Account")
+    
+    with col2:
+        with st.form(key='register_form'):
+            st.text_input('Choose Username', key='register_username', placeholder='Enter a username')
+            st.text_input('Choose Password', type='password', key='register_password', placeholder='Enter a password')
+            st.text_input('Confirm Password', type='password', key='confirm_password', placeholder='Confirm your password')
+            register_submit = st.form_submit_button('🎯 Create Account', type='secondary', use_container_width=True)
+
+        if register_submit:
+            username = st.session_state.get('register_username', '').strip()
+            password = st.session_state.get('register_password', '')
+            confirm_password = st.session_state.get('confirm_password', '')
+            
+            if not username or not password:
+                st.error('Please fill in all fields')
+            elif len(password) < 6:
+                st.error('Password must be at least 6 characters long')
+            elif password != confirm_password:
+                st.error('Passwords do not match')
+            else:
+                # Try to register the user
+                from app.db import register_user
+                success, message = register_user(username, password)
+                
+                if success:
+                    st.success(f'✅ Account created successfully for {username}!')
+                    st.info('👆 Now you can log in with your new credentials above')
+                else:
+                    st.error(f'Registration failed: {message}')
 
     return False
 
