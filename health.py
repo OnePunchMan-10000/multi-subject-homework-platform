@@ -5,8 +5,9 @@ def get_deployment_info():
     return {
         "status": "healthy",
         "timestamp": datetime.datetime.now().isoformat(),
-        "version": "4-page-navigation-flow",
-        "commit": "90529e5"
+        "version": "4-page-navigation-flow-v2",
+        "commit": "latest",
+        "database": "postgresql-railway-connected"
     }
 
 if __name__ == "__main__":
