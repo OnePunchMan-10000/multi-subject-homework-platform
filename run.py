@@ -116,6 +116,57 @@ def load_css():
         margin: 0 !important;
     }}
 
+    /* Navbar styling */
+    .navbar {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }}
+
+    .navbar-brand {{
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #FFD700;
+        display: flex;
+        align-items: center;
+    }}
+
+    .navbar-nav {{
+        display: flex;
+        gap: 2rem;
+    }}
+
+    .nav-link {{
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }}
+
+    .nav-link:hover {{
+        background: rgba(255, 215, 0, 0.2);
+        transform: translateY(-2px);
+    }}
+
+    /* Subject card hover effects */
+    .subject-card {{
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }}
+
+    .subject-card:hover {{
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
+    }}
+
     /* Dark Mode Toggle */
     .theme-toggle {{
         position: fixed;
@@ -1719,9 +1770,9 @@ def render_theme_toggle():
 
 # Page Components
 def render_navbar():
-    """Render the sticky navigation bar with navigation functionality"""
-    # Navigation buttons in columns for better layout
-    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
+    """Render the navigation bar with proper layout"""
+    # Brand and navigation in columns
+    col1, col2, col3, col4, col5, col6 = st.columns([2, 1, 1, 1, 1, 1])
 
     with col1:
         st.markdown("""
@@ -1743,12 +1794,20 @@ def render_navbar():
             st.rerun()
 
     with col4:
-        if st.button("ℹ️ About", key="nav_about", use_container_width=True):
-            st.info("EduLLM - Your AI-powered homework assistant!")
+        if st.button("👤 Profile", key="nav_profile", use_container_width=True):
+            st.session_state.page = 'profile'
+            st.rerun()
 
     with col5:
-        if st.button("👤 Profile", key="nav_profile", use_container_width=True):
-            st.info(f"Logged in as: {st.session_state.get('username', 'User')}")
+        if st.button("ℹ️ About Us", key="nav_about", use_container_width=True):
+            st.session_state.page = 'about'
+            st.rerun()
+
+    with col6:
+        if st.button("🚪 Logout", key="nav_logout", use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.page = 'landing'
+            st.rerun()
 
     # Add separator
     st.markdown("---")
@@ -1955,30 +2014,357 @@ def render_login_page():
 
 
 def render_subjects_page():
-    """Subjects grid with navbar"""
+    """Enhanced subjects page with proper grid layout"""
     render_theme_toggle()
     render_navbar()
 
     st.markdown("# 📚 Choose Your Subject")
-    st.markdown("**Select a subject to get started with your homework questions**")
-    st.markdown("---")
+    st.markdown("Select a subject to get started with your homework questions. Our AI tutor is ready to help!")
 
-    # Create 3x3 grid
+    # Subject data with enhanced descriptions and colors
+    subjects_data = {
+        "Mathematics": {
+            "icon": "🔢",
+            "description": "Algebra, Calculus, Geometry, Statistics",
+            "color": "#667eea"
+        },
+        "Chemistry": {
+            "icon": "🧪",
+            "description": "Organic, Inorganic, Physical Chemistry",
+            "color": "#f093fb"
+        },
+        "History": {
+            "icon": "🏛️",
+            "description": "World History, Ancient Civilizations",
+            "color": "#4facfe"
+        },
+        "English": {
+            "icon": "📖",
+            "description": "Literature, Grammar, Writing",
+            "color": "#43e97b"
+        },
+        "Biology": {
+            "icon": "🧬",
+            "description": "Cell Biology, Genetics, Ecology",
+            "color": "#fa709a"
+        },
+        "Economics": {
+            "icon": "💰",
+            "description": "Micro, Macro, International Economics",
+            "color": "#a8edea"
+        }
+    }
+
+    # Create 3 columns for grid layout
     cols = st.columns(3)
-    subjects = list(SUBJECTS.keys())
 
-    for idx, subject in enumerate(subjects):
+    for idx, (subject, info) in enumerate(subjects_data.items()):
         with cols[idx % 3]:
-            info = SUBJECTS[subject]
-            st.markdown(f"### {info['icon']} {subject}")
-            st.markdown(f"*Focused, step-by-step help tailored for {subject.lower()}.*")
+            # Create styled subject card with HTML
+            card_html = f"""
+            <div class="subject-card" style="
+                background: linear-gradient(135deg, {info['color']} 0%, rgba(255,255,255,0.1) 100%);
+                padding: 2rem;
+                border-radius: 20px;
+                text-align: center;
+                margin: 1rem 0;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                border: 1px solid rgba(255,255,255,0.2);
+                backdrop-filter: blur(10px);
+                min-height: 220px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                position: relative;
+                overflow: hidden;
+            ">
+                <div style="font-size: 4rem; margin-bottom: 1rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">{info['icon']}</div>
+                <h2 style="color: white; font-weight: bold; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.5rem;">{subject}</h2>
+                <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); line-height: 1.4;">{info['description']}</p>
+                <div style="
+                    position: absolute;
+                    top: -50%;
+                    right: -50%;
+                    width: 100%;
+                    height: 100%;
+                    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+                    pointer-events: none;
+                "></div>
+            </div>
+            """
+            st.markdown(card_html, unsafe_allow_html=True)
 
-            if st.button(f"Select {subject}", key=f"select_{subject}", use_container_width=True, type="primary"):
+            # Hidden button for functionality
+            if st.button(f"Select {subject}", key=f"select_{subject}", help=f"Start {subject} homework session"):
                 st.session_state.selected_subject = subject
                 st.session_state.page = 'questions'
                 st.rerun()
 
-            st.markdown("")  # Add space
+def render_profile_page():
+    """Profile page with user stats and achievements"""
+    render_theme_toggle()
+    render_navbar()
+
+    st.markdown("# My Profile")
+
+    # User info section
+    col1, col2 = st.columns([1, 3])
+
+    with col1:
+        # Profile avatar
+        st.markdown("""
+        <div style="text-align: center;">
+            <div style="width: 100px; height: 100px; background: linear-gradient(45deg, #FFD700, #FFA500);
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                        margin: 0 auto; font-size: 2rem; font-weight: bold; color: white;">
+                JD
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        username = st.session_state.get('username', 'John Doe')
+        email = st.session_state.get('user_email', 'john.doe@example.com')
+        st.markdown(f"## {username}")
+        st.markdown(f"📧 {email}")
+        st.markdown("🎓 Grade 10")
+
+    st.markdown("---")
+
+    # Stats section
+    col1, col2, col3 = st.columns(3)
+
+    # Get user stats from history
+    user_id = st.session_state.get("user_id")
+    total_questions = 0
+    subjects_studied = 0
+    day_streak = 0
+
+    if user_id:
+        try:
+            rows = load_history(user_id, limit=1000)  # Get all history
+            total_questions = len(rows)
+            subjects_studied = len(set(row[1] for row in rows))  # Unique subjects
+            day_streak = min(total_questions, 15)  # Simple streak calculation
+        except:
+            pass
+
+    with col1:
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
+            <div style="font-size: 2rem;">📚</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{total_questions}</div>
+            <div>Questions Asked</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
+            <div style="font-size: 2rem;">🎯</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{subjects_studied}</div>
+            <div>Subjects Studied</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
+            <div style="font-size: 2rem;">🔥</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{day_streak}</div>
+            <div>Day Streak</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Achievements section
+    st.markdown("## 🏆 Achievements")
+    st.markdown("Your learning milestones")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # First Question achievement
+        first_q_unlocked = total_questions >= 1
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, {'0.3' if first_q_unlocked else '0.1'});
+                    padding: 1rem; border-radius: 10px; margin: 0.5rem 0;
+                    opacity: {'1' if first_q_unlocked else '0.5'};">
+            <div style="font-size: 1.5rem;">🌟 First Question</div>
+            <div>Asked your first question</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Subject Master achievement
+        subject_master = subjects_studied >= 3
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, {'0.3' if subject_master else '0.1'});
+                    padding: 1rem; border-radius: 10px; margin: 0.5rem 0;
+                    opacity: {'1' if subject_master else '0.5'};">
+            <div style="font-size: 1.5rem;">🎓 Subject Master</div>
+            <div>Studied 3+ subjects in a subject</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        # Quick Learner achievement
+        quick_learner = total_questions >= 10
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, {'0.3' if quick_learner else '0.1'});
+                    padding: 1rem; border-radius: 10px; margin: 0.5rem 0;
+                    opacity: {'1' if quick_learner else '0.5'};">
+            <div style="font-size: 1.5rem;">⚡ Quick Learner</div>
+            <div>Completed 10 questions in one day</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Streak Champion achievement
+        streak_champ = day_streak >= 7
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, {'0.3' if streak_champ else '0.1'});
+                    padding: 1rem; border-radius: 10px; margin: 0.5rem 0;
+                    opacity: {'1' if streak_champ else '0.5'};">
+            <div style="font-size: 1.5rem;">🔥 Streak Champion</div>
+            <div>Maintained a 7+ day streak</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+def render_about_page():
+    """About Us page with company mission and info"""
+    render_theme_toggle()
+    render_navbar()
+
+    # Header with logo
+    st.markdown("""
+    <div style="text-align: center; padding: 2rem 0;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">👑</div>
+        <h1>About <span style="color: #FFD700;">EduLLM</span></h1>
+        <p style="font-size: 1.2rem; color: #888; max-width: 600px; margin: 0 auto;">
+            We're revolutionizing education by making high-quality, personalized learning
+            assistance accessible to every student through the power of artificial intelligence.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Our Mission section
+    st.markdown("## 🎯 Our Mission")
+
+    st.markdown("""
+    At EduLLM, we believe that every student deserves access to personalized, high-quality
+    educational support. Our mission is to democratize learning by providing an AI-powered
+    homework assistant that helps students understand complex concepts, complete assignments, and
+    build confidence in their academic abilities. We're not just providing answers - we're fostering
+    understanding and encouraging critical thinking.
+    """)
+
+    st.markdown("---")
+
+    # Why Choose EduLLM section
+    st.markdown("## 🌟 Why Choose EduLLM?")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("""
+        ### 🤖 AI-Powered Learning
+        Our advanced AI understands your questions and provides detailed, step-by-step explanations
+        that help you learn, not just get answers.
+
+        ### 📚 Multi-Subject Support
+        From Mathematics to Literature, Chemistry to History - we cover all major academic subjects
+        with specialized knowledge in each area.
+
+        ### ⚡ Instant Help
+        Get help whenever you need it. Our AI tutor is available 24/7 to assist with your homework
+        and study questions.
+        """)
+
+    with col2:
+        st.markdown("""
+        ### 🎯 Personalized Experience
+        Every student learns differently. Our AI adapts to your learning style and provides
+        explanations tailored to your level.
+
+        ### 🏆 Track Your Progress
+        Monitor your learning journey with detailed progress tracking, achievements, and
+        personalized insights.
+
+        ### 🔒 Safe & Secure
+        Your privacy matters. We maintain the highest standards of data security and never
+        share your personal information.
+        """)
+
+    st.markdown("---")
+
+    # Our Values section
+    st.markdown("## 💎 Our Values")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎓</div>
+            <h3>Excellence</h3>
+            <p>We strive for the highest quality in everything we do, from our AI technology to our user experience.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🤝</div>
+            <h3>Accessibility</h3>
+            <p>Education should be available to everyone, regardless of background or circumstances.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
+            <h3>Innovation</h3>
+            <p>We continuously push the boundaries of what's possible in educational technology.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Contact section
+    st.markdown("## 📞 Get in Touch")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("""
+        ### Contact Information
+        📧 **Email:** support@edullm.com
+        📱 **Phone:** +1 (555) 123-4567
+        🌐 **Website:** www.edullm.com
+        📍 **Address:** 123 Education St, Learning City, LC 12345
+        """)
+
+    with col2:
+        st.markdown("""
+        ### Follow Us
+        🐦 **Twitter:** @EduLLM
+        📘 **Facebook:** /EduLLM
+        💼 **LinkedIn:** /company/edullm
+        📸 **Instagram:** @edullm_official
+        """)
+
+    st.markdown("---")
+
+    # Footer
+    st.markdown("""
+    <div style="text-align: center; padding: 2rem 0; color: #888;">
+        <p>© 2024 EduLLM. All rights reserved. | Privacy Policy | Terms of Service</p>
+        <p>Empowering students worldwide with AI-powered learning assistance.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 def render_questions_page():
     """Questions page with navbar"""
@@ -2126,6 +2512,14 @@ def main():
         else:
             st.session_state.page = 'subjects'
             st.rerun()
+    elif st.session_state.page == 'profile':
+        if st.session_state.logged_in:
+            render_profile_page()
+        else:
+            st.session_state.page = 'login'
+            st.rerun()
+    elif st.session_state.page == 'about':
+        render_about_page()
 
 if __name__ == "__main__":
     main()
