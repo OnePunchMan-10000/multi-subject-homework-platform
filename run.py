@@ -64,12 +64,14 @@ def load_css():
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
     }}
 
-    /* Main container with glass effect */
+    /* Main container with glass effect and top padding for fixed navbar */
     .main .block-container {{
         background: rgba(255, 255, 255, 0.1) !important;
         backdrop-filter: blur(15px) !important;
         border-radius: 20px !important;
         margin: 1rem !important;
+        margin-top: 6rem !important;
+        padding-top: 2rem !important;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
         border: 1px solid rgba(255, 215, 0, 0.3) !important;
     }}
@@ -258,18 +260,22 @@ def load_css():
         line-height: 1.5;
     }}
 
-    /* Navigation Bar */
+    /* Sticky Navigation Bar - Full Width */
     .navbar {{
         background: linear-gradient(135deg, #FFD700, #FFA500);
         padding: 1rem 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        position: sticky;
+        position: fixed;
         top: 0;
-        z-index: 1000;
-        margin-bottom: 2rem;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px);
+        border-bottom: 2px solid rgba(255, 215, 0, 0.5);
     }}
 
     .navbar-brand {{
@@ -1602,15 +1608,18 @@ def backend_save_history(subject: str, question: str, answer: str) -> bool:
     except:
         return False
 
-def backend_get_history(limit: int = 20) -> list:
-    """Get user history from backend"""
+def backend_get_history(limit: int = 20, subject: str = None) -> list:
+    """Get user history from backend, optionally filtered by subject"""
     try:
         token = st.session_state.get("access_token")
         if not token:
             return []
 
         headers = {"Authorization": f"Bearer {token}"}
-        r = requests.get(f"{BACKEND_URL}/history?limit={limit}", headers=headers, timeout=6)
+        url = f"{BACKEND_URL}/history?limit={limit}"
+        if subject:
+            url += f"&subject={subject}"
+        r = requests.get(url, headers=headers, timeout=6)
         if r.status_code == 200:
             data = r.json()
             return data.get("history", [])
@@ -1668,20 +1677,32 @@ def save_history(user_id: int, subject: str, question: str, answer: str):
     except sqlite3.Error:
         pass
 
-def load_history(user_id: int, limit: int = 20) -> list[tuple]:
+def load_history(user_id: int, limit: int = 20, subject: str = None) -> list[tuple]:
     try:
         with sqlite3.connect(DB_PATH) as conn:
             cur = conn.cursor()
-            cur.execute(
-                """
-                SELECT id, subject, question, answer, created_at
-                FROM history
-                WHERE user_id=?
-                ORDER BY id DESC
-                LIMIT ?
-                """,
-                (user_id, limit),
-            )
+            if subject:
+                cur.execute(
+                    """
+                    SELECT id, subject, question, answer, created_at
+                    FROM history
+                    WHERE user_id=? AND subject=?
+                    ORDER BY id DESC
+                    LIMIT ?
+                    """,
+                    (user_id, subject, limit),
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT id, subject, question, answer, created_at
+                    FROM history
+                    WHERE user_id=?
+                    ORDER BY id DESC
+                    LIMIT ?
+                    """,
+                    (user_id, limit),
+                )
             return cur.fetchall()
     except sqlite3.Error:
         return []
@@ -1698,22 +1719,39 @@ def render_theme_toggle():
 
 # Page Components
 def render_navbar():
-    """Render the navigation bar"""
-    st.markdown("""
-    <div class="navbar">
-        <div class="navbar-brand">
-            <span style="margin-right: 10px;">👑</span>
-            EduLLM
+    """Render the sticky navigation bar with navigation functionality"""
+    # Navigation buttons in columns for better layout
+    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
+
+    with col1:
+        st.markdown("""
+        <div style="display: flex; align-items: center; padding: 1rem 0;">
+            <span style="font-size: 1.5rem; margin-right: 10px;">👑</span>
+            <span style="font-size: 1.5rem; font-weight: bold; color: #FFD700;">EduLLM</span>
         </div>
-        <div class="navbar-nav">
-            <span class="nav-link active">Home</span>
-            <span class="nav-link">Subjects</span>
-            <span class="nav-link">About</span>
-            <span class="nav-link">Profile</span>
-            <span class="nav-link">Logout</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+
+    with col2:
+        if st.button("🏠 Home", key="nav_home", use_container_width=True):
+            st.session_state.page = 'landing'
+            st.rerun()
+
+    with col3:
+        if st.button("📚 Subjects", key="nav_subjects", use_container_width=True):
+            st.session_state.page = 'subjects'
+            st.session_state.selected_subject = None
+            st.rerun()
+
+    with col4:
+        if st.button("ℹ️ About", key="nav_about", use_container_width=True):
+            st.info("EduLLM - Your AI-powered homework assistant!")
+
+    with col5:
+        if st.button("👤 Profile", key="nav_profile", use_container_width=True):
+            st.info(f"Logged in as: {st.session_state.get('username', 'User')}")
+
+    # Add separator
+    st.markdown("---")
 
 def render_landing_page():
     """Professional landing page with crown logo"""
@@ -2015,14 +2053,38 @@ def render_questions_page():
         else:
             st.warning("Please enter a question.")
 
-    # History + footer
-    with st.expander("🕘 View your recent history"):
-        # Try to load from backend first, fallback to local
-        rows = backend_get_history(limit=25)
+    # Subject-specific History
+    with st.expander(f"🕘 View your {subject} history"):
+        # Try to load subject-specific history from backend first, fallback to local
+        rows = backend_get_history(limit=25, subject=subject)
         if not rows:
             user_id = st.session_state.get("user_id")
             if user_id:
-                rows = load_history(user_id, limit=25)
+                rows = load_history(user_id, limit=25, subject=subject)
+        if not rows:
+            st.info(f"No {subject} history yet.")
+        else:
+            for row in rows:
+                # Handle both backend format (dict) and local format (tuple)
+                if isinstance(row, dict):
+                    subj = row.get('subject', 'Unknown')
+                    q = row.get('question', 'No question')
+                    created_at = row.get('created_at', 'Unknown time')
+                else:
+                    # Local format: (id, subject, question, answer, created_at)
+                    _id, subj, q, a, created_at = row
+                st.markdown(f"**[{created_at}] {subj}**")
+                st.markdown(f"- Question: {q}")
+                st.markdown("---")
+
+    # All subjects history
+    with st.expander("📚 View all subjects history"):
+        # Try to load all history from backend first, fallback to local
+        rows = backend_get_history(limit=50)
+        if not rows:
+            user_id = st.session_state.get("user_id")
+            if user_id:
+                rows = load_history(user_id, limit=50)
         if not rows:
             st.info("No history yet.")
         else:
