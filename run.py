@@ -351,16 +351,14 @@ def load_css():
     .code-block pre {{ margin: 0; padding: 0.75rem; overflow-x: auto; }}
     .step-code {{ background: rgba(0,0,0,0.04); border: 1px dashed rgba(0,0,0,0.2); padding: 0.6rem; border-radius: 6px; margin: 0.4rem 0 0.8rem 0; }}
     .final-answer {{
-        background: linear-gradient(135deg, #4CAF50, #45a049);
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 1.1rem;
+        background-color: rgba(76,175,80,0.2);
+        border: 2px solid #4CAF50;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 8px;
         text-align: center;
-        margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        font-weight: bold;
+        font-size: 1.2em;
     }}
 
     </style>
@@ -741,13 +739,33 @@ def render_login_page():
             st.markdown("")
             if st.button("Sign In", type="primary", use_container_width=True):
                 if email and password:
-                    st.session_state.logged_in = True
-                    # Generate consistent integer user_id from email
-                    st.session_state.user_id = abs(hash(email)) % 1000000
-                    st.session_state.user_email = email
-                    st.session_state.page = 'subjects'
-                    st.success("Login successful!")
-                    st.rerun()
+                    # Try backend authentication first
+                    try:
+                        from app.backend import backend_login, backend_get_me
+                        ok, token_or_err = backend_login(email, password)
+                        if ok:
+                            token = token_or_err
+                            st.session_state["access_token"] = token
+                            ok2, me_or_err = backend_get_me(token)
+                            if ok2:
+                                st.session_state["user_id"] = me_or_err.get("id")
+                                st.session_state["username"] = me_or_err.get("username")
+                                st.session_state.logged_in = True
+                                st.session_state.page = 'subjects'
+                                st.success("Login successful!")
+                                st.rerun()
+                            else:
+                                st.error(f"Login succeeded but fetching user failed: {me_or_err}")
+                        else:
+                            st.error(f"Login failed: {token_or_err}")
+                    except Exception as e:
+                        # Fallback to simple login for demo
+                        st.session_state.logged_in = True
+                        st.session_state.user_id = abs(hash(email)) % 1000000
+                        st.session_state.user_email = email
+                        st.session_state.page = 'subjects'
+                        st.success("Login successful (demo mode)!")
+                        st.rerun()
                 else:
                     st.error("Please fill in all fields")
 
