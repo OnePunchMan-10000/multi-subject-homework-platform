@@ -25,41 +25,87 @@ if 'user_id' not in st.session_state:
     st.session_state.user_id = None
 if 'auth_tab' not in st.session_state:
     st.session_state.auth_tab = 'login'
+if 'dark_mode' not in st.session_state:
+    st.session_state.dark_mode = False
 
 # Professional CSS Styling
 def load_css():
-    st.markdown("""
+    # Get theme colors
+    if st.session_state.dark_mode:
+        bg_color = "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)"
+        text_color = "#ffffff"
+        card_bg = "rgba(45, 45, 45, 0.9)"
+        subtitle_color = "#c0c0c0"
+    else:
+        bg_color = "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 25%, #ffffff 50%, #e9ecef 75%, #f8f9fa 100%)"
+        text_color = "#333333"
+        card_bg = "rgba(255, 255, 255, 0.9)"
+        subtitle_color = "#666666"
+
+    st.markdown(f"""
     <style>
     /* Hide Streamlit default elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {visibility: hidden;}
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
+    .stDeployButton {{visibility: hidden;}}
+
+    /* Global Background */
+    .stApp {{
+        background: {bg_color};
+        color: {text_color};
+    }}
+
+    /* Dark Mode Toggle */
+    .theme-toggle {{
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        border: none;
+        border-radius: 50px;
+        padding: 10px 20px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        transition: all 0.3s ease;
+    }}
+
+    .theme-toggle:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+    }}
 
     /* Landing Page Styles */
-    .landing-container {
+    .landing-container {{
         text-align: center;
         padding: 4rem 2rem;
         max-width: 1200px;
         margin: 0 auto;
-    }
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }}
 
-    .crown-logo {
+    .crown-logo {{
         position: relative;
         display: inline-block;
         margin-bottom: 2rem;
-    }
+    }}
 
-    .crown-icon {
+    .crown-icon {{
         font-size: 2.5rem;
         position: absolute;
         top: -15px;
         left: 50%;
         transform: translateX(-50%);
         color: #FFD700;
-    }
+    }}
 
-    .brand-letter {
+    .brand-letter {{
         width: 100px;
         height: 100px;
         background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -73,68 +119,78 @@ def load_css():
         margin: 0 auto;
         box-shadow: 0 10px 40px rgba(255, 215, 0, 0.3);
         border: 3px solid rgba(255, 255, 255, 0.2);
-    }
+    }}
 
-    .landing-title {
+    .landing-title {{
         font-size: 3.5rem;
         font-weight: 800;
         color: #FFD700;
         margin: 2rem 0 1rem 0;
         text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+    }}
 
-    .landing-subtitle {
+    .landing-subtitle {{
         font-size: 1.3rem;
-        color: #666;
-        max-width: 700px;
+        color: {subtitle_color};
+        max-width: 600px;
         margin: 0 auto 3rem auto;
         line-height: 1.6;
-    }
+        text-align: center;
+    }}
 
-    /* Flash Cards */
-    .flash-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* Flash Cards - Single Row Layout */
+    .flash-cards {{
+        display: flex;
+        justify-content: center;
         gap: 2rem;
-        margin: 3rem 0;
-        max-width: 900px;
+        margin: 4rem 0;
+        flex-wrap: wrap;
+        max-width: 1200px;
         margin-left: auto;
         margin-right: auto;
-    }
+    }}
 
-    .flash-card {
-        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    .flash-card {{
+        background: {card_bg};
         padding: 2rem;
         border-radius: 15px;
         text-align: center;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        border: 1px solid #e9ecef;
-        transition: transform 0.3s ease;
-    }
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        transition: all 0.3s ease;
+        flex: 1;
+        min-width: 250px;
+        max-width: 280px;
+        backdrop-filter: blur(10px);
+    }}
 
-    .flash-card:hover {
-        transform: translateY(-5px);
-    }
+    .flash-card:hover {{
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(255, 215, 0, 0.2);
+        border-color: #FFD700;
+    }}
 
-    .flash-card-icon {
-        font-size: 2.5rem;
+    .flash-card-icon {{
+        font-size: 3rem;
         margin-bottom: 1rem;
-    }
+        color: #FFD700;
+    }}
 
-    .flash-card-title {
-        font-size: 1.2rem;
+    .flash-card-title {{
+        font-size: 1.3rem;
         font-weight: 600;
-        color: #333;
-        margin-bottom: 0.5rem;
-    }
+        color: {text_color};
+        margin-bottom: 0.8rem;
+    }}
 
-    .flash-card-desc {
-        color: #666;
-        font-size: 0.9rem;
-    }
+    .flash-card-desc {{
+        color: {subtitle_color};
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }}
 
     /* Navigation Bar */
-    .navbar {
+    .navbar {{
         background: linear-gradient(135deg, #FFD700, #FFA500);
         padding: 1rem 2rem;
         display: flex;
@@ -145,24 +201,24 @@ def load_css():
         top: 0;
         z-index: 1000;
         margin-bottom: 2rem;
-    }
+    }}
 
-    .navbar-brand {
+    .navbar-brand {{
         display: flex;
         align-items: center;
         font-size: 1.5rem;
         font-weight: 700;
         color: white;
         text-decoration: none;
-    }
+    }}
 
-    .navbar-nav {
+    .navbar-nav {{
         display: flex;
         gap: 2rem;
         align-items: center;
-    }
+    }}
 
-    .nav-link {
+    .nav-link {{
         color: white;
         text-decoration: none;
         font-weight: 500;
@@ -170,15 +226,63 @@ def load_css():
         border-radius: 8px;
         transition: background 0.3s ease;
         cursor: pointer;
-    }
+    }}
 
-    .nav-link:hover {
+    .nav-link:hover {{
         background: rgba(255,255,255,0.2);
-    }
+    }}
 
-    .nav-link.active {
+    .nav-link.active {{
         background: rgba(255,255,255,0.3);
-    }
+    }}
+
+    /* Centered Auth Container */
+    .auth-container {{
+        max-width: 450px;
+        margin: 2rem auto;
+        background: {card_bg};
+        border-radius: 20px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        overflow: hidden;
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+    }}
+
+    .auth-tabs {{
+        display: flex;
+        background: rgba(248, 249, 250, 0.1);
+    }}
+
+    .auth-tab {{
+        flex: 1;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        background: transparent;
+        color: {text_color};
+    }}
+
+    .auth-tab.active {{
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: white;
+    }}
+
+    .auth-form {{
+        padding: 2.5rem;
+    }}
+
+    /* Center login page */
+    .login-page {{
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -300,6 +404,16 @@ def format_response(response):
 
     return '\n\n'.join(formatted_lines)
 
+# Theme Toggle Component
+def render_theme_toggle():
+    """Render theme toggle button"""
+    col1, col2, col3 = st.columns([8, 1, 1])
+    with col3:
+        theme_icon = "🌙" if st.session_state.dark_mode else "☀️"
+        if st.button(f"{theme_icon}", key="theme_toggle", help="Toggle Dark/Light Mode"):
+            st.session_state.dark_mode = not st.session_state.dark_mode
+            st.rerun()
+
 # Page Components
 def render_navbar():
     """Render the navigation bar"""
@@ -321,6 +435,9 @@ def render_navbar():
 
 def render_landing_page():
     """Professional landing page with crown logo"""
+    # Theme toggle
+    render_theme_toggle()
+
     st.markdown("""
     <div class="landing-container">
         <div class="crown-logo">
@@ -343,94 +460,161 @@ def render_landing_page():
             st.session_state.page = 'login'
             st.rerun()
 
-    # Flash Cards
+    # Why Choose EduLLM Section
+    st.markdown("""
+    <div style="text-align: center; margin: 4rem 0 2rem 0;">
+        <h2 style="font-size: 2.5rem; font-weight: 700; color: #333; margin-bottom: 1rem;">
+            Why Choose <span style="color: #FFD700;">EduLLM?</span>
+        </h2>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Flash Cards in Single Row
     st.markdown("""
     <div class="flash-cards">
         <div class="flash-card">
-            <div class="flash-card-icon">🎯</div>
-            <div class="flash-card-title">Instant Solutions</div>
-            <div class="flash-card-desc">Get step-by-step solutions in seconds</div>
-        </div>
-        <div class="flash-card">
-            <div class="flash-card-icon">📚</div>
-            <div class="flash-card-title">All Subjects</div>
-            <div class="flash-card-desc">Math, Science, English, History & more</div>
-        </div>
-        <div class="flash-card">
             <div class="flash-card-icon">🧠</div>
-            <div class="flash-card-title">AI-Powered</div>
-            <div class="flash-card-desc">Advanced AI for accurate explanations</div>
+            <div class="flash-card-title">AI-Powered Learning</div>
+            <div class="flash-card-desc">Advanced LLM technology helps you understand complex concepts with personalized explanations.</div>
+        </div>
+        <div class="flash-card">
+            <div class="flash-card-icon">📖</div>
+            <div class="flash-card-title">Multiple Subjects</div>
+            <div class="flash-card-desc">Get help with Math, Science, History, English, and more - all in one platform.</div>
+        </div>
+        <div class="flash-card">
+            <div class="flash-card-icon">💡</div>
+            <div class="flash-card-title">Instant Solutions</div>
+            <div class="flash-card-desc">Get step-by-step solutions to your homework problems in seconds.</div>
+        </div>
+        <div class="flash-card">
+            <div class="flash-card-icon">👥</div>
+            <div class="flash-card-title">Student Community</div>
+            <div class="flash-card-desc">Join thousands of students who are already improving their grades with EduLLM.</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-def render_login_page():
-    """Professional login/register page with tabs"""
+    # Ready to Ace Section
     st.markdown("""
-    <div class="landing-container">
+    <div style="text-align: center; margin: 4rem 0 2rem 0; padding: 3rem 2rem; background: rgba(255, 215, 0, 0.1); border-radius: 20px;">
+        <h2 style="font-size: 2rem; font-weight: 700; color: #333; margin-bottom: 1rem;">
+            Ready to Ace Your Homework?
+        </h2>
+        <p style="font-size: 1.1rem; color: #666; max-width: 600px; margin: 0 auto;">
+            Join thousands of students who are already using EduLLM to improve their understanding and grades.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Final CTA
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button('🎯 Get Started Today', type='primary', use_container_width=True, key='get_started'):
+            st.session_state.page = 'login'
+            st.rerun()
+
+def render_login_page():
+    """Professional centered login/register page"""
+    # Theme toggle
+    render_theme_toggle()
+
+    # Centered login container
+    st.markdown('<div class="login-page">', unsafe_allow_html=True)
+
+    # Crown logo and title
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 3rem;">
         <div class="crown-logo">
             <div class="crown-icon">👑</div>
             <div class="brand-letter">E</div>
         </div>
-        <h1 class="landing-title">Welcome to EduLLM</h1>
+        <h1 style="font-size: 2.5rem; font-weight: 700; color: #FFD700; margin: 1rem 0;">Welcome to EduLLM</h1>
+        <p style="color: #666; font-size: 1.1rem;">Sign in to start learning</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Tabs
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Login", use_container_width=True, key="login_tab",
-                    type="primary" if st.session_state.auth_tab == 'login' else "secondary"):
-            st.session_state.auth_tab = 'login'
+    # Centered auth container
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("Register", use_container_width=True, key="register_tab",
-                    type="primary" if st.session_state.auth_tab == 'register' else "secondary"):
-            st.session_state.auth_tab = 'register'
+        # Tabs
+        tab_col1, tab_col2 = st.columns(2)
+        with tab_col1:
+            if st.button("Login", use_container_width=True, key="login_tab",
+                        type="primary" if st.session_state.auth_tab == 'login' else "secondary"):
+                st.session_state.auth_tab = 'login'
+        with tab_col2:
+            if st.button("Sign Up", use_container_width=True, key="register_tab",
+                        type="primary" if st.session_state.auth_tab == 'register' else "secondary"):
+                st.session_state.auth_tab = 'register'
 
-    st.markdown("---")
+        st.markdown("---")
 
-    if st.session_state.auth_tab == 'login':
-        st.markdown("### 🔐 Login to Your Account")
-        email = st.text_input("Email", placeholder="Enter your email")
-        password = st.text_input("Password", type="password", placeholder="Enter your password")
+        if st.session_state.auth_tab == 'login':
+            st.markdown("### Sign In")
+            st.markdown("*Enter your credentials to access your account*")
+            st.markdown("")
 
-        if st.button("Login", type="primary", use_container_width=True):
-            if email and password:
-                st.session_state.logged_in = True
-                st.session_state.user_id = email
-                st.session_state.page = 'subjects'
-                st.success("Login successful!")
-                st.rerun()
-            else:
-                st.error("Please fill in all fields")
+            email = st.text_input("Email", placeholder="student@example.com", key="login_email")
+            password = st.text_input("Password", type="password", placeholder="••••••••", key="login_password")
 
-    else:  # register
-        st.markdown("### 📝 Create New Account")
-        name = st.text_input("Full Name", placeholder="Enter your full name")
-        email = st.text_input("Email", placeholder="Enter your email")
-        password = st.text_input("Password", type="password", placeholder="Create a password")
-        confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password")
-
-        if st.button("Register", type="primary", use_container_width=True):
-            if name and email and password and confirm_password:
-                if password == confirm_password:
+            st.markdown("")
+            if st.button("Sign In", type="primary", use_container_width=True):
+                if email and password:
                     st.session_state.logged_in = True
                     st.session_state.user_id = email
                     st.session_state.page = 'subjects'
-                    st.success("Registration successful!")
+                    st.success("Login successful!")
                     st.rerun()
                 else:
-                    st.error("Passwords don't match")
-            else:
-                st.error("Please fill in all fields")
+                    st.error("Please fill in all fields")
 
-    # Back to landing
-    if st.button('← Back to Home', use_container_width=True):
-        st.session_state.page = 'landing'
-        st.rerun()
+            st.markdown("---")
+            st.markdown("**OR CONTINUE WITH**")
+
+            google_col, github_col = st.columns(2)
+            with google_col:
+                if st.button("🔍 Google", use_container_width=True):
+                    st.info("Google login coming soon!")
+            with github_col:
+                if st.button("🐙 GitHub", use_container_width=True):
+                    st.info("GitHub login coming soon!")
+
+        else:  # register
+            st.markdown("### Create Account")
+            st.markdown("*Join thousands of students improving their grades*")
+            st.markdown("")
+
+            name = st.text_input("Full Name", placeholder="Enter your full name", key="reg_name")
+            email = st.text_input("Email", placeholder="student@example.com", key="reg_email")
+            password = st.text_input("Password", type="password", placeholder="Create a password", key="reg_password")
+            confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password", key="reg_confirm")
+
+            st.markdown("")
+            if st.button("Create Account", type="primary", use_container_width=True):
+                if name and email and password and confirm_password:
+                    if password == confirm_password:
+                        st.session_state.logged_in = True
+                        st.session_state.user_id = email
+                        st.session_state.page = 'subjects'
+                        st.success("Registration successful!")
+                        st.rerun()
+                    else:
+                        st.error("Passwords don't match")
+                else:
+                    st.error("Please fill in all fields")
+
+        st.markdown("")
+        # Back to landing
+        if st.button('← Back to Home', use_container_width=True):
+            st.session_state.page = 'landing'
+            st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def render_subjects_page():
     """Subjects grid with navbar"""
+    render_theme_toggle()
     render_navbar()
 
     st.markdown("# 📚 Choose Your Subject")
@@ -456,6 +640,7 @@ def render_subjects_page():
 
 def render_questions_page():
     """Questions page with navbar"""
+    render_theme_toggle()
     render_navbar()
 
     subject = st.session_state.selected_subject
