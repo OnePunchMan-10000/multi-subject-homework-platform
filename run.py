@@ -68,9 +68,17 @@ def load_css():
     }}
 
     /* Remove element container spacing */
-    .stElementContainer {{
+    .stElementContainer,
+    .element-container,
+    [data-testid="stElementContainer"],
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stVerticalBlock"],
+    [data-testid="stHorizontalBlock"] {{
         margin: 0 !important;
         padding: 0 !important;
+        min-height: 0 !important;
+        background: transparent !important;
+        border: 0 !important;
     }}
 
     /* Remove any container spacing */
@@ -80,13 +88,13 @@ def load_css():
     }}
 
     /* Remove markdown container spacing */
-    .stMarkdown {{
+    .stMarkdown, .stMarkdownWrapper, .stMarkdownContainer {{
         margin: 0 !important;
         padding: 0 !important;
     }}
 
     /* Remove column container spacing */
-    .stColumn {{
+    .stColumn, [data-testid="column"] {{
         padding: 0 !important;
         margin: 0 !important;
     }}
@@ -131,10 +139,10 @@ def load_css():
     .crown-logo {{
         position: relative;
         display: inline-block;
-        margin: 0;
-        padding: 0;
+        margin: 0 !important;
+        padding: 0 !important;
         height: 100px;
-        margin-top: 0;
+        margin-top: 0 !important;
     }}
 
     .crown-icon {{
@@ -320,29 +328,29 @@ def load_css():
         padding: 2.5rem;
     }}
 
-    /* Center login page */
-    .login-page {{
-        min-height: 60vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-        padding: 0;
-        margin: 0;
-        padding-top: 0;
-        margin-top: 0;
-    }}
+    /* Removed login page wrappers; keep simple centering via Streamlit columns */
+    .login-header, .login-page, .login-form-container {{ display: contents; }}
 
-    .login-header {{
+    /* Math rendering and code blocks */
+    .math-line {{
+        font-family: 'Courier New', monospace;
+        background: rgba(255,193,7,0.12);
+        padding: 0.6rem 0.8rem;
+        margin: 0.5rem 0;
+        border-radius: 6px;
+        color: #d49100;
         text-align: center;
-        margin-bottom: 0.5rem;
+        line-height: 1.6;
+        border: 1px solid rgba(255,193,7,0.25);
     }}
+    .fraction-display {{ display: inline-block; text-align: center; margin: 0 6px; vertical-align: middle; line-height: 1.2; }}
+    .fraction-bar {{ border-bottom: 2px solid #d49100; margin: 2px 0; line-height: 1; width: 100%; }}
+    .power {{ font-size: 0.8em; vertical-align: super; line-height: 0; }}
+    .code-block {{ background: #0d1117; color: #c9d1d9; border-radius: 8px; margin: 0.75rem 0; border: 1px solid #30363d; }}
+    .code-block .code-header {{ background: #161b22; color: #8b949e; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-bottom: 1px solid #30363d; border-top-left-radius: 8px; border-top-right-radius: 8px; }}
+    .code-block pre {{ margin: 0; padding: 0.75rem; overflow-x: auto; }}
+    .step-code {{ background: rgba(0,0,0,0.04); border: 1px dashed rgba(0,0,0,0.2); padding: 0.6rem; border-radius: 6px; margin: 0.4rem 0 0.8rem 0; }}
 
-    .login-form-container {{
-        width: 100%;
-        max-width: 450px;
-        margin: 0 auto;
-    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -441,27 +449,35 @@ def get_api_response(question, subject):
         st.error(f"Network Error: {str(e)}")
         return None
 
+# Prefer rich HTML formatter from app.formatting if available
+try:
+    from app.formatting import format_response as _rich_format_response
+except Exception:
+    _rich_format_response = None
+
 def format_response(response):
-    """Format the AI response for better display"""
+    """Format the AI response for better display (math-friendly).
+    Uses app.formatting if available; otherwise falls back to a simple formatter.
+    """
     if not response:
         return ""
+    if _rich_format_response:
+        return _rich_format_response(response)
 
+    # Fallback basic formatting
     lines = response.split('\n')
     formatted_lines = []
-
     for line in lines:
         line = line.strip()
         if not line:
             formatted_lines.append('')
             continue
-
         if line.startswith('#'):
             formatted_lines.append(f"**{line.replace('#', '').strip()}**")
         elif line.startswith('Step') or line.startswith('Solution'):
             formatted_lines.append(f"**{line}**")
         else:
             formatted_lines.append(line)
-
     return '\n\n'.join(formatted_lines)
 
 # Theme Toggle Component
@@ -581,23 +597,19 @@ def render_login_page():
     """Professional centered login/register page"""
     # No theme toggle on login page for cleaner look
 
-    # Centered login container
-    st.markdown('<div class="login-page">', unsafe_allow_html=True)
+    # Centered login container (removed unnecessary outer wrapper)
 
     # Crown logo and title - more compact
     st.markdown("""
-    <div class="login-header">
-        <div class="crown-logo" style="margin-bottom: 1rem;">
-            <div class="crown-icon">👑</div>
-            <div class="brand-letter" style="width: 80px; height: 80px; font-size: 2.5rem;">E</div>
-        </div>
-        <h1 style="font-size: 2rem; font-weight: 700; color: #FFD700; margin: 1rem 0;">Welcome to EduLLM</h1>
-        <p style="color: #666; font-size: 1rem; margin-bottom: 0;">Sign in to start learning</p>
+    <div class="crown-logo" style="margin-bottom: 1rem;">
+        <div class="crown-icon">👑</div>
+        <div class="brand-letter" style="width: 80px; height: 80px; font-size: 2.5rem;">E</div>
     </div>
+    <h1 style="font-size: 2rem; font-weight: 700; color: #FFD700; margin: 1rem 0;">Welcome to EduLLM</h1>
+    <p style="color: #666; font-size: 1rem; margin-bottom: 0;">Sign in to start learning</p>
     """, unsafe_allow_html=True)
 
-    # Centered auth container
-    st.markdown('<div class="login-form-container">', unsafe_allow_html=True)
+    # Centered auth container (removed unnecessary wrapper)
     col1, col2, col3 = st.columns([0.5, 2, 0.5])
     with col2:
         # Tabs
@@ -673,8 +685,6 @@ def render_login_page():
             st.session_state.page = 'landing'
             st.rerun()
 
-    st.markdown('</div>', unsafe_allow_html=True)  # Close login-form-container
-    st.markdown('</div>', unsafe_allow_html=True)  # Close login-page
 
 def render_subjects_page():
     """Subjects grid with navbar"""
@@ -736,9 +746,23 @@ def render_questions_page():
                     st.markdown("---")
                     st.markdown(f"## 📚 {subject} Solution")
 
-                    # Display solution
+                    # Display solution (render HTML for math/formatting)
                     formatted_response = format_response(response)
-                    st.markdown(formatted_response)
+                    st.markdown(f"""
+                    <div class="solution-content">
+                        {formatted_response}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # Save to history (backend first, fallback local)
+                    try:
+                        from app.backend import backend_save_history, backend_get_history
+                        from app.db import save_history, load_history
+                        saved = backend_save_history(subject, question.strip(), formatted_response)
+                        if not saved:
+                            save_history(st.session_state.get("user_id") or 0, subject, question.strip(), formatted_response)
+                    except Exception:
+                        pass
 
                     # Feedback
                     st.markdown("### Rate this solution")
@@ -754,6 +778,29 @@ def render_questions_page():
                             st.rerun()
         else:
             st.warning("Please enter a question.")
+
+    # Recent History section (always visible below the page)
+    try:
+        from app.backend import backend_get_history
+        from app.db import load_history
+        st.markdown("---")
+        with st.expander("🕘 View your recent history"):
+            rows = backend_get_history(limit=25)
+            if not rows:
+                rows = load_history(st.session_state.get("user_id") or 0, limit=25)
+            if not rows:
+                st.info("No history yet.")
+            else:
+                for row in rows:
+                    if isinstance(row, dict):
+                        subj, q, created_at = row.get('subject'), row.get('question'), row.get('created_at')
+                    else:
+                        _id, subj, q, a, created_at = row
+                    st.markdown(f"**[{created_at}] {subj}**")
+                    st.markdown(f"- Question: {q}")
+                    st.markdown("---")
+    except Exception:
+        pass
 
 def main():
     """Main application with complete workflow"""
