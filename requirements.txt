@@ -5,7 +5,7 @@ numpy==2.3.2
 pillow==11.3.0
 psycopg2-binary==2.9.10
 
-# Force deployment refresh - updated timestamp
+# Force deployment refresh - updated timestamp: 2025-08-26 14:20
 # This should trigger Streamlit Cloud to rebuild completely
 
 
