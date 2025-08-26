@@ -1765,6 +1765,21 @@ def render_navbar():
     """Render horizontal navigation bar with integrated nav items"""
     st.markdown("""
     <style>
+    /* Remove Streamlit's default padding */
+    .main > div {
+        padding-top: 0rem !important;
+    }
+    .block-container {
+        padding-top: 0rem !important;
+        margin-top: 0rem !important;
+    }
+    header[data-testid="stHeader"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+
     .top-navbar {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 0.8rem 1rem;
@@ -1860,89 +1875,49 @@ def render_navbar():
 
     st.markdown(navbar_html, unsafe_allow_html=True)
 
-    # Handle navigation with buttons (using CSS to hide them)
-    st.markdown("""
-    <style>
-    .stButton > button[data-testid="baseButton-secondary"] {
-        display: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
-
-    with col1:
-        if st.button("Home", key="nav_home"):
-            st.session_state.page = 'landing'
-            st.rerun()
-
-    with col2:
-        if st.button("Subjects", key="nav_subjects"):
-            st.session_state.page = 'subjects'
-            st.session_state.selected_subject = None
-            st.rerun()
-
-    with col3:
-        if st.button("Profile", key="nav_profile"):
-            st.session_state.page = 'profile'
-            st.rerun()
-
-    with col4:
-        if st.button("About", key="nav_about"):
-            st.session_state.page = 'about'
-            st.rerun()
-
-    with col5:
-        if st.button("Logout", key="nav_logout"):
-            st.session_state.logged_in = False
-            st.session_state.page = 'landing'
-            st.rerun()
-
 def render_hamburger_navbar():
-    """Render black transparent hamburger menu for questions page"""
+    """Render simple black hamburger button for questions page"""
     # Initialize menu state
     if 'menu_open' not in st.session_state:
         st.session_state.menu_open = False
 
     st.markdown("""
     <style>
-    .hamburger-navbar {
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(10px);
-        padding: 0.8rem 1rem;
-        margin: -1rem -1rem 1rem -1rem;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    /* Remove Streamlit's default padding */
+    .main > div {
+        padding-top: 0rem !important;
     }
-    .hamburger-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        max-width: 1200px;
-        margin: 0 auto;
+    .block-container {
+        padding-top: 0rem !important;
+        margin-top: 0rem !important;
+    }
+    header[data-testid="stHeader"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+
+    .hamburger-btn-container {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
     }
     .hamburger-btn {
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(0, 0, 0, 0.8);
+        border: none;
         border-radius: 8px;
-        padding: 0.5rem 1rem;
+        padding: 0.8rem;
         color: white;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-size: 1rem;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
     .hamburger-btn:hover {
-        background: rgba(255,255,255,0.2);
-        border-color: rgba(255,255,255,0.4);
-    }
-    .navbar-brand-ham {
-        display: flex;
-        align-items: center;
-        color: white;
-        font-size: 1.5rem;
-        font-weight: bold;
+        background: rgba(0, 0, 0, 0.9);
+        transform: scale(1.05);
     }
     .slide-menu {
         position: fixed;
@@ -2005,25 +1980,8 @@ def render_hamburger_navbar():
     </style>
     """, unsafe_allow_html=True)
 
-    # Top navbar with hamburger menu
-    navbar_html = f"""
-    <div class="hamburger-navbar">
-        <div class="hamburger-content">
-            <div class="hamburger-btn" onclick="toggleMenu()">
-                ☰ Menu
-            </div>
-            <div class="navbar-brand-ham">
-                <span style="margin-right: 10px;">👑</span>
-                <span style="color: #FFD700;">EduLLM</span>
-            </div>
-        </div>
-    </div>
-    """
-
-    st.markdown(navbar_html, unsafe_allow_html=True)
-
     # Hamburger button functionality
-    col1, col2 = st.columns([1, 10])
+    col1, col2, col3 = st.columns([1, 8, 1])
     with col1:
         if st.button("☰", key="hamburger_btn", help="Menu"):
             st.session_state.menu_open = not st.session_state.menu_open
@@ -2047,45 +2005,59 @@ def render_hamburger_navbar():
         </div>
         """, unsafe_allow_html=True)
 
-        # Hidden navigation buttons (using CSS to hide them)
+        # Navigation buttons (hidden but functional)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
+
+        with col1:
+            if st.button("🏠", key="ham_home"):
+                st.session_state.page = 'landing'
+                st.session_state.menu_open = False
+                st.rerun()
+
+        with col2:
+            if st.button("📚", key="ham_subjects"):
+                st.session_state.page = 'subjects'
+                st.session_state.selected_subject = None
+                st.session_state.menu_open = False
+                st.rerun()
+
+        with col3:
+            if st.button("👤", key="ham_profile"):
+                st.session_state.page = 'profile'
+                st.session_state.menu_open = False
+                st.rerun()
+
+        with col4:
+            if st.button("ℹ️", key="ham_about"):
+                st.session_state.page = 'about'
+                st.session_state.menu_open = False
+                st.rerun()
+
+        with col5:
+            if st.button("🚪", key="ham_logout"):
+                st.session_state.logged_in = False
+                st.session_state.page = 'landing'
+                st.session_state.menu_open = False
+                st.rerun()
+
+        with col6:
+            if st.button("✕", key="close_menu"):
+                st.session_state.menu_open = False
+                st.rerun()
+
+        # Hide the buttons with CSS
         st.markdown("""
         <style>
-        .stButton > button[data-testid="baseButton-secondary"] {
-            display: none !important;
+        .stButton > button {
+            opacity: 0;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: none;
         }
         </style>
         """, unsafe_allow_html=True)
-
-        if st.button("🏠 Home", key="ham_home"):
-            st.session_state.page = 'landing'
-            st.session_state.menu_open = False
-            st.rerun()
-
-        if st.button("📚 Subjects", key="ham_subjects"):
-            st.session_state.page = 'subjects'
-            st.session_state.selected_subject = None
-            st.session_state.menu_open = False
-            st.rerun()
-
-        if st.button("👤 Profile", key="ham_profile"):
-            st.session_state.page = 'profile'
-            st.session_state.menu_open = False
-            st.rerun()
-
-        if st.button("ℹ️ About", key="ham_about"):
-            st.session_state.page = 'about'
-            st.session_state.menu_open = False
-            st.rerun()
-
-        if st.button("🚪 Logout", key="ham_logout"):
-            st.session_state.logged_in = False
-            st.session_state.page = 'landing'
-            st.session_state.menu_open = False
-            st.rerun()
-
-        if st.button("✕ Close", key="close_menu"):
-            st.session_state.menu_open = False
-            st.rerun()
 
 def render_landing_page():
     """Professional landing page with crown logo"""
