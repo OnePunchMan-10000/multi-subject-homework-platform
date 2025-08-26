@@ -733,39 +733,52 @@ def should_show_diagram(question: str, subject: str) -> bool:
     Policy:
     - Require an explicit drawing intent for algebra/calculus/trig (draw/plot/graph/sketch/construct/diagram/illustrate/visualize)
     - Always allow geometry constructions when common geometry terms appear
-    - Avoid diagrams for pure computational problems
+    - Keep other subjects conservative
     """
-    question_lower = question.lower()
+    q = question.lower()
 
-    # Explicit drawing intent keywords
-    intent_keywords = [
-        'draw', 'plot', 'graph', 'sketch', 'construct', 'diagram', 'illustrate', 'visualize',
-        'show', 'display', 'picture', 'figure', 'image'
-    ]
-    intent = any(k in question_lower for k in intent_keywords)
+    # 1) Strong drawing intent verbs
+    intent = any(w in q for w in [
+        'draw', 'sketch', 'plot', 'graph', 'construct', 'diagram', 'figure',
+        'illustrate', 'visualize'
+    ])
 
-    # Geometry terms that often need visual representation
+    # 2) Geometry keywords that justify a diagram regardless of verb
     geometry_terms = [
-        'triangle', 'perpendicular bisector', 'angle bisector', 'median', 'altitude',
-        'circle', 'tangent', 'circumcircle', 'incenter', 'circumcenter',
-        'square', 'rectangle', 'polygon', 'semicircle', 'pentagon', 'hexagon'
+        'triangle', ' abc', 'abc ', 'perpendicular bisector', 'angle bisector',
+        'median', 'altitude', 'parallel', 'perpendicular', 'circumcircle',
+        'incenter', 'circumcenter', 'square', 'rectangle', 'circle',
+        'semicircle', 'polygon', 'pentagon', 'hexagon', 'heptagon', 'octagon',
+        'geometry', 'tangent', 'tangents'
     ]
-    has_geometry = any(term in question_lower for term in geometry_terms)
+    if any(t in q for t in geometry_terms):
+        return True
 
-    # For Mathematics: require intent OR common geometry constructions
-    if subject == "Mathematics":
-        # Always show for explicit geometry constructions
-        if has_geometry:
+    # 3) Mathematics graphs: require intent + an equation/function pattern
+    if subject == 'Mathematics':
+        if intent and (
+            re.search(r'\by\s*=\s*', q) or  # y = ...
+            re.search(r'\bf\(x\)\s*=\s*', q) or  # f(x) = ...
+            'parabola' in q or  # often implies graphing when paired with intent
+            'sin' in q or 'cos' in q or 'tan' in q  # trig plots when intent present
+        ):
             return True
-        # For other math topics, require explicit intent
-        return intent
+        return False
 
-    # For other subjects: require explicit intent
-    if subject in ["Physics", "Economics"]:
-        return intent
+    # 4) Physics: show only for waves/trajectories when intent present
+    if subject == 'Physics':
+        if intent and any(k in q for k in ['wave', 'trajectory', 'motion', 'circuit']):
+            return True
+        return False
 
-    # Default: no diagram
-    return False
+    # 5) Economics: show only when intent present with supply/demand
+    if subject == 'Economics':
+        if intent and any(k in q for k in ['supply', 'demand', 'equilibrium', 'curve']):
+            return True
+        return False
+
+    # Default: require explicit intent
+    return intent
 
 def create_smart_visualization(question: str, subject: str):
     """Create simple, clean visualizations.
@@ -948,6 +961,112 @@ def create_smart_visualization(question: str, subject: str):
                     # Simple bounds like triangle
                     ax.set_xlim(-radius-1, radius+1)
                     ax.set_ylim(-radius-1, radius+1)
+                    ax.set_aspect('equal')
+
+                # Improved pair of tangents to a circle with given angle between them
+                tan_match = re.search(r'tangents?\s+to\s+a?\s*circle.*?(?:inclined.*?at|angle.*?of)\s*(\d+(?:\.\d+)?)\s*degrees?', question, flags=re.IGNORECASE)
+                if tan_match:
+                    tangent_angle = float(tan_match.group(1))  # degrees between tangents
+
+                    # Get radius from existing circle or default
+                    r = 3.0
+                    center = (0.0, 0.0)
+                    existing_circle = next((p for p in ax.patches if isinstance(p, plt.Circle)), None)
+                    if existing_circle:
+                        center = existing_circle.get_center()
+                        r = existing_circle.get_radius()
+                    else:
+                        # Create circle if none exists
+                        circle = plt.Circle(center, r, fill=False, edgecolor='#000000', linewidth=2)
+                        ax.add_patch(circle)
+                        ax.scatter([center[0]], [center[1]], color='#000000')
+                        ax.text(center[0], center[1]+0.2, 'O', color='#000000', ha='center')
+
+                    # Calculate central angle (supplementary to tangent angle)
+                    central_angle = 180 - tangent_angle
+                    A_angle = np.radians(central_angle / 2)
+                    B_angle = -A_angle
+
+                    # Points of tangency A and B
+                    A = (center[0] + r * np.cos(A_angle), center[1] + r * np.sin(A_angle))
+                    B = (center[0] + r * np.cos(B_angle), center[1] + r * np.sin(B_angle))
+
+                    # Draw radii to points of tangency
+                    ax.plot([center[0], A[0]], [center[1], A[1]], 'k--', linewidth=1, alpha=0.7, label='Radii')
+                    ax.plot([center[0], B[0]], [center[1], B[1]], 'k--', linewidth=1, alpha=0.7)
+
+                    # Mark points of tangency
+                    ax.scatter([A[0], B[0]], [A[1], B[1]], color='red', s=30, zorder=5)
+                    ax.text(A[0], A[1]+0.2, 'A', color='red', ha='center', fontweight='bold')
+                    ax.text(B[0], B[1]-0.2, 'B', color='red', ha='center', fontweight='bold')
+
+                    # Draw tangent lines (perpendicular to radii at A and B)
+                    line_length = r * 3
+                    for point, angle in [(A, A_angle), (B, B_angle)]:
+                        # Tangent slope is perpendicular to radius
+                        if np.abs(np.cos(angle)) < 1e-10:  # vertical radius
+                            # Horizontal tangent
+                            x_vals = np.array([point[0] - line_length, point[0] + line_length])
+                            y_vals = np.array([point[1], point[1]])
+                        else:
+                            slope = -1 / np.tan(angle)
+                            x_vals = np.array([point[0] - line_length, point[0] + line_length])
+                            y_vals = slope * (x_vals - point[0]) + point[1]
+                        ax.plot(x_vals, y_vals, 'red', linewidth=2, label='Tangents' if point == A else '')
+
+                    # Mark the angle between tangents
+                    ax.text(center[0], center[1]-r-0.5, f'Angle between tangents: {int(tangent_angle)}°',
+                           color='#000000', ha='center', fontweight='bold')
+
+                # Specific angle construction (e.g., 60 degrees, 30 degrees, 45 degrees)
+                angle_construct_match = re.search(r'construct.*?(\d+)\s*degrees?|(\d+)\s*degrees?.*?angle', question, flags=re.IGNORECASE)
+                if angle_construct_match:
+                    angle_deg = float(angle_construct_match.group(1) or angle_construct_match.group(2))
+
+                    # Standard compass and straightedge construction
+                    stroke = '#000000'
+
+                    # Base line (horizontal)
+                    ax.plot([-2, 4], [0, 0], color=stroke, linewidth=2, label='Base line')
+
+                    # Vertex point
+                    vertex = (0, 0)
+                    ax.scatter([vertex[0]], [vertex[1]], color=stroke, s=50, zorder=5)
+                    ax.text(vertex[0]-0.2, vertex[1]-0.3, 'O', color=stroke, ha='center', fontweight='bold')
+
+                    # Construct the angle
+                    angle_rad = np.radians(angle_deg)
+                    end_point = (3 * np.cos(angle_rad), 3 * np.sin(angle_rad))
+
+                    # Draw the angle ray
+                    ax.plot([vertex[0], end_point[0]], [vertex[1], end_point[1]], color='red', linewidth=2, label=f'{int(angle_deg)}° ray')
+
+                    # Mark the angle arc
+                    arc_radius = 1.0
+                    arc_angles = np.linspace(0, angle_rad, 50)
+                    arc_x = vertex[0] + arc_radius * np.cos(arc_angles)
+                    arc_y = vertex[1] + arc_radius * np.sin(arc_angles)
+                    ax.plot(arc_x, arc_y, color='blue', linewidth=2, label='Angle arc')
+
+                    # Label the angle
+                    label_angle = angle_rad / 2
+                    label_x = vertex[0] + (arc_radius + 0.3) * np.cos(label_angle)
+                    label_y = vertex[1] + (arc_radius + 0.3) * np.sin(label_angle)
+                    ax.text(label_x, label_y, f'{int(angle_deg)}°', color='blue', ha='center', fontweight='bold')
+
+                    # For 60-degree angle, show the equilateral triangle construction
+                    if abs(angle_deg - 60) < 1:
+                        # Draw construction circles for 60-degree angle
+                        circle1 = plt.Circle(vertex, 2, fill=False, edgecolor='green', linewidth=1, linestyle='--', alpha=0.7)
+                        circle2 = plt.Circle((2, 0), 2, fill=False, edgecolor='green', linewidth=1, linestyle='--', alpha=0.7)
+                        ax.add_patch(circle1)
+                        ax.add_patch(circle2)
+                        ax.text(1, -2.5, 'Construction: Two intersecting circles of equal radius',
+                               color='green', ha='center', fontsize=10)
+
+                    # Set appropriate bounds
+                    ax.set_xlim(-2.5, 4.5)
+                    ax.set_ylim(-3, 3)
                     ax.set_aspect('equal')
 
                 # Final styling and bounds
