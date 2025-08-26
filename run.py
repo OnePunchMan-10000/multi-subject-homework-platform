@@ -30,16 +30,24 @@ if 'dark_mode' not in st.session_state:
 
 # Professional CSS Styling
 def load_css():
-    # Get theme colors
+    # Get theme colors - Study-themed with gold/silver/black
     if st.session_state.dark_mode:
-        bg_color = "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)"
+        bg_color = """
+            radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(192, 192, 192, 0.1) 0%, transparent 50%),
+            linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 25%, #2d2d2d 50%, #1a1a1a 75%, #0f0f0f 100%)
+        """
         text_color = "#ffffff"
-        card_bg = "rgba(45, 45, 45, 0.9)"
+        card_bg = "rgba(30, 30, 30, 0.95)"
         subtitle_color = "#c0c0c0"
     else:
-        bg_color = "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 25%, #ffffff 50%, #e9ecef 75%, #f8f9fa 100%)"
+        bg_color = """
+            radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(192, 192, 192, 0.15) 0%, transparent 50%),
+            linear-gradient(135deg, #fafafa 0%, #f0f0f0 25%, #ffffff 50%, #f0f0f0 75%, #fafafa 100%)
+        """
         text_color = "#333333"
-        card_bg = "rgba(255, 255, 255, 0.9)"
+        card_bg = "rgba(255, 255, 255, 0.95)"
         subtitle_color = "#666666"
 
     st.markdown(f"""
@@ -50,10 +58,26 @@ def load_css():
     header {{visibility: hidden;}}
     .stDeployButton {{visibility: hidden;}}
 
-    /* Global Background */
+    /* Global Background with Study Theme */
     .stApp {{
         background: {bg_color};
         color: {text_color};
+        position: relative;
+    }}
+
+    /* Study-themed decorative elements */
+    .stApp::before {{
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+            radial-gradient(circle at 10% 20%, rgba(255, 215, 0, 0.05) 0%, transparent 20%),
+            radial-gradient(circle at 90% 80%, rgba(192, 192, 192, 0.05) 0%, transparent 20%);
+        pointer-events: none;
+        z-index: -1;
     }}
 
     /* Dark Mode Toggle */
@@ -81,13 +105,14 @@ def load_css():
     /* Landing Page Styles */
     .landing-container {{
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 2rem 1rem;
         max-width: 1200px;
         margin: 0 auto;
-        min-height: 100vh;
+        min-height: 80vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        align-items: center;
     }}
 
     .crown-logo {{
@@ -133,9 +158,11 @@ def load_css():
         font-size: 1.3rem;
         color: {subtitle_color};
         max-width: 600px;
-        margin: 0 auto 3rem auto;
+        margin: 0 auto 2rem auto;
         line-height: 1.6;
         text-align: center;
+        display: block;
+        width: 100%;
     }}
 
     /* Flash Cards - Single Row Layout */
@@ -276,12 +303,24 @@ def load_css():
 
     /* Center login page */
     .login-page {{
-        min-height: 100vh;
+        min-height: 90vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 2rem;
+        padding: 1rem;
+        margin-top: -2rem;
+    }}
+
+    .login-header {{
+        text-align: center;
+        margin-bottom: 2rem;
+    }}
+
+    .login-form-container {{
+        width: 100%;
+        max-width: 450px;
+        margin: 0 auto;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -440,16 +479,20 @@ def render_landing_page():
 
     st.markdown("""
     <div class="landing-container">
-        <div class="crown-logo">
-            <div class="crown-icon">👑</div>
-            <div class="brand-letter">E</div>
+        <div style="text-align: center; width: 100%;">
+            <div class="crown-logo">
+                <div class="crown-icon">👑</div>
+                <div class="brand-letter">E</div>
+            </div>
+            <h1 class="landing-title">EduLLM</h1>
+            <div style="text-align: center; width: 100%; display: flex; justify-content: center;">
+                <p class="landing-subtitle">
+                    Your AI-powered homework companion. Get instant, accurate answers
+                    to your school questions using cutting-edge Large Language Model
+                    technology.
+                </p>
+            </div>
         </div>
-        <h1 class="landing-title">EduLLM</h1>
-        <p class="landing-subtitle">
-            Your AI-powered homework companion. Get instant, accurate answers
-            to your school questions using cutting-edge Large Language Model
-            technology.
-        </p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -522,20 +565,21 @@ def render_login_page():
     # Centered login container
     st.markdown('<div class="login-page">', unsafe_allow_html=True)
 
-    # Crown logo and title
+    # Crown logo and title - more compact
     st.markdown("""
-    <div style="text-align: center; margin-bottom: 3rem;">
-        <div class="crown-logo">
+    <div class="login-header">
+        <div class="crown-logo" style="margin-bottom: 1rem;">
             <div class="crown-icon">👑</div>
-            <div class="brand-letter">E</div>
+            <div class="brand-letter" style="width: 80px; height: 80px; font-size: 2.5rem;">E</div>
         </div>
-        <h1 style="font-size: 2.5rem; font-weight: 700; color: #FFD700; margin: 1rem 0;">Welcome to EduLLM</h1>
-        <p style="color: #666; font-size: 1.1rem;">Sign in to start learning</p>
+        <h1 style="font-size: 2rem; font-weight: 700; color: #FFD700; margin: 1rem 0;">Welcome to EduLLM</h1>
+        <p style="color: #666; font-size: 1rem; margin-bottom: 0;">Sign in to start learning</p>
     </div>
     """, unsafe_allow_html=True)
 
     # Centered auth container
-    col1, col2, col3 = st.columns([1, 2, 1])
+    st.markdown('<div class="login-form-container">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([0.5, 2, 0.5])
     with col2:
         # Tabs
         tab_col1, tab_col2 = st.columns(2)
@@ -610,7 +654,8 @@ def render_login_page():
             st.session_state.page = 'landing'
             st.rerun()
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)  # Close login-form-container
+    st.markdown('</div>', unsafe_allow_html=True)  # Close login-page
 
 def render_subjects_page():
     """Subjects grid with navbar"""
