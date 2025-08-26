@@ -1770,40 +1770,71 @@ def render_theme_toggle():
 
 # Page Components
 def render_navbar():
-    """Render the navigation bar with proper layout"""
-    # Brand and navigation in columns
-    col1, col2, col3, col4, col5, col6 = st.columns([2, 1, 1, 1, 1, 1])
+    """Render responsive navigation bar"""
+    # Mobile-friendly navbar with hamburger menu concept
+    st.markdown("""
+    <style>
+    .navbar-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .navbar-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    @media (max-width: 768px) {
+        .navbar-nav {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .navbar-brand {
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+    }
+    </style>
+    <div class="navbar-container">
+        <div class="navbar-brand">
+            <span style="margin-right: 10px;">👑</span>
+            <span style="color: #FFD700;">EduLLM</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Navigation buttons in a responsive grid
+    col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("""
-        <div style="display: flex; align-items: center; padding: 1rem 0;">
-            <span style="font-size: 1.5rem; margin-right: 10px;">👑</span>
-            <span style="font-size: 1.5rem; font-weight: bold; color: #FFD700;">EduLLM</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
         if st.button("🏠 Home", key="nav_home", use_container_width=True):
             st.session_state.page = 'landing'
             st.rerun()
-
-    with col3:
-        if st.button("📚 Subjects", key="nav_subjects", use_container_width=True):
-            st.session_state.page = 'subjects'
-            st.session_state.selected_subject = None
-            st.rerun()
-
-    with col4:
         if st.button("👤 Profile", key="nav_profile", use_container_width=True):
             st.session_state.page = 'profile'
             st.rerun()
 
-    with col5:
+    with col2:
+        if st.button("📚 Subjects", key="nav_subjects", use_container_width=True):
+            st.session_state.page = 'subjects'
+            st.session_state.selected_subject = None
+            st.rerun()
         if st.button("ℹ️ About Us", key="nav_about", use_container_width=True):
             st.session_state.page = 'about'
             st.rerun()
 
-    with col6:
+    with col3:
         if st.button("🚪 Logout", key="nav_logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.page = 'landing'
@@ -2017,9 +2048,6 @@ def render_subjects_page():
     """Enhanced subjects page with proper grid layout"""
     render_theme_toggle()
     render_navbar()
-
-    st.markdown("# 📚 Choose Your Subject")
-    st.markdown("Select a subject to get started with your homework questions. Our AI tutor is ready to help!")
 
     # Subject data with enhanced descriptions and colors - All 9 subjects
     subjects_data = {
@@ -2387,7 +2415,6 @@ def render_questions_page():
     render_navbar()
 
     subject = st.session_state.selected_subject
-    st.markdown(f"# ❓ {subject} Questions")
 
     # Back button
     col1, col2 = st.columns([4, 1])
