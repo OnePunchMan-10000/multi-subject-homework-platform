@@ -454,42 +454,303 @@ def load_css():
         background: linear-gradient(45deg, #FFA500, #E6E6FA) !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
+    }
+
+    /* Enhanced Input Field Styling */
+    .stTextInput > div > div > input {
+        background: rgba(255, 255, 255, 0.95) !important;
+        color: #000000 !important;
+        border: 2px solid rgba(255, 215, 0, 0.4) !important;
+        border-radius: 8px !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
+        text-shadow: none !important;
+        max-width: 350px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .stTextInput > div > div > input:focus {
+        border-color: #FFD700 !important;
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
+        outline: none !important;
+    }
+
+    .stTextArea > div > div > textarea {
+        background: rgba(255, 255, 255, 0.95) !important;
+        color: #000000 !important;
+        border: 2px solid rgba(255, 215, 0, 0.4) !important;
+        border-radius: 8px !important;
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+        text-shadow: none !important;
+        max-width: 500px !important;
+        min-height: 100px !important;
+        max-height: 250px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        resize: vertical !important;
+    }
+
+    .stTextArea > div > div > textarea:focus {
+        border-color: #FFD700 !important;
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
+        outline: none !important;
+    }
+
+    /* Enhanced Subject Cards */
+    .subject-card {
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(15px) !important;
+        border: 2px solid rgba(255, 215, 0, 0.3) !important;
+        border-radius: 15px !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .subject-card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 12px 40px rgba(255, 215, 0, 0.4) !important;
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-color: #FFD700 !important;
+    }
+
+    /* Solution Content with High Contrast */
+    .solution-content {
+        background: rgba(255, 255, 255, 0.95) !important;
+        color: #000000 !important;
+        border-radius: 10px !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        border-left: 4px solid #FFD700 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .solution-content * {
+        color: #000000 !important;
+        text-shadow: none !important;
+    }
+
+    </style>
+    """, unsafe_allow_html=True)
+
+# Subject definitions
+SUBJECTS = {
+    "Mathematics": {
+        "icon": "",
+        "prompt": """You are an expert mathematics tutor. Provide clear, step-by-step solutions:
+
+FORMATTING REQUIREMENTS:
+1. Use "**Step 1:**", "**Step 2:**" etc. for each step
+2. Write mathematical expressions in plain text: use x^2 for x², sqrt(x) for square roots
+3. For fractions, use format: (numerator)/(denominator) - this will be displayed properly
+4. Put each mathematical equation on its own line
+5. Explain the reasoning behind each step
+6. End with "**Final Answer:**"
+7. Keep explanations clear and concise
+8. Add blank lines between steps for better readability
+
+FRACTION EXAMPLES:
+- Write dy/dx = (2x + 1)/(x^2 + 1)
+- Write y = (x^2 + 3x + 2)/(x + 1)
+- This will display with numerator over denominator in a single box
+
+Provide detailed explanations but keep the formatting clean and readable.""",
+        "example": "Solve: 3x² - 12x + 9 = 0"
+    },
+    "Physics": {
+        "icon": "",
+        "prompt": """You are a senior physics tutor. Produce highly readable, plain‑text solutions.
+
+FORMATTING REQUIREMENTS (STRICT):
+1. Use "**Step 1:**", "**Step 2:**" etc. for each step (short title on one line)
+2. On the next line, briefly explain the idea (why we do this step)
+3. On the next line, put the equation with quantities and units in simple text (no LaTeX, no \\(...\\) or symbols). Examples:
+   - v = u + a*t
+   - F = m*a
+   - v = sqrt(2*g*h)
+4. Substitute numbers on a separate line, with SI units:
+   - v = sqrt(2*9.8 m/s^2*10 m)
+5. Compute and show the numeric result on its own line with the unit:
+   - v = 14.0 m/s
+6. Include a short "Assumptions" line when needed (e.g., ignore air resistance).
+7. End with "**Final Answer:**" on its own line with the value and the unit.
+
+STYLE:
+- Plain text only (no LaTeX, no Greek letters, write "mu" not μ)
+- Keep numbers with 2–3 significant figures unless the question demands otherwise
+- Always show units in every formula line and result line
+- Add blank lines between steps for readability
+""",
+        "example": "A 2 kg object falls from 10 m height. Find velocity just before impact."
+    },
+    "Chemistry": {
+        "icon": "",
+        "prompt": """You are a senior chemistry tutor. Produce highly readable, plain‑text solutions.
+
+FORMATTING REQUIREMENTS (STRICT):
+1. Use "**Step 1:**", "**Step 2:**" etc. as a SINGLE LINE title
+2. On the next line, explain the idea briefly (why this step is needed)
+3. On the next line, write the relevant equation in simple text (no LaTeX). Examples:
+   - rate = k * [A]^m * [B]^n
+   - t_half = 0.693 / k
+   - M = m / n
+4. Substitute numbers on a separate line with proper units where applicable
+5. Compute and show the numeric result on its own line with clear units
+6. Balance chemical equations when required and show the balanced form on its own line
+7. Add an "Assumptions" line when needed (e.g., ideal behavior, constant temperature)
+8. End with "**Final Answer:**" on its own line with the value (and unit) or the balanced equation
+
+STYLE:
+- Plain text only (no LaTeX, avoid special symbols). Write arrows using '->' and charges like 'SO4^2-'
+- Keep numbers to 2–3 significant figures unless the problem demands more
+- Always include units next to numbers where relevant
+- Add blank lines between steps for readability
+""",
+        "example": "Balance: Al + O2 -> Al2O3"
+    },
+    "Biology": {
+        "icon": "",
+        "prompt": """You are a senior biology tutor. Produce highly readable, plain‑text solutions.
+
+FORMATTING REQUIREMENTS (STRICT):
+1. Use "**Step 1:**", "**Step 2:**" etc. as a SINGLE LINE title
+2. On the next line, explain the idea briefly (why this step matters biologically)
+3. On the next line, if a process/equation exists, write it in simple text (no LaTeX). Examples:
+   - Photosynthesis: 6 CO2 + 6 H2O -> C6H12O6 + 6 O2
+   - ATP yield per glucose in aerobic respiration: ~30–32 ATP
+4. If any quantities are computed, show substitution on a separate line and result on a new line with units (price/quantity)
+5. Add an "Assumptions" line when needed (e.g., standard temperature, typical eukaryotic cell)
+6. End with "**Final Answer:**" summarizing the key result or definition in one clear sentence
+
+STYLE:
+- Plain text only, no LaTeX; arrows as '->', charges as '^', and units explicit when used
+- 2–3 concise sentences per step; add blank lines between steps for readability
+""",
+        "example": "Explain the process of cellular respiration in detail."
+    },
+    "English Literature": {
+        "icon": "",
+        "prompt": """You are a senior literature tutor. Produce structured, plain‑text analyses.
+
+FORMATTING REQUIREMENTS (STRICT):
+1. Use steps as SINGLE LINE titles (e.g., **Step 1:** Thesis)
+2. Next line: concise explanation of the claim for that step
+3. Next line: quote or evidence (short and attributed) on its own line with quotation marks
+4. Next line: analysis that links evidence to the claim in 1–2 sentences
+5. Repeat for 2–3 key points
+6. End with "**Final Answer:**" one‑sentence conclusion that directly answers the question
+
+STYLE:
+- Plain text only; keep quotes short; add blank lines between steps for readability
+""",
+        "example": "Analyze the symbolism of light and darkness in Romeo and Juliet."
+    },
+    "History": {
+        "icon": "",
+        "prompt": """You are a senior history tutor. Produce chronological/thematic, plain‑text analyses.
+
+FORMATTING REQUIREMENTS (STRICT):
+1. Use steps as SINGLE LINE titles (e.g., **Step 1:** Long‑term causes)
+2. Next line: 1–2 sentence explanation of the factor
+3. Next line: key evidence/fact/date on its own line
+4. Next line: consequence/impact that links to the question
+5. Cover 3–5 major factors; keep each step compact
+6. End with "**Final Answer:**" one‑sentence conclusion that synthesizes the argument
+
+STYLE:
+- Plain text only; neutral tone; add blank lines between steps for readability
+""",
+        "example": "Analyze the causes of World War I."
+    },
+    "Economics": {
+        "icon": "",
+        "prompt": """You are a senior economics tutor. Produce clear, plain‑text, step‑by‑step solutions.
+
+FORMATTING REQUIREMENTS (STRICT):
+1. Use "**Step 1:**", "**Step 2:**" etc. as SINGLE LINE titles
+2. Next line: explain the concept (demand/supply/elasticity/etc.) in 1–2 sentences
+3. Next line: write the relevant equation in simple text (no LaTeX). Examples:
+   - Qd = a − bP
+   - Qs = c + dP
+   - Equilibrium: set Qd = Qs and solve for P and Q
+4. If numbers are given, show substitution on a separate line and compute the result on a new line with units (price/quantity)
+5. Add assumptions where needed (e.g., linear demand, ceteris paribus)
+6. End with "**Final Answer:**" stating the numeric or conceptual result
+
+STYLE:
+- Plain text only; keep math simple and vertically separated; add blank lines between steps for readability
+""",
+        "example": "Explain supply and demand equilibrium with a market example."
+    },
+    "Computer Science": {
+        "icon": "",
+        "prompt": """You are a computer science expert. Provide solutions using the EXACT format below.
+
+FORMATTING REQUIREMENTS:
+1. Use "**Step 1:**", "**Step 2:**" etc. for each step as a SINGLE LINE
+2. Follow each step with explanatory text on the NEXT LINE
+3. Then show relevant syntax/code snippet on SEPARATE LINES (not horizontal)
+4. Add blank lines between steps for readability
+5. ALWAYS include "**Time Complexity:**" and "**Space Complexity:**" sections before the final code
+6. End with "**Complete Code**" followed by ONE consolidated, executable code block fenced with language (e.g., ```python)
+```
+
+Follow these instructions to make the following change to my code document.
+
+Instruction: 
+
+Code Edit:
+```
+{{ ... }}
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
     }}
 
     /* Enhanced Input Field Styling */
     .stTextInput > div > div > input {{
-        background: rgba(255, 255, 255, 0.9) !important;
+        background: rgba(255, 255, 255, 0.95) !important;
         color: #000000 !important;
-        border: 2px solid rgba(255, 215, 0, 0.5) !important;
-        border-radius: 10px !important;
-        padding: 0.75rem !important;
-        font-size: 1rem !important;
+        border: 2px solid rgba(255, 215, 0, 0.4) !important;
+        border-radius: 8px !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
         text-shadow: none !important;
+        max-width: 350px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     }}
 
     .stTextInput > div > div > input:focus {{
         border-color: #FFD700 !important;
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.3) !important;
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
+        outline: none !important;
     }}
 
     .stTextArea > div > div > textarea {{
-        background: rgba(255, 255, 255, 0.9) !important;
+        background: rgba(255, 255, 255, 0.95) !important;
         color: #000000 !important;
-        border: 2px solid rgba(255, 215, 0, 0.5) !important;
-        border-radius: 10px !important;
-        padding: 0.75rem !important;
-        font-size: 1rem !important;
+        border: 2px solid rgba(255, 215, 0, 0.4) !important;
+        border-radius: 8px !important;
+        padding: 12px 14px !important;
+        font-size: 14px !important;
         text-shadow: none !important;
+        max-width: 500px !important;
+        min-height: 100px !important;
+        max-height: 250px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        resize: vertical !important;
     }}
 
     .stTextArea > div > div > textarea:focus {{
         border-color: #FFD700 !important;
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.3) !important;
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
+        outline: none !important;
     }}
 
     /* Enhanced Subject Cards */
     .subject-card {{
         background: rgba(255, 255, 255, 0.2) !important;
+{{ ... }}
         backdrop-filter: blur(15px) !important;
         border: 2px solid rgba(255, 215, 0, 0.3) !important;
         border-radius: 15px !important;
