@@ -2278,6 +2278,80 @@ def render_navbar():
     """
 
     st.markdown(navbar_html, unsafe_allow_html=True)
+    
+    # Add JavaScript navigation handler
+    navigation_js = """
+    <script>
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'nav') {
+            // Use Streamlit's session state to handle navigation
+            const page = event.data.page;
+            if (page === 'logout') {
+                // Handle logout
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    key: 'logout_clicked',
+                    value: true
+                }, '*');
+            } else {
+                // Handle page navigation
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue', 
+                    key: 'nav_page',
+                    value: page
+                }, '*');
+            }
+        }
+    });
+    </script>
+    """
+    st.markdown(navigation_js, unsafe_allow_html=True)
+    
+    # Fallback navigation using Streamlit buttons (hidden behind the fancy navbar)
+    st.markdown("""
+    <style>
+    .fallback-nav {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.8);
+        padding: 0.5rem;
+        border-radius: 10px;
+        z-index: 9999;
+        display: none; /* Hidden by default, can be shown if needed */
+    }
+    </style>
+    <div class="fallback-nav">
+        Fallback Navigation
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Create invisible buttons for navigation that can be triggered by JavaScript
+    col1, col2, col3, col4, col5 = st.columns([1,1,1,1,1])
+    with col1:
+        if st.button("🏠", key="nav_home", help="Home", type="secondary"):
+            st.session_state.page = 'landing'
+            st.rerun()
+    with col2:
+        if st.button("📚", key="nav_subjects", help="Subjects", type="secondary"):
+            st.session_state.page = 'subjects'
+            st.rerun()
+    with col3:
+        if st.button("👤", key="nav_profile", help="Profile", type="secondary"):
+            st.session_state.page = 'profile'
+            st.rerun()
+    with col4:
+        if st.button("ℹ️", key="nav_about", help="About", type="secondary"):
+            st.session_state.page = 'about'
+            st.rerun()
+    with col5:
+        if st.button("🚪", key="nav_logout", help="Logout", type="secondary"):
+            st.session_state.logged_in = False
+            st.session_state.page = 'landing'
+            st.session_state.user_id = None
+            st.session_state.username = None
+            st.session_state.selected_subject = None
+            st.rerun()
 
 def render_hamburger_navbar():
     """Render hamburger menu for questions page - EduLLM left, burger right"""
@@ -2799,133 +2873,231 @@ def render_subjects_page():
                 st.rerun()
 
 def render_profile_page():
-    """Profile page with user stats and achievements"""
+    """Enhanced profile page with comprehensive user stats, achievements, and settings"""
     render_navbar()
 
-    st.markdown("# My Profile")
+    # Enhanced header with crown styling
+    st.markdown("""
+    <div style="text-align: center; padding: 2rem 0 1rem 0;">
+        <div style="font-size: 3rem; margin-bottom: 0.5rem;">👑</div>
+        <h1 style="background: linear-gradient(45deg, #FFD700, #FFA500); 
+                   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                   margin: 0; font-size: 2.5rem; font-weight: bold;">My Profile</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 0.5rem 0 0 0; font-size: 1.1rem;">
+            Track your learning journey and achievements
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # User info section
-    col1, col2 = st.columns([1, 3])
-
-    with col1:
-        # Profile avatar
-        st.markdown("""
-        <div style="text-align: center;">
-            <div style="width: 100px; height: 100px; background: linear-gradient(45deg, #FFD700, #FFA500);
-                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                        margin: 0 auto; font-size: 2rem; font-weight: bold; color: white;">
-                JD
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
+    # User info section with enhanced styling
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
     with col2:
         username = st.session_state.get('username', 'John Doe')
         email = st.session_state.get('user_email', 'john.doe@example.com')
-        st.markdown(f"## {username}")
-        st.markdown(f"📧 {email}")
-        st.markdown("🎓 Grade 10")
-
-    st.markdown("---")
-
-    # Stats section
-    col1, col2, col3 = st.columns(3)
+        user_initials = ''.join([word[0].upper() for word in username.split()[:2]])
+        
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, 0.15); padding: 2rem; border-radius: 20px; 
+                    text-align: center; backdrop-filter: blur(10px); 
+                    border: 1px solid rgba(255, 215, 0, 0.3); margin-bottom: 2rem;">
+            <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #FFD700, #FFA500, #FF6B6B);
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                        margin: 0 auto 1.5rem auto; font-size: 2.5rem; font-weight: bold; color: white;
+                        box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3); border: 3px solid rgba(255,255,255,0.2);">
+                {user_initials}
+            </div>
+            <h2 style="margin: 0 0 0.5rem 0; color: #FFD700; font-size: 1.8rem;">{username}</h2>
+            <p style="margin: 0 0 0.5rem 0; color: rgba(255,255,255,0.9); font-size: 1.1rem;">📧 {email}</p>
+            <p style="margin: 0; color: rgba(255,255,255,0.8); font-size: 1rem;">🎓 Student • Learning Explorer</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Get user stats from history
     user_id = st.session_state.get("user_id")
     total_questions = 0
     subjects_studied = 0
     day_streak = 0
+    favorite_subject = "None"
+    total_study_time = 0
 
     if user_id:
         try:
-            rows = load_history(user_id, limit=1000)  # Get all history
-            total_questions = len(rows)
-            subjects_studied = len(set(row[1] for row in rows))  # Unique subjects
-            day_streak = min(total_questions, 15)  # Simple streak calculation
+            rows = load_history(user_id, limit=1000)
+            if rows:
+                total_questions = len(rows)
+                subjects = [row[1] for row in rows if len(row) > 1]
+                subjects_studied = len(set(subjects))
+                day_streak = min(total_questions, 15)
+                # Find favorite subject
+                if subjects:
+                    from collections import Counter
+                    subject_counts = Counter(subjects)
+                    favorite_subject = subject_counts.most_common(1)[0][0] if subject_counts else "None"
+                # Estimate study time (5 minutes per question)
+                total_study_time = total_questions * 5
         except:
             pass
 
+    # Enhanced stats section with 4 columns
+    st.markdown("## 📊 Learning Statistics")
+    col1, col2, col3, col4 = st.columns(4)
+
     with col1:
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
-            <div style="font-size: 2rem;">📚</div>
-            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{total_questions}</div>
-            <div>Questions Asked</div>
+        <div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1)); 
+                    padding: 1.5rem; border-radius: 15px; text-align: center; 
+                    border: 1px solid rgba(255, 215, 0, 0.3); backdrop-filter: blur(10px);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📚</div>
+            <div style="font-size: 2.2rem; font-weight: bold; color: #FFD700; margin-bottom: 0.3rem;">{total_questions}</div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">Questions Asked</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
-            <div style="font-size: 2rem;">🎯</div>
-            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{subjects_studied}</div>
-            <div>Subjects Studied</div>
+        <div style="background: linear-gradient(135deg, rgba(75, 192, 192, 0.2), rgba(54, 162, 235, 0.1)); 
+                    padding: 1.5rem; border-radius: 15px; text-align: center; 
+                    border: 1px solid rgba(75, 192, 192, 0.3); backdrop-filter: blur(10px);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎯</div>
+            <div style="font-size: 2.2rem; font-weight: bold; color: #4BC0C0; margin-bottom: 0.3rem;">{subjects_studied}</div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">Subjects Explored</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
-            <div style="font-size: 2rem;">🔥</div>
-            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{day_streak}</div>
-            <div>Day Streak</div>
+        <div style="background: linear-gradient(135deg, rgba(255, 99, 132, 0.2), rgba(255, 159, 64, 0.1)); 
+                    padding: 1.5rem; border-radius: 15px; text-align: center; 
+                    border: 1px solid rgba(255, 99, 132, 0.3); backdrop-filter: blur(10px);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔥</div>
+            <div style="font-size: 2.2rem; font-weight: bold; color: #FF6384; margin-bottom: 0.3rem;">{day_streak}</div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">Learning Streak</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col4:
+        hours = total_study_time // 60
+        minutes = total_study_time % 60
+        time_display = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, rgba(153, 102, 255, 0.2), rgba(255, 159, 243, 0.1)); 
+                    padding: 1.5rem; border-radius: 15px; text-align: center; 
+                    border: 1px solid rgba(153, 102, 255, 0.3); backdrop-filter: blur(10px);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏱️</div>
+            <div style="font-size: 2.2rem; font-weight: bold; color: #9966FF; margin-bottom: 0.3rem;">{time_display}</div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">Study Time</div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # Achievements section
-    st.markdown("## 🏆 Achievements")
-    st.markdown("Your learning milestones")
+    # Achievements section with progress bars
+    st.markdown("## 🏆 Achievements & Milestones")
+    
+    achievements = [
+        {"name": "🌟 First Steps", "desc": "Asked your first question", "progress": min(total_questions, 1), "target": 1, "unlocked": total_questions >= 1},
+        {"name": "🎓 Subject Explorer", "desc": "Explored 3+ different subjects", "progress": min(subjects_studied, 3), "target": 3, "unlocked": subjects_studied >= 3},
+        {"name": "⚡ Quick Learner", "desc": "Asked 10+ questions", "progress": min(total_questions, 10), "target": 10, "unlocked": total_questions >= 10},
+        {"name": "🔥 Streak Master", "desc": "Maintained a 7+ day streak", "progress": min(day_streak, 7), "target": 7, "unlocked": day_streak >= 7},
+        {"name": "📚 Knowledge Seeker", "desc": "Asked 25+ questions", "progress": min(total_questions, 25), "target": 25, "unlocked": total_questions >= 25},
+        {"name": "🎯 Subject Master", "desc": "Mastered 5+ subjects", "progress": min(subjects_studied, 5), "target": 5, "unlocked": subjects_studied >= 5}
+    ]
 
     col1, col2 = st.columns(2)
+    
+    for i, achievement in enumerate(achievements):
+        with col1 if i % 2 == 0 else col2:
+            progress_percent = (achievement["progress"] / achievement["target"]) * 100
+            opacity = "1" if achievement["unlocked"] else "0.6"
+            bg_color = "rgba(255, 215, 0, 0.2)" if achievement["unlocked"] else "rgba(255, 255, 255, 0.1)"
+            border_color = "rgba(255, 215, 0, 0.5)" if achievement["unlocked"] else "rgba(255, 255, 255, 0.2)"
+            
+            st.markdown(f"""
+            <div style="background: {bg_color}; padding: 1.2rem; border-radius: 12px; margin: 0.5rem 0;
+                        opacity: {opacity}; border: 1px solid {border_color}; backdrop-filter: blur(5px);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="font-size: 1.2rem; font-weight: bold;">{achievement["name"]}</div>
+                    <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8);">{achievement["progress"]}/{achievement["target"]}</div>
+                </div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 0.8rem;">{achievement["desc"]}</div>
+                <div style="background: rgba(0,0,0,0.3); height: 6px; border-radius: 3px; overflow: hidden;">
+                    <div style="background: linear-gradient(90deg, #FFD700, #FFA500); height: 100%; width: {progress_percent}%; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
+    st.markdown("---")
+
+    # Learning insights section
+    st.markdown("## 📈 Learning Insights")
+    
+    col1, col2 = st.columns(2)
+    
     with col1:
-        # First Question achievement
-        first_q_unlocked = total_questions >= 1
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, {'0.3' if first_q_unlocked else '0.1'});
-                    padding: 1rem; border-radius: 10px; margin: 0.5rem 0;
-                    opacity: {'1' if first_q_unlocked else '0.5'};">
-            <div style="font-size: 1.5rem;">🌟 First Question</div>
-            <div>Asked your first question</div>
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 15px; 
+                    border: 1px solid rgba(255, 215, 0, 0.3); backdrop-filter: blur(10px);">
+            <h3 style="color: #FFD700; margin: 0 0 1rem 0;">🎯 Favorite Subject</h3>
+            <div style="font-size: 1.5rem; color: white; margin-bottom: 0.5rem;">{favorite_subject}</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Your most explored topic</div>
         </div>
         """, unsafe_allow_html=True)
-
-        # Subject Master achievement
-        subject_master = subjects_studied >= 3
-        st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, {'0.3' if subject_master else '0.1'});
-                    padding: 1rem; border-radius: 10px; margin: 0.5rem 0;
-                    opacity: {'1' if subject_master else '0.5'};">
-            <div style="font-size: 1.5rem;">🎓 Subject Master</div>
-            <div>Studied 3+ subjects in a subject</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+    
     with col2:
-        # Quick Learner achievement
-        quick_learner = total_questions >= 10
+        level = min(total_questions // 5 + 1, 20)  # Level up every 5 questions, max level 20
+        next_level_questions = (level) * 5
+        questions_to_next = max(0, next_level_questions - total_questions)
+        
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, {'0.3' if quick_learner else '0.1'});
-                    padding: 1rem; border-radius: 10px; margin: 0.5rem 0;
-                    opacity: {'1' if quick_learner else '0.5'};">
-            <div style="font-size: 1.5rem;">⚡ Quick Learner</div>
-            <div>Completed 10 questions in one day</div>
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 15px; 
+                    border: 1px solid rgba(255, 215, 0, 0.3); backdrop-filter: blur(10px);">
+            <h3 style="color: #FFD700; margin: 0 0 1rem 0;">📊 Learning Level</h3>
+            <div style="font-size: 1.5rem; color: white; margin-bottom: 0.5rem;">Level {level}</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+                {questions_to_next} questions to next level
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Streak Champion achievement
-        streak_champ = day_streak >= 7
-        st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, {'0.3' if streak_champ else '0.1'});
-                    padding: 1rem; border-radius: 10px; margin: 0.5rem 0;
-                    opacity: {'1' if streak_champ else '0.5'};">
-            <div style="font-size: 1.5rem;">🔥 Streak Champion</div>
-            <div>Maintained a 7+ day streak</div>
-        </div>
-        """, unsafe_allow_html=True)
+    # Quick actions section
+    st.markdown("---")
+    st.markdown("## ⚡ Quick Actions")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("📚 Continue Learning", type="primary", use_container_width=True):
+            st.session_state.page = 'subjects'
+            st.rerun()
+    
+    with col2:
+        if st.button("📊 View History", use_container_width=True):
+            # Show recent history in an expander
+            with st.expander("📜 Recent Learning History", expanded=True):
+                if user_id:
+                    try:
+                        recent_rows = load_history(user_id, limit=5)
+                        if recent_rows:
+                            for row in recent_rows:
+                                subject, question = row[1], row[2]
+                                st.markdown(f"**{subject}**: {question[:100]}{'...' if len(question) > 100 else ''}")
+                        else:
+                            st.info("No history available yet. Start learning to see your progress!")
+                    except:
+                        st.info("No history available yet. Start learning to see your progress!")
+                else:
+                    st.info("No history available yet. Start learning to see your progress!")
+    
+    with col3:
+        if st.button("⚙️ Settings", use_container_width=True):
+            with st.expander("⚙️ Profile Settings", expanded=True):
+                st.markdown("### Account Information")
+                st.text_input("Username", value=username, disabled=True)
+                st.text_input("Email", value=email, disabled=True)
+                st.selectbox("Grade Level", ["Grade 9", "Grade 10", "Grade 11", "Grade 12", "University"], index=1)
+                st.checkbox("Email notifications", value=True)
+                st.checkbox("Achievement notifications", value=True)
 
 def render_about_page():
     """About Us page with company mission and info"""
@@ -3179,6 +3351,29 @@ def main():
     """Main application with complete workflow"""
     # Initialize database
     init_db()
+
+    # Handle JavaScript navigation
+    if 'nav_page' not in st.session_state:
+        st.session_state.nav_page = None
+    if 'logout_clicked' not in st.session_state:
+        st.session_state.logout_clicked = False
+        
+    # Check for navigation from JavaScript
+    nav_page = st.session_state.get('nav_page')
+    if nav_page and nav_page != st.session_state.page:
+        st.session_state.page = nav_page
+        st.session_state.nav_page = None  # Reset
+        st.rerun()
+        
+    # Handle logout
+    if st.session_state.get('logout_clicked'):
+        st.session_state.logged_in = False
+        st.session_state.page = 'landing'
+        st.session_state.logout_clicked = False
+        st.session_state.user_id = None
+        st.session_state.username = None
+        st.session_state.selected_subject = None
+        st.rerun()
 
     # Load CSS
     load_css()
