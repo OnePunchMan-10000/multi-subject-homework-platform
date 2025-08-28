@@ -425,6 +425,29 @@ st.markdown("""
         padding: 2.5rem; 
     } 
      
+    /* Input styling */
+    .stTextInput > div > div > input {
+        background-color: rgba(255,255,255,0.9) !important;
+        border: 2px solid rgba(255,255,255,0.5) !important;
+        border-radius: 8px !important;
+        color: #333 !important;
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+        max-width: 300px !important;
+    }
+    
+    .stTextArea textarea {
+        background-color: rgba(255,255,255,0.9) !important;
+        border: 2px solid rgba(255,255,255,0.5) !important;
+        border-radius: 8px !important;
+        color: #333 !important;
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+        max-width: 400px !important;
+        min-height: 80px !important;
+        max-height: 200px !important;
+    }
+
     /* Enhanced Button Styling */ 
     .stButton > button { 
         background: linear-gradient(45deg, #FFD700, #C0C0C0) !important; 

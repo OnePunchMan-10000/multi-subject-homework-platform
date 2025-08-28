@@ -2487,103 +2487,169 @@ def render_landing_page():
             st.rerun()
 
 def render_login_page():
-    """Professional centered login/register page"""
-    # No theme toggle on login page for cleaner look
-
-    # Compact centered login container
+    """Clean centered login page with proper structure"""
+    
+    # Clean login page CSS with background gradient
     st.markdown("""
-    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;">
-        <div class="auth-container">
-            <div style="padding: 1.5rem;">
-                <div style="text-align: center; margin-bottom: 1.5rem;">
-                    <div class="crown-icon" style="font-size: 2.5rem; margin-bottom: 0.3rem;">👑</div>
-                    <h1 style="font-size: 1.4rem; font-weight: 700; color: #333; margin: 0;">Welcome to EduLLM</h1>
-                    <p style="color: #666; margin: 0.3rem 0 0 0; font-size: 0.8rem;">Sign in to start learning</p>
-                </div>
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #FFD700 0%, #C0C0C0 25%, #2C2C2C 50%, #000000 75%, #FFD700 100%);
+        background-attachment: fixed;
+    }
+    
+    .login-container {
+        max-width: 420px;
+        margin: 50px auto;
+        padding: 30px 25px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    
+    .logo {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    
+    .crown-icon {
+        font-size: 3rem;
+        color: #FFD700;
+    }
+    
+    .title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        color: #cc9900;
+        margin: 10px 0 5px 0;
+    }
+    
+    .subtitle {
+        text-align: center;
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 20px;
+    }
+    
+    .btn-primary {
+        background-color: #f7c948 !important;
+        color: black !important;
+        font-weight: bold !important;
+        padding: 10px !important;
+        border: none !important;
+        border-radius: 6px !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+    }
+    
+    .social-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .social-btn {
+        flex: 1;
+        background-color: #f1f1f1;
+        color: #333;
+        border-radius: 6px;
+        text-align: center;
+        padding: 8px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .divider {
+        text-align: center;
+        color: #999;
+        margin: 15px 0;
+        font-size: 13px;
+    }
+    
+    /* Black inputs with white placeholders */
+    .stTextInput > div > div > input {
+        background: #1a1a1a !important;
+        color: #ffffff !important;
+        border: 1px solid #333333 !important;
+        border-radius: 6px !important;
+    }
+    
+    .stTextInput > div > div > input::placeholder {
+        color: #cccccc !important;
+        opacity: 1 !important;
+    }
+    </style>
     """, unsafe_allow_html=True)
 
-    # Auth form content - compact design
+    # Container with logo and title
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<div class="logo"><div class="crown-icon">👑</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="title">Welcome to EduLLM</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">Sign in to start learning</div>', unsafe_allow_html=True)
+
     # Tabs
-    tab_col1, tab_col2 = st.columns(2)
-    with tab_col1:
-        if st.button("Login", use_container_width=True, key="login_tab",
-                    type="primary" if st.session_state.auth_tab == 'login' else "secondary"):
-            st.session_state.auth_tab = 'login'
-    with tab_col2:
-        if st.button("Sign Up", use_container_width=True, key="register_tab",
-                    type="primary" if st.session_state.auth_tab == 'register' else "secondary"):
-            st.session_state.auth_tab = 'register'
+    tabs = st.tabs(["Login", "Sign Up"])
 
-    st.markdown("---")
-
-    if st.session_state.auth_tab == 'login':
-        st.markdown("### Sign In")
-        st.markdown("*Enter your credentials to access your account*")
-        st.markdown("")
-
+    # Login Tab
+    with tabs[0]:
         email = st.text_input("Email", placeholder="student@example.com", key="login_email")
         password = st.text_input("Password", type="password", placeholder="••••••••", key="login_password")
 
-        st.markdown("")
-        if st.button("Sign In", type="primary", use_container_width=True):
-                if email and password:
-                    # Try backend authentication first
-                    try:
-                        from app.backend import backend_login, backend_get_me
-                        ok, token_or_err = backend_login(email, password)
-                        if ok:
-                            token = token_or_err
-                            st.session_state["access_token"] = token
-                            ok2, me_or_err = backend_get_me(token)
-                            if ok2:
-                                st.session_state["user_id"] = me_or_err.get("id")
-                                st.session_state["username"] = me_or_err.get("username")
-                                st.session_state.logged_in = True
-                                st.session_state.page = 'subjects'
-                                st.success("Login successful!")
-                                st.rerun()
-                            else:
-                                st.error(f"Login succeeded but fetching user failed: {me_or_err}")
+        if st.button("Sign In", key="signin_btn"):
+            if email and password:
+                # Try backend authentication first
+                try:
+                    from app.backend import backend_login, backend_get_me
+                    ok, token_or_err = backend_login(email, password)
+                    if ok:
+                        token = token_or_err
+                        st.session_state["access_token"] = token
+                        ok2, me_or_err = backend_get_me(token)
+                        if ok2:
+                            st.session_state["user_id"] = me_or_err.get("id")
+                            st.session_state["username"] = me_or_err.get("username")
+                            st.session_state.logged_in = True
+                            st.session_state.page = 'subjects'
+                            st.success("Login successful!")
+                            st.rerun()
                         else:
-                            st.error(f"Login failed: {token_or_err}")
-                    except Exception as e:
-                        # Fallback to simple login for demo
-                        st.session_state.logged_in = True
-                        st.session_state.user_id = abs(hash(email)) % 1000000
-                        st.session_state.user_email = email
-                        st.session_state.page = 'subjects'
-                        st.success("Login successful (demo mode)!")
-                        st.rerun()
-                else:
-                    st.error("Please fill in all fields")
+                            st.error(f"Login succeeded but fetching user failed: {me_or_err}")
+                    else:
+                        st.error(f"Login failed: {token_or_err}")
+                except Exception as e:
+                    # Fallback to simple login for demo
+                    st.session_state.logged_in = True
+                    st.session_state.user_id = abs(hash(email)) % 1000000
+                    st.session_state.user_email = email
+                    st.session_state.page = 'subjects'
+                    st.success("Login successful (demo mode)!")
+                    st.rerun()
+            else:
+                st.error("Please fill in all fields")
 
-        st.markdown("---")
-        st.markdown("**OR CONTINUE WITH**")
-
-        google_col, github_col = st.columns(2)
-        with google_col:
-            if st.button("🔍 Google", use_container_width=True):
+        st.markdown('<div class="divider">OR CONTINUE WITH</div>', unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔍 Google", key="google_login"):
                 st.info("Google login coming soon!")
-        with github_col:
-            if st.button("🐙 GitHub", use_container_width=True):
+        with col2:
+            if st.button("🐙 GitHub", key="github_login"):
                 st.info("GitHub login coming soon!")
 
-    else:  # register
-        st.markdown("### Create Account")
-        st.markdown("*Join thousands of students improving their grades*")
-        st.markdown("")
-
-        name = st.text_input("Full Name", placeholder="Enter your full name", key="reg_name")
-        email = st.text_input("Email", placeholder="student@example.com", key="reg_email")
+    # Sign Up Tab
+    with tabs[1]:
+        name = st.text_input("Full Name", placeholder="Jane Doe", key="reg_name")
+        email = st.text_input("Email", placeholder="you@example.com", key="reg_email")
         password = st.text_input("Password", type="password", placeholder="Create a password", key="reg_password")
         confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password", key="reg_confirm")
 
-        st.markdown("")
-        if st.button("Create Account", type="primary", use_container_width=True):
+        if st.button("Sign Up", key="signup_btn"):
             if name and email and password and confirm_password:
                 if password == confirm_password:
                     st.session_state.logged_in = True
-                    # Generate consistent integer user_id from email
                     st.session_state.user_id = abs(hash(email)) % 1000000
                     st.session_state.user_email = email
                     st.session_state.page = 'subjects'
@@ -2594,18 +2660,22 @@ def render_login_page():
             else:
                 st.error("Please fill in all fields")
 
-    st.markdown("")
-    # Back to landing
-    if st.button('← Back to Home', use_container_width=True):
+        st.markdown('<div class="divider">OR CONTINUE WITH</div>', unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔍 Google", key="google_signup"):
+                st.info("Google login coming soon!")
+        with col2:
+            if st.button("🐙 GitHub", key="github_signup"):
+                st.info("GitHub login coming soon!")
+
+    # Back to home button
+    if st.button('← Back to Home'):
         st.session_state.page = 'landing'
         st.rerun()
 
-    # Close the auth container HTML
-    st.markdown("""
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def render_subjects_page():
