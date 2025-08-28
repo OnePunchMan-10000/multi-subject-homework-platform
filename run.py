@@ -9,6 +9,8 @@ import hashlib
 import matplotlib.pyplot as plt
 import numpy as np
 import io
+from streamlit_oauth import OAuth2Component
+import base64
 
 # Set page config with crown branding
 st.set_page_config(
@@ -2119,6 +2121,123 @@ def init_db():
     except sqlite3.Error:
         pass
 
+# OAuth Functions
+def google_oauth_login():
+    """Handle Google OAuth login with proper account selection"""
+    try:
+        # Check if we have Google OAuth credentials
+        client_id = st.secrets.get("GOOGLE_CLIENT_ID", "")
+        client_secret = st.secrets.get("GOOGLE_CLIENT_SECRET", "")
+        redirect_uri = st.secrets.get("GOOGLE_REDIRECT_URI", "http://localhost:8501")
+        
+        if not client_id or not client_secret:
+            # Fallback to demo login if credentials not configured
+            st.info("🔧 Google OAuth not configured. Using demo login...")
+            st.session_state.logged_in = True
+            st.session_state.username = "Demo Google User"
+            st.session_state.user_email = "demo.google@example.com"
+            st.session_state.user_id = 1001
+            st.session_state.join_date = "January 2025"
+            st.session_state.auth_method = "google_demo"
+            st.session_state.page = 'subjects'
+            st.success("✅ Demo Google login successful!")
+            st.rerun()
+            return
+        
+        # Initialize OAuth2Component for Google
+        oauth2 = OAuth2Component(
+            client_id=client_id,
+            client_secret=client_secret,
+            authorize_endpoint="https://accounts.google.com/o/oauth2/auth",
+            token_endpoint="https://oauth2.googleapis.com/token",
+            refresh_token_endpoint="https://oauth2.googleapis.com/token",
+            revoke_token_endpoint="https://oauth2.googleapis.com/revoke",
+        )
+        
+        # Set up the authorization URL with proper scopes
+        authorization_url = oauth2.authorize_button(
+            name="Login with Google",
+            icon="https://developers.google.com/identity/images/g-logo.png",
+            redirect_uri=redirect_uri,
+            scope="openid email profile",
+            key="google_oauth",
+            use_container_width=True,
+        )
+        
+        if authorization_url:
+            st.markdown(f'<meta http-equiv="refresh" content="0; URL={authorization_url}" />', unsafe_allow_html=True)
+            
+    except Exception as e:
+        st.error(f"Google OAuth error: {str(e)}")
+        # Fallback to demo login
+        st.session_state.logged_in = True
+        st.session_state.username = "Demo Google User"
+        st.session_state.user_email = "demo.google@example.com"
+        st.session_state.user_id = 1001
+        st.session_state.join_date = "January 2025"
+        st.session_state.auth_method = "google_demo"
+        st.session_state.page = 'subjects'
+        st.success("✅ Demo Google login successful!")
+        st.rerun()
+
+def github_oauth_login():
+    """Handle GitHub OAuth login"""
+    try:
+        # Check if we have GitHub OAuth credentials
+        client_id = st.secrets.get("GITHUB_CLIENT_ID", "")
+        client_secret = st.secrets.get("GITHUB_CLIENT_SECRET", "")
+        redirect_uri = st.secrets.get("GITHUB_REDIRECT_URI", "http://localhost:8501")
+        
+        if not client_id or not client_secret:
+            # Fallback to demo login if credentials not configured
+            st.info("🔧 GitHub OAuth not configured. Using demo login...")
+            st.session_state.logged_in = True
+            st.session_state.username = "Demo GitHub User"
+            st.session_state.user_email = "demo.github@example.com"
+            st.session_state.user_id = 1002
+            st.session_state.join_date = "January 2025"
+            st.session_state.auth_method = "github_demo"
+            st.session_state.page = 'subjects'
+            st.success("✅ Demo GitHub login successful!")
+            st.rerun()
+            return
+            
+        # Initialize OAuth2Component for GitHub
+        oauth2 = OAuth2Component(
+            client_id=client_id,
+            client_secret=client_secret,
+            authorize_endpoint="https://github.com/login/oauth/authorize",
+            token_endpoint="https://github.com/login/oauth/access_token",
+            refresh_token_endpoint="https://github.com/login/oauth/access_token",
+            revoke_token_endpoint="https://github.com/settings/applications",
+        )
+        
+        # Set up the authorization URL
+        authorization_url = oauth2.authorize_button(
+            name="Login with GitHub",
+            icon="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+            redirect_uri=redirect_uri,
+            scope="user:email",
+            key="github_oauth",
+            use_container_width=True,
+        )
+        
+        if authorization_url:
+            st.markdown(f'<meta http-equiv="refresh" content="0; URL={authorization_url}" />', unsafe_allow_html=True)
+            
+    except Exception as e:
+        st.error(f"GitHub OAuth error: {str(e)}")
+        # Fallback to demo login
+        st.session_state.logged_in = True
+        st.session_state.username = "Demo GitHub User"
+        st.session_state.user_email = "demo.github@example.com"
+        st.session_state.user_id = 1002
+        st.session_state.join_date = "January 2025"
+        st.session_state.auth_method = "github_demo"
+        st.session_state.page = 'subjects'
+        st.success("✅ Demo GitHub login successful!")
+        st.rerun()
+
 def save_history(user_id: int, subject: str, question: str, answer: str):
     """Save question/answer to local database"""
     try:
@@ -2278,6 +2397,41 @@ def render_navbar():
     """
 
     st.markdown(navbar_html, unsafe_allow_html=True)
+    
+    # Add functional navigation buttons below the navbar
+    st.markdown("---")
+    nav_cols = st.columns([1, 1, 1, 1, 1])
+    
+    with nav_cols[0]:
+        if st.button("🏠 Home", key="nav_home_functional"):
+            st.session_state.page = 'subjects'  # Home goes to subjects for logged in users
+            st.rerun()
+    
+    with nav_cols[1]:
+        if st.button("📚 Subjects", key="nav_subjects_functional"):
+            st.session_state.page = 'subjects'
+            st.rerun()
+    
+    with nav_cols[2]:
+        if st.button("👤 Profile", key="nav_profile_functional"):
+            st.session_state.page = 'profile'
+            st.rerun()
+    
+    with nav_cols[3]:
+        if st.button("ℹ️ About", key="nav_about_functional"):
+            st.session_state.page = 'about'
+            st.rerun()
+    
+    with nav_cols[4]:
+        if st.button("🚪 Logout", key="nav_logout_functional"):
+            # Clear session data
+            for key in list(st.session_state.keys()):
+                if key.startswith('user') or key in ['logged_in', 'username', 'user_email', 'auth_method']:
+                    del st.session_state[key]
+            st.session_state.logged_in = False
+            st.session_state.page = 'landing'
+            st.success("Successfully logged out!")
+            st.rerun()
 
 def render_hamburger_navbar():
     """Render hamburger menu for questions page - EduLLM left, burger right"""
@@ -2656,28 +2810,10 @@ def render_login_page():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔍 Google", key="google_login"):
-                # Simulate Google OAuth login
-                st.session_state.logged_in = True
-                st.session_state.username = "John Doe"
-                st.session_state.user_email = "john.doe@gmail.com"
-                st.session_state.user_id = 1001
-                st.session_state.join_date = "January 2025"
-                st.session_state.auth_method = "google"
-                st.session_state.page = 'subjects'
-                st.success("✅ Successfully signed in with Google!")
-                st.rerun()
+                google_oauth_login()
         with col2:
             if st.button("🐙 GitHub", key="github_login"):
-                # Simulate GitHub OAuth login
-                st.session_state.logged_in = True
-                st.session_state.username = "GitHub User"
-                st.session_state.user_email = "user@github.com"
-                st.session_state.user_id = 1002
-                st.session_state.join_date = "January 2025"
-                st.session_state.auth_method = "github"
-                st.session_state.page = 'subjects'
-                st.success("✅ Successfully signed in with GitHub!")
-                st.rerun()
+                github_oauth_login()
 
     # Sign Up Tab
     with tabs[1]:
@@ -2705,28 +2841,10 @@ def render_login_page():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔍 Google", key="google_signup"):
-                # Simulate Google OAuth registration
-                st.session_state.logged_in = True
-                st.session_state.username = "John Doe"
-                st.session_state.user_email = "john.doe@gmail.com"
-                st.session_state.user_id = 1001
-                st.session_state.join_date = "January 2025"
-                st.session_state.auth_method = "google"
-                st.session_state.page = 'subjects'
-                st.success("✅ Successfully registered with Google!")
-                st.rerun()
+                google_oauth_login()
         with col2:
             if st.button("🐙 GitHub", key="github_signup"):
-                # Simulate GitHub OAuth registration
-                st.session_state.logged_in = True
-                st.session_state.username = "GitHub User"
-                st.session_state.user_email = "user@github.com"
-                st.session_state.user_id = 1002
-                st.session_state.join_date = "January 2025"
-                st.session_state.auth_method = "github"
-                st.session_state.page = 'subjects'
-                st.success("✅ Successfully registered with GitHub!")
-                st.rerun()
+                github_oauth_login()
 
     # Back to home button
     if st.button('← Back to Home'):
