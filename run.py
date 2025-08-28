@@ -534,49 +534,101 @@ def load_css():
         border-color: #FFD700 !important;
     }}
 
-    /* Solution Content with High Contrast */
+    /* AGGRESSIVE HIGH CONTRAST SOLUTION CONTENT */
     .solution-content {{
-        background: rgba(255, 255, 255, 0.95) !important;
-        color: #000000 !important;
+        background: #000000 !important;
+        color: #FFFFFF !important;
+        border: 3px solid #FFFFFF !important;
         border-radius: 10px !important;
+        padding: 2rem !important;
+        margin: 1.5rem 0 !important;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3) !important;
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+    }}
+
+    .solution-content *, 
+    .solution-content p, 
+    .solution-content div, 
+    .solution-content span,
+    .solution-content h1,
+    .solution-content h2,
+    .solution-content h3,
+    .solution-content h4,
+    .solution-content h5,
+    .solution-content h6,
+    .solution-content strong,
+    .solution-content em,
+    .solution-content code,
+    .solution-content pre {{
+        background: #000000 !important;
+        color: #FFFFFF !important;
+        text-shadow: none !important;
+        font-weight: 500 !important;
+    }}
+
+    /* Math expressions - Black background with white text */
+    .math-line {{
+        background: #000000 !important;
+        color: #FFFFFF !important;
+        border: 2px solid #FFFFFF !important;
+        font-weight: 700 !important;
+        padding: 1rem !important;
+        margin: 1rem 0 !important;
+        border-radius: 8px !important;
+    }}
+
+    /* Final answers - Black background with white text */
+    .final-answer {{
+        background: #000000 !important;
+        color: #FFFFFF !important;
+        border: 3px solid #FFFFFF !important;
+        font-weight: 900 !important;
         padding: 1.5rem !important;
         margin: 1rem 0 !important;
-        border-left: 4px solid #FFD700 !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+        border-radius: 8px !important;
+        font-size: 18px !important;
     }}
 
-    .solution-content * {{
-        color: #000000 !important;
-        text-shadow: none !important;
-    }}
-
-    /* Math line styling with better contrast */
-    .math-line {{
-        background: rgba(255, 193, 7, 0.9) !important;
-        color: #000000 !important;
-        border: 2px solid #FFC107 !important;
-        font-weight: 600 !important;
-    }}
-
-    /* Final answer styling with better contrast */
-    .final-answer {{
-        background: rgba(76, 175, 80, 0.9) !important;
-        color: #000000 !important;
-        border: 2px solid #4CAF50 !important;
-        font-weight: 700 !important;
-    }}
-
-    /* Step code styling with better contrast */
+    /* Step code - Black background with white text */
     .step-code {{
-        background: rgba(255, 255, 255, 0.9) !important;
-        color: #000000 !important;
-        border: 2px solid #4CAF50 !important;
+        background: #000000 !important;
+        color: #FFFFFF !important;
+        border: 2px solid #FFFFFF !important;
+        padding: 1rem !important;
+        margin: 1rem 0 !important;
+        border-radius: 8px !important;
     }}
 
-    /* Improve general text readability */
-    .stMarkdown p, .stMarkdown div, .stMarkdown span {{
+    /* Code blocks - Black background with white text */
+    .code-block {{
+        background: #000000 !important;
         color: #FFFFFF !important;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+        border: 2px solid #FFFFFF !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        border-radius: 8px !important;
+    }}
+
+    .code-block *, 
+    .code-block pre, 
+    .code-block code {{
+        background: #000000 !important;
+        color: #FFFFFF !important;
+        font-family: 'Courier New', monospace !important;
+    }}
+
+    /* Override any conflicting styles */
+    [data-testid="stMarkdown"] div {{
+        background: transparent !important;
+    }}
+
+    /* Ensure all solution text is white on black */
+    .solution-content .stMarkdown,
+    .solution-content .stMarkdown *,
+    div[data-testid="stMarkdown"] {{
+        background: transparent !important;
+        color: #FFFFFF !important;
     }}
 
     </style>
