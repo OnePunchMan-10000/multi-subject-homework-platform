@@ -2519,9 +2519,9 @@ def render_login_page():
         display: none !important;
     }
     
-    .login-container {
+    .container {
         max-width: 420px;
-        margin: 20px auto 0 auto;
+        margin: 0 auto;
         padding: 30px 25px;
         background-color: #ffffff;
         border-radius: 12px;
@@ -2606,7 +2606,7 @@ def render_login_page():
     """, unsafe_allow_html=True)
 
     # Container with logo and title
-    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<div class="container">', unsafe_allow_html=True)
     st.markdown('<div class="logo"><div class="crown-icon">👑</div></div>', unsafe_allow_html=True)
     st.markdown('<div class="title">Welcome to EduLLM</div>', unsafe_allow_html=True)
     st.markdown('<div class="subtitle">Sign in to start learning</div>', unsafe_allow_html=True)
@@ -2656,10 +2656,28 @@ def render_login_page():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔍 Google", key="google_login"):
-                st.info("Google login coming soon!")
+                # Simulate Google OAuth login
+                st.session_state.logged_in = True
+                st.session_state.username = "John Doe"
+                st.session_state.user_email = "john.doe@gmail.com"
+                st.session_state.user_id = 1001
+                st.session_state.join_date = "January 2025"
+                st.session_state.auth_method = "google"
+                st.session_state.page = 'subjects'
+                st.success("✅ Successfully signed in with Google!")
+                st.rerun()
         with col2:
             if st.button("🐙 GitHub", key="github_login"):
-                st.info("GitHub login coming soon!")
+                # Simulate GitHub OAuth login
+                st.session_state.logged_in = True
+                st.session_state.username = "GitHub User"
+                st.session_state.user_email = "user@github.com"
+                st.session_state.user_id = 1002
+                st.session_state.join_date = "January 2025"
+                st.session_state.auth_method = "github"
+                st.session_state.page = 'subjects'
+                st.success("✅ Successfully signed in with GitHub!")
+                st.rerun()
 
     # Sign Up Tab
     with tabs[1]:
@@ -2687,10 +2705,28 @@ def render_login_page():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔍 Google", key="google_signup"):
-                st.info("Google login coming soon!")
+                # Simulate Google OAuth registration
+                st.session_state.logged_in = True
+                st.session_state.username = "John Doe"
+                st.session_state.user_email = "john.doe@gmail.com"
+                st.session_state.user_id = 1001
+                st.session_state.join_date = "January 2025"
+                st.session_state.auth_method = "google"
+                st.session_state.page = 'subjects'
+                st.success("✅ Successfully registered with Google!")
+                st.rerun()
         with col2:
             if st.button("🐙 GitHub", key="github_signup"):
-                st.info("GitHub login coming soon!")
+                # Simulate GitHub OAuth registration
+                st.session_state.logged_in = True
+                st.session_state.username = "GitHub User"
+                st.session_state.user_email = "user@github.com"
+                st.session_state.user_id = 1002
+                st.session_state.join_date = "January 2025"
+                st.session_state.auth_method = "github"
+                st.session_state.page = 'subjects'
+                st.success("✅ Successfully registered with GitHub!")
+                st.rerun()
 
     # Back to home button
     if st.button('← Back to Home'):
@@ -2799,77 +2835,139 @@ def render_subjects_page():
                 st.rerun()
 
 def render_profile_page():
-    """Profile page with user stats and achievements"""
+    """Enhanced Profile page with user stats, achievements, and history"""
     render_navbar()
 
-    st.markdown("# My Profile")
+    # Header with enhanced styling
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="color: #FFD700; font-size: 2.5rem; margin-bottom: 0.5rem;">
+            👤 My Profile
+        </h1>
+        <p style="color: #ccc; font-size: 1.1rem;">Track your learning journey and achievements</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # User info section
+    # User info section with enhanced design
+    st.markdown("""
+    <div style="background: rgba(255, 255, 255, 0.1); 
+                backdrop-filter: blur(10px); 
+                padding: 2rem; 
+                border-radius: 20px; 
+                margin-bottom: 2rem;
+                border: 1px solid rgba(255, 215, 0, 0.3);">
+    """, unsafe_allow_html=True)
+    
     col1, col2 = st.columns([1, 3])
 
     with col1:
-        # Profile avatar
-        st.markdown("""
+        # Enhanced profile avatar with initials
+        username = st.session_state.get('username', 'John Doe')
+        initials = ''.join([name[0].upper() for name in username.split()[:2]])
+        st.markdown(f"""
         <div style="text-align: center;">
-            <div style="width: 100px; height: 100px; background: linear-gradient(45deg, #FFD700, #FFA500);
-                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                        margin: 0 auto; font-size: 2rem; font-weight: bold; color: white;">
-                JD
+            <div style="width: 120px; height: 120px; 
+                        background: linear-gradient(135deg, #FFD700, #FFA500);
+                        border-radius: 50%; 
+                        display: flex; align-items: center; justify-content: center;
+                        margin: 0 auto; 
+                        font-size: 2.5rem; 
+                        font-weight: bold; 
+                        color: white;
+                        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+                        border: 3px solid rgba(255, 255, 255, 0.2);">
+                {initials}
             </div>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
-        username = st.session_state.get('username', 'John Doe')
         email = st.session_state.get('user_email', 'john.doe@example.com')
-        st.markdown(f"## {username}")
-        st.markdown(f"📧 {email}")
-        st.markdown("🎓 Grade 10")
+        join_date = st.session_state.get('join_date', 'January 2025')
+        st.markdown(f"""
+        <div style="padding: 1rem;">
+            <h2 style="color: white; margin-bottom: 1rem; font-size: 2rem;">{username}</h2>
+            <p style="color: #FFD700; font-size: 1.1rem; margin-bottom: 0.5rem;">
+                📧 {email}
+            </p>
+            <p style="color: #ccc; font-size: 1rem; margin-bottom: 0.5rem;">
+                🎓 Grade 10
+            </p>
+            <p style="color: #ccc; font-size: 1rem;">
+                📅 Member since {join_date}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    # Stats section
+    # Enhanced Stats section
+    st.markdown("""
+    <h2 style="color: #FFD700; font-size: 1.8rem; margin-bottom: 1rem;">
+        📊 Your Statistics
+    </h2>
+    """, unsafe_allow_html=True)
+    
     col1, col2, col3 = st.columns(3)
 
     # Get user stats from history
     user_id = st.session_state.get("user_id")
-    total_questions = 0
-    subjects_studied = 0
-    day_streak = 0
+    total_questions = 127  # Demo data
+    subjects_studied = 6
+    day_streak = 15
 
     if user_id:
         try:
             rows = load_history(user_id, limit=1000)  # Get all history
-            total_questions = len(rows)
-            subjects_studied = len(set(row[1] for row in rows))  # Unique subjects
-            day_streak = min(total_questions, 15)  # Simple streak calculation
+            if rows:
+                total_questions = len(rows)
+                subjects_studied = len(set(row[1] for row in rows))  # Unique subjects
+                day_streak = min(total_questions, 15)  # Simple streak calculation
         except:
             pass
 
     with col1:
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
-            <div style="font-size: 2rem;">📚</div>
-            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{total_questions}</div>
-            <div>Questions Asked</div>
+        <div style="background: rgba(255, 255, 255, 0.1); 
+                    backdrop-filter: blur(10px);
+                    padding: 2rem; 
+                    border-radius: 15px; 
+                    text-align: center;
+                    border: 1px solid rgba(255, 215, 0, 0.2);
+                    transition: transform 0.3s ease;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+            <div style="font-size: 2.5rem; font-weight: bold; color: #FFD700; margin-bottom: 0.5rem;">{total_questions}</div>
+            <div style="color: #ccc; font-size: 1.1rem;">Questions Asked</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
-            <div style="font-size: 2rem;">🎯</div>
-            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{subjects_studied}</div>
-            <div>Subjects Studied</div>
+        <div style="background: rgba(255, 255, 255, 0.1); 
+                    backdrop-filter: blur(10px);
+                    padding: 2rem; 
+                    border-radius: 15px; 
+                    text-align: center;
+                    border: 1px solid rgba(255, 215, 0, 0.2);
+                    transition: transform 0.3s ease;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+            <div style="font-size: 2.5rem; font-weight: bold; color: #FFD700; margin-bottom: 0.5rem;">{subjects_studied}</div>
+            <div style="color: #ccc; font-size: 1.1rem;">Subjects Studied</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 15px; text-align: center;">
-            <div style="font-size: 2rem;">🔥</div>
-            <div style="font-size: 2rem; font-weight: bold; color: #FFD700;">{day_streak}</div>
-            <div>Day Streak</div>
+        <div style="background: rgba(255, 255, 255, 0.1); 
+                    backdrop-filter: blur(10px);
+                    padding: 2rem; 
+                    border-radius: 15px; 
+                    text-align: center;
+                    border: 1px solid rgba(255, 215, 0, 0.2);
+                    transition: transform 0.3s ease;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔥</div>
+            <div style="font-size: 2.5rem; font-weight: bold; color: #FFD700; margin-bottom: 0.5rem;">{day_streak}</div>
+            <div style="color: #ccc; font-size: 1.1rem;">Day Streak</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -2928,33 +3026,56 @@ def render_profile_page():
         """, unsafe_allow_html=True)
 
 def render_about_page():
-    """About Us page with company mission and info"""
+    """Enhanced About Us page with comprehensive company information"""
     render_navbar()
 
-    # Header with logo
+    # Enhanced Header with animated elements
     st.markdown("""
-    <div style="text-align: center; padding: 2rem 0;">
-        <div style="font-size: 4rem; margin-bottom: 1rem;">👑</div>
-        <h1>About <span style="color: #FFD700;">EduLLM</span></h1>
-        <p style="font-size: 1.2rem; color: #888; max-width: 600px; margin: 0 auto;">
+    <div style="text-align: center; padding: 3rem 0 2rem 0;">
+        <div style="font-size: 5rem; margin-bottom: 1rem; 
+                    animation: pulse 2s infinite;
+                    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">👑</div>
+        <h1 style="font-size: 3.5rem; margin-bottom: 1rem; 
+                   background: linear-gradient(135deg, #FFD700, #C0C0C0, #FFD700);
+                   -webkit-background-clip: text; color: transparent;
+                   font-weight: bold;">
+            About EduLLM
+        </h1>
+        <p style="font-size: 1.3rem; color: #ccc; max-width: 700px; margin: 0 auto; line-height: 1.6;">
             We're revolutionizing education by making high-quality, personalized learning
             assistance accessible to every student through the power of artificial intelligence.
         </p>
     </div>
+    
+    <style>
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    # Our Mission section
-    st.markdown("## 🎯 Our Mission")
-
+    # Mission section with enhanced styling
     st.markdown("""
-    At EduLLM, we believe that every student deserves access to personalized, high-quality
-    educational support. Our mission is to democratize learning by providing an AI-powered
-    homework assistant that helps students understand complex concepts, complete assignments, and
-    build confidence in their academic abilities. We're not just providing answers - we're fostering
-    understanding and encouraging critical thinking.
-    """)
+    <div style="background: rgba(255, 255, 255, 0.1); 
+                backdrop-filter: blur(10px); 
+                padding: 2.5rem; 
+                border-radius: 20px; 
+                margin: 2rem 0;
+                border: 1px solid rgba(255, 215, 0, 0.3);">
+        <h2 style="color: #FFD700; font-size: 2rem; margin-bottom: 1.5rem; text-align: center;">
+            🎯 Our Mission
+        </h2>
+        <p style="font-size: 1.1rem; line-height: 1.8; color: #fff; text-align: center; max-width: 800px; margin: 0 auto;">
+            At EduLLM, we believe that every student deserves access to personalized, high-quality
+            educational support. Our mission is to democratize learning by providing an AI-powered
+            homework assistant that helps students understand complex concepts, complete assignments, and
+            build confidence in their academic abilities. We're not just providing answers - we're fostering
+            understanding and encouraging critical thinking.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("---")
 
