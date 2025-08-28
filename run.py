@@ -684,7 +684,7 @@ STYLE:
         "example": "Explain supply and demand equilibrium with a market example."
     },
     "Computer Science": {
-        "icon": "",
+        "icon": "💻",
         "prompt": """You are a computer science expert. Provide solutions using the EXACT format below.
 
 FORMATTING REQUIREMENTS:
@@ -694,97 +694,218 @@ FORMATTING REQUIREMENTS:
 4. Add blank lines between steps for readability
 5. ALWAYS include "**Time Complexity:**" and "**Space Complexity:**" sections before the final code
 6. End with "**Complete Code**" followed by ONE consolidated, executable code block fenced with language (e.g., ```python)
+
+EXAMPLE FORMAT:
+**Step 1:** Initialize two pointers
+Set left pointer to start and right pointer to end of array.
+```
+left = 0
+right = len(array) - 1
 ```
 
-Follow these instructions to make the following change to my code document.
-
-Instruction: 
-
-Code Edit:
+**Step 2:** Compare middle element
+Find middle index and compare with target value.
 ```
-{{ ... }}
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
-    }}
+mid = (left + right) // 2
+if array[mid] == target:
+    return mid
+```
 
-    /* Enhanced Input Field Styling */
-    .stTextInput > div > div > input {{
-        background: rgba(255, 255, 255, 0.95) !important;
-        color: #000000 !important;
-        border: 2px solid rgba(255, 215, 0, 0.4) !important;
-        border-radius: 8px !important;
-        padding: 10px 14px !important;
-        font-size: 14px !important;
-        text-shadow: none !important;
-        max-width: 350px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    }}
+**Time Complexity:** O(log n) where n is the size of the array
+**Space Complexity:** O(1) constant space usage
 
-    .stTextInput > div > div > input:focus {{
-        border-color: #FFD700 !important;
-        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
-        outline: none !important;
-    }}
+**Complete Code**
+```python
+# full, runnable program here
+```
 
-    .stTextArea > div > div > textarea {{
-        background: rgba(255, 255, 255, 0.95) !important;
-        color: #000000 !important;
-        border: 2px solid rgba(255, 215, 0, 0.4) !important;
-        border-radius: 8px !important;
-        padding: 12px 14px !important;
-        font-size: 14px !important;
-        text-shadow: none !important;
-        max-width: 500px !important;
-        min-height: 100px !important;
-        max-height: 250px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-        resize: vertical !important;
-    }}
+Keep explanations clean and readable with proper vertical separation.""",
+        "example": "Implement binary search algorithm in Python."
+    }
+}
 
-    .stTextArea > div > div > textarea:focus {{
-        border-color: #FFD700 !important;
-        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
-        outline: none !important;
-    }}
+# API Functions
+def get_api_response(question, subject):
+    """Get response from OpenRouter API"""
+    if 'OPENROUTER_API_KEY' not in st.secrets:
+        st.error("⚠️ API key not configured. Please add OPENROUTER_API_KEY to Streamlit secrets.")
+        return None
 
-    /* Enhanced Subject Cards */
-    .subject-card {{
-        background: rgba(255, 255, 255, 0.2) !important;
-{{ ... }}
-        backdrop-filter: blur(15px) !important;
-        border: 2px solid rgba(255, 215, 0, 0.3) !important;
-        border-radius: 15px !important;
-        padding: 1.5rem !important;
-        margin: 1rem 0 !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-        transition: all 0.3s ease !important;
-    }}
+    api_key = st.secrets['OPENROUTER_API_KEY']
 
-    .subject-card:hover {{
-        transform: translateY(-5px) !important;
-        box-shadow: 0 12px 40px rgba(255, 215, 0, 0.4) !important;
-        background: rgba(255, 255, 255, 0.3) !important;
-        border-color: #FFD700 !important;
-    }}
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
 
-    /* Solution Content with High Contrast */
-    .solution-content {{
-        background: rgba(255, 255, 255, 0.95) !important;
-        color: #000000 !important;
-        border-radius: 10px !important;
-        padding: 1.5rem !important;
-        margin: 1rem 0 !important;
-        border-left: 4px solid #FFD700 !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
-    }}
+    model = "openai/gpt-4o-mini"
+    if subject in ("Physics", "Chemistry"):
+        model = "openai/gpt-4o"
 
-    .solution-content * {{
-        color: #000000 !important;
-        text-shadow: none !important;
-    }}
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": SUBJECTS[subject]['prompt']},
+            {"role": "user", "content": question}
+        ],
+        "temperature": 0.1,
+        "max_tokens": 2000
+    }
 
-    </style>
-    """, unsafe_allow_html=True)
+    try:
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=body,
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            return response.json()['choices'][0]['message']['content']
+        else:
+            st.error("Service temporarily unavailable. Please try again.")
+            return None
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"Network Error: {str(e)}")
+        return None
+
+import re
+import html
+
+def format_powers(text):
+    """Convert ^2, ^3, etc. to proper superscript format"""
+    # Replace common powers with superscript
+    text = re.sub(r'\^2', '<span class="power">2</span>', text)
+    text = re.sub(r'\^3', '<span class="power">3</span>', text)
+    text = re.sub(r'\^4', '<span class="power">4</span>', text)
+    text = re.sub(r'\^(\d+)', r'<span class="power">\1</span>', text)
+    text = re.sub(r'\^(\([^)]+\))', r'<span class="power">\1</span>', text)
+    # Replace sqrt(...) with √(...)
+    text = re.sub(r'\bsqrt\s*\(', '√(', text)
+    return text
+
+def format_fraction(numerator, denominator):
+    """Format a fraction with numerator over denominator in inline style"""
+    num_clean = format_powers(numerator.strip())
+    den_clean = format_powers(denominator.strip())
+
+    return f"""<div class="fraction-display">
+        <div>{num_clean}</div>
+        <div class="fraction-bar"></div>
+        <div>{den_clean}</div>
+    </div>"""
+
+def format_response(response_text):
+    """Improved formatting with consistent vertical fractions and tighter spacing.
+
+    Also formats Computer Science responses:
+    - Preserves fenced code blocks in a styled container
+    - Keeps non-code steps readable like math section
+    """
+    if not response_text:
+        return ""
+
+    # Clean up LaTeX notation to simple text but preserve fraction structure
+    response_text = re.sub(r'\\sqrt\{([^}]+)\}', r'sqrt(\1)', response_text)
+    response_text = re.sub(r'\\[a-zA-Z]+\{?([^}]*)\}?', r'\1', response_text)
+
+    # Handle fenced code blocks (```lang ... ```)
+    formatted_content = []
+    code_block_open = False
+    code_lines = []
+    code_lang = None
+
+    lines = response_text.strip().split('\n')
+    for line in lines:
+        line = line.strip()
+        if not line:
+            # Add minimal spacing between sections
+            if not code_block_open:
+                formatted_content.append("<br>")
+            continue
+
+        # Detect start/end of fenced code blocks
+        if line.startswith('```'):
+            fence = line.strip()
+            if not code_block_open:
+                # opening
+                code_block_open = True
+                code_lines = []
+                code_lang = fence.strip('`').strip() or 'text'
+            else:
+                # closing -> render and reset
+                escaped = html.escape("\n".join(code_lines))
+                formatted_content.append(
+                    f'<div class="code-block"><div class="code-header">{code_lang}</div><pre><code>{escaped}</code></pre></div>'
+                )
+                code_block_open = False
+                code_lines = []
+                code_lang = None
+            continue
+
+        if code_block_open:
+            code_lines.append(line)
+            continue
+
+        # Skip stray closing tags that may appear in the model text
+        if re.match(r'^\s*</(div|span|p)>\s*$', line):
+            continue
+
+        # One-line step headers with next-line explanation in monospace box
+        if re.match(r'^\*\*Step \d+:', line) or re.match(r'^###\s*Step \d+:', line):
+            step_text = re.sub(r'\*\*|###', '', line).strip()
+            # Keep step title on one line
+            formatted_content.append(f'<div style="color:#4CAF50;font-weight:700;margin:0.6rem 0 0.2rem 0;">{step_text}</div>')
+            # The explanation for this step is expected on the next line; we wrap whatever comes next
+            # by inserting an opener token that the next non-empty, non-step line will close.
+            formatted_content.append('<!--STEP_CODE_NEXT-->')
+
+        # Final answer (simple one-line box, as before)
+        elif 'Final Answer' in line:
+            clean_line = re.sub(r'\*\*', '', line)
+            formatted_content.append(f'<div class="final-answer">{format_powers(clean_line)}</div>\n')
+
+        # Check for any line containing fractions - convert ALL to vertical display
+        elif '/' in line and ('(' in line or any(char in line for char in ['x', 'y', 'dx', 'dy', 'du', 'dv'])):
+            # Convert all fractions in the line to vertical display
+            # First handle complex fractions like (numerator)/(denominator) - more comprehensive pattern
+            formatted_line = re.sub(r'\(([^)]+)\)\s*/\s*\(([^)]+)\)', lambda m: format_fraction(m.group(1), m.group(2)), line)
+            # Then handle simple fractions like du/dx, dv/dx, dy/dx
+            formatted_line = re.sub(r'\b([a-zA-Z]+)/([a-zA-Z]+)\b', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
+            # Handle any remaining fractions with parentheses - catch cases like (2x + 1) / (x² + 1)²
+            formatted_line = re.sub(r'\(([^)]+)\)\s*/\s*([^/\s]+)', lambda m: format_fraction(m.group(1), m.group(2)), formatted_line)
+            formatted_content.append(f'<div class="math-line">{format_powers(formatted_line)}</div>\n')
+
+
+
+        # If we previously saw a step header, wrap this first following line in step-code box
+        elif formatted_content and formatted_content[-1] == '<!--STEP_CODE_NEXT-->':
+            formatted_content.pop()  # remove token
+            formatted_content.append(f'<div class="step-code">{html.escape(line)}</div>')
+
+        # Mathematical expressions with equations (no fractions)
+        elif ('=' in line and any(char in line for char in ['x', '+', '-', '*', '^', '(', ')'])):
+            formatted_content.append(f'<div class="math-line">{format_powers(line)}</div>\n')
+
+        # Regular text
+        else:
+            formatted_content.append(f"{format_powers(line)}\n")
+
+    return ''.join(formatted_content)
+
+def should_show_diagram(question: str, subject: str) -> bool:
+    """Return True only when the question explicitly asks for a visual/graph/geometry construction.
+
+    Policy:
+    - Require an explicit drawing intent for algebra/calculus/trig (draw/plot/graph/sketch/construct/diagram/illustrate/visualize)
+    - Always allow geometry constructions when common geometry terms appear
+    - Keep other subjects conservative
+    """
+    q = question.lower()
+
+    # 1) Strong drawing intent verbs
+    intent = any(w in q for w in [
 
 # Subject definitions
 SUBJECTS = {
