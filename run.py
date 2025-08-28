@@ -362,10 +362,11 @@ def load_css():
         background: rgba(255,255,255,0.3);
     }}
 
-    /* Centered Auth Container - Clean White Card */
+    /* Centered Auth Container - Compact White Card */
     .auth-container {{
-        max-width: 400px;
-        margin: 3rem auto;
+        max-width: 320px;
+        width: 320px;
+        margin: 0 auto;
         background: rgba(255, 255, 255, 0.98);
         border-radius: 12px;
         box-shadow: 0 8px 32px rgba(0,0,0,0.1);
@@ -456,24 +457,29 @@ def load_css():
         box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
     }}
 
-    /* Enhanced Input Field Styling - Clean White Inputs */
+    /* Enhanced Input Field Styling - Black Inputs with White Placeholder */
     .stTextInput > div > div > input {{
-        background: #ffffff !important;
-        color: #333333 !important;
-        border: 1px solid #e1e5e9 !important;
+        background: #1a1a1a !important;
+        color: #ffffff !important;
+        border: 1px solid #333333 !important;
         border-radius: 6px !important;
-        padding: 12px 16px !important;
+        padding: 10px 12px !important;
         font-size: 14px !important;
         text-shadow: none !important;
         width: 100% !important;
         max-width: none !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
         transition: border-color 0.2s ease !important;
+    }}
+    
+    .stTextInput > div > div > input::placeholder {{
+        color: #cccccc !important;
+        opacity: 1 !important;
     }}
 
     .stTextInput > div > div > input:focus {{
         border-color: #4285f4 !important;
-        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2) !important;
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.3) !important;
         outline: none !important;
     }}
 
@@ -2484,44 +2490,42 @@ def render_login_page():
     """Professional centered login/register page"""
     # No theme toggle on login page for cleaner look
 
-    # Centered login container with proper auth-container styling
+    # Compact centered login container
     st.markdown("""
-    <div style="display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 2rem 0;">
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;">
         <div class="auth-container">
-            <div style="padding: 2rem;">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <div class="crown-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">👑</div>
-                    <h1 style="font-size: 1.8rem; font-weight: 700; color: #333; margin: 0;">Welcome to EduLLM</h1>
-                    <p style="color: #666; margin: 0.5rem 0 0 0; font-size: 0.9rem;">Sign in to start learning</p>
+            <div style="padding: 1.5rem;">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div class="crown-icon" style="font-size: 2.5rem; margin-bottom: 0.3rem;">👑</div>
+                    <h1 style="font-size: 1.4rem; font-weight: 700; color: #333; margin: 0;">Welcome to EduLLM</h1>
+                    <p style="color: #666; margin: 0.3rem 0 0 0; font-size: 0.8rem;">Sign in to start learning</p>
                 </div>
     """, unsafe_allow_html=True)
 
-    # Auth form content
-    col1, col2, col3 = st.columns([0.1, 1, 0.1])
-    with col2:
-        # Tabs
-        tab_col1, tab_col2 = st.columns(2)
-        with tab_col1:
-            if st.button("Login", use_container_width=True, key="login_tab",
-                        type="primary" if st.session_state.auth_tab == 'login' else "secondary"):
-                st.session_state.auth_tab = 'login'
-        with tab_col2:
-            if st.button("Sign Up", use_container_width=True, key="register_tab",
-                        type="primary" if st.session_state.auth_tab == 'register' else "secondary"):
-                st.session_state.auth_tab = 'register'
+    # Auth form content - compact design
+    # Tabs
+    tab_col1, tab_col2 = st.columns(2)
+    with tab_col1:
+        if st.button("Login", use_container_width=True, key="login_tab",
+                    type="primary" if st.session_state.auth_tab == 'login' else "secondary"):
+            st.session_state.auth_tab = 'login'
+    with tab_col2:
+        if st.button("Sign Up", use_container_width=True, key="register_tab",
+                    type="primary" if st.session_state.auth_tab == 'register' else "secondary"):
+            st.session_state.auth_tab = 'register'
 
-        st.markdown("---")
+    st.markdown("---")
 
-        if st.session_state.auth_tab == 'login':
-            st.markdown("### Sign In")
-            st.markdown("*Enter your credentials to access your account*")
-            st.markdown("")
+    if st.session_state.auth_tab == 'login':
+        st.markdown("### Sign In")
+        st.markdown("*Enter your credentials to access your account*")
+        st.markdown("")
 
-            email = st.text_input("Email", placeholder="student@example.com", key="login_email")
-            password = st.text_input("Password", type="password", placeholder="••••••••", key="login_password")
+        email = st.text_input("Email", placeholder="student@example.com", key="login_email")
+        password = st.text_input("Password", type="password", placeholder="••••••••", key="login_password")
 
-            st.markdown("")
-            if st.button("Sign In", type="primary", use_container_width=True):
+        st.markdown("")
+        if st.button("Sign In", type="primary", use_container_width=True):
                 if email and password:
                     # Try backend authentication first
                     try:
@@ -2553,48 +2557,48 @@ def render_login_page():
                 else:
                     st.error("Please fill in all fields")
 
-            st.markdown("---")
-            st.markdown("**OR CONTINUE WITH**")
+        st.markdown("---")
+        st.markdown("**OR CONTINUE WITH**")
 
-            google_col, github_col = st.columns(2)
-            with google_col:
-                if st.button("🔍 Google", use_container_width=True):
-                    st.info("Google login coming soon!")
-            with github_col:
-                if st.button("🐙 GitHub", use_container_width=True):
-                    st.info("GitHub login coming soon!")
+        google_col, github_col = st.columns(2)
+        with google_col:
+            if st.button("🔍 Google", use_container_width=True):
+                st.info("Google login coming soon!")
+        with github_col:
+            if st.button("🐙 GitHub", use_container_width=True):
+                st.info("GitHub login coming soon!")
 
-        else:  # register
-            st.markdown("### Create Account")
-            st.markdown("*Join thousands of students improving their grades*")
-            st.markdown("")
+    else:  # register
+        st.markdown("### Create Account")
+        st.markdown("*Join thousands of students improving their grades*")
+        st.markdown("")
 
-            name = st.text_input("Full Name", placeholder="Enter your full name", key="reg_name")
-            email = st.text_input("Email", placeholder="student@example.com", key="reg_email")
-            password = st.text_input("Password", type="password", placeholder="Create a password", key="reg_password")
-            confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password", key="reg_confirm")
-
-            st.markdown("")
-            if st.button("Create Account", type="primary", use_container_width=True):
-                if name and email and password and confirm_password:
-                    if password == confirm_password:
-                        st.session_state.logged_in = True
-                        # Generate consistent integer user_id from email
-                        st.session_state.user_id = abs(hash(email)) % 1000000
-                        st.session_state.user_email = email
-                        st.session_state.page = 'subjects'
-                        st.success("Registration successful!")
-                        st.rerun()
-                    else:
-                        st.error("Passwords don't match")
-                else:
-                    st.error("Please fill in all fields")
+        name = st.text_input("Full Name", placeholder="Enter your full name", key="reg_name")
+        email = st.text_input("Email", placeholder="student@example.com", key="reg_email")
+        password = st.text_input("Password", type="password", placeholder="Create a password", key="reg_password")
+        confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password", key="reg_confirm")
 
         st.markdown("")
-        # Back to landing
-        if st.button('← Back to Home', use_container_width=True):
-            st.session_state.page = 'landing'
-            st.rerun()
+        if st.button("Create Account", type="primary", use_container_width=True):
+            if name and email and password and confirm_password:
+                if password == confirm_password:
+                    st.session_state.logged_in = True
+                    # Generate consistent integer user_id from email
+                    st.session_state.user_id = abs(hash(email)) % 1000000
+                    st.session_state.user_email = email
+                    st.session_state.page = 'subjects'
+                    st.success("Registration successful!")
+                    st.rerun()
+                else:
+                    st.error("Passwords don't match")
+            else:
+                st.error("Please fill in all fields")
+
+    st.markdown("")
+    # Back to landing
+    if st.button('← Back to Home', use_container_width=True):
+        st.session_state.page = 'landing'
+        st.rerun()
 
     # Close the auth container HTML
     st.markdown("""
