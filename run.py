@@ -457,7 +457,7 @@ def load_css():
     }}
 
     /* Enhanced Input Field Styling */
-    .stTextInput > div > div > input {
+    .stTextInput > div > div > input {{
         background: rgba(255, 255, 255, 0.95) !important;
         color: #000000 !important;
         border: 2px solid rgba(255, 215, 0, 0.4) !important;
@@ -467,15 +467,15 @@ def load_css():
         text-shadow: none !important;
         max-width: 350px !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    }
+    }}
 
-    .stTextInput > div > div > input:focus {
+    .stTextInput > div > div > input:focus {{
         border-color: #FFD700 !important;
         box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
         outline: none !important;
-    }
+    }}
 
-    .stTextArea > div > div > textarea {
+    .stTextArea > div > div > textarea {{
         background: rgba(255, 255, 255, 0.95) !important;
         color: #000000 !important;
         border: 2px solid rgba(255, 215, 0, 0.4) !important;
@@ -488,16 +488,16 @@ def load_css():
         max-height: 250px !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
         resize: vertical !important;
-    }
+    }}
 
-    .stTextArea > div > div > textarea:focus {
+    .stTextArea > div > div > textarea:focus {{
         border-color: #FFD700 !important;
         box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
         outline: none !important;
-    }
+    }}
 
     /* Enhanced Subject Cards */
-    .subject-card {
+    .subject-card {{
         background: rgba(255, 255, 255, 0.2) !important;
         backdrop-filter: blur(15px) !important;
         border: 2px solid rgba(255, 215, 0, 0.3) !important;
@@ -506,17 +506,17 @@ def load_css():
         margin: 1rem 0 !important;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
         transition: all 0.3s ease !important;
-    }
+    }}
 
-    .subject-card:hover {
+    .subject-card:hover {{
         transform: translateY(-5px) !important;
         box-shadow: 0 12px 40px rgba(255, 215, 0, 0.4) !important;
         background: rgba(255, 255, 255, 0.3) !important;
         border-color: #FFD700 !important;
-    }
+    }}
 
     /* Solution Content with High Contrast */
-    .solution-content {
+    .solution-content {{
         background: rgba(255, 255, 255, 0.95) !important;
         color: #000000 !important;
         border-radius: 10px !important;
@@ -524,12 +524,12 @@ def load_css():
         margin: 1rem 0 !important;
         border-left: 4px solid #FFD700 !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
-    }
+    }}
 
-    .solution-content * {
+    .solution-content * {{
         color: #000000 !important;
         text-shadow: none !important;
-    }
+    }}
 
     </style>
     """, unsafe_allow_html=True)
