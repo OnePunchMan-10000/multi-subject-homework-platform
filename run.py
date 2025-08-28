@@ -906,6 +906,18 @@ def should_show_diagram(question: str, subject: str) -> bool:
 
     # 1) Strong drawing intent verbs
     intent = any(w in q for w in [
+        'draw', 'plot', 'graph', 'sketch', 'construct', 'diagram', 'illustrate', 'visualize'
+    ])
+    
+    # 2) Geometry terms that usually need construction
+    geometry_terms = any(w in q for w in [
+        'triangle', 'circle', 'polygon', 'angle', 'perpendicular', 'parallel'
+    ])
+    
+    if subject == "Mathematics":
+        return intent or geometry_terms
+    else:
+        return intent
 
 # Subject definitions
 SUBJECTS = {
