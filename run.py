@@ -64,17 +64,24 @@ def load_css():
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
     }}
 
-    /* Remove ALL Streamlit default spacing and containers - NO SCROLLING */
+    /* Main container with glass effect and top padding for fixed navbar */
     .main .block-container {{
-        padding: 0 !important;
-        margin: 0 !important;
-        max-width: 100% !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-        min-height: 100vh !important;
-        height: 100vh !important;
-        overflow: hidden !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(15px) !important;
+        border-radius: 20px !important;
+        margin: 1rem !important;
+        margin-top: 6rem !important;
+        padding-top: 2rem !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    }}
+
+    /* Remove ALL Streamlit default spacing */
+    .main .block-container {{
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        max-width: 100%;
     }}
 
     /* Remove element container spacing */
@@ -93,10 +100,8 @@ def load_css():
 
     /* Remove any container spacing */
     .stApp > div:first-child {{
-        padding: 0 !important;
-        margin: 0 !important;
-        height: 100vh !important;
-        overflow: hidden !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
     }}
 
     /* Remove markdown container spacing */
@@ -109,13 +114,6 @@ def load_css():
     .stColumn, [data-testid="column"] {{
         padding: 0 !important;
         margin: 0 !important;
-    }}
-
-    /* Prevent any scrolling */
-    html, body, .stApp {{
-        overflow: hidden !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
     }}
 
     /* Navbar styling */
@@ -2492,9 +2490,9 @@ def render_login_page():
     """Professional centered login/register page"""
     # No theme toggle on login page for cleaner look
 
-    # Single container from top - NO SCROLLING
+    # Compact centered login container
     st.markdown("""
-    <div style="height: 100vh; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; overflow: hidden;">
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;">
         <div class="auth-container">
             <div style="padding: 1.5rem;">
                 <div style="text-align: center; margin-bottom: 1.5rem;">
