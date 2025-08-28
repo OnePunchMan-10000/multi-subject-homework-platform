@@ -2607,7 +2607,6 @@ def render_login_page():
 
     # Container with logo and title
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-{{ ... }}
     st.markdown('<div class="logo"><div class="crown-icon">👑</div></div>', unsafe_allow_html=True)
     st.markdown('<div class="title">Welcome to EduLLM</div>', unsafe_allow_html=True)
     st.markdown('<div class="subtitle">Sign in to start learning</div>', unsafe_allow_html=True)
