@@ -454,7 +454,7 @@ def load_css():
         background: linear-gradient(45deg, #FFA500, #E6E6FA) !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
-    }
+    }}
 
     /* Enhanced Input Field Styling */
     .stTextInput > div > div > input {
