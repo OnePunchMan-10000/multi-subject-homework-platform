@@ -362,16 +362,16 @@ def load_css():
         background: rgba(255,255,255,0.3);
     }}
 
-    /* Centered Auth Container */
+    /* Centered Auth Container - Clean White Card */
     .auth-container {{
-        max-width: 450px;
-        margin: 2rem auto;
-        background: {card_bg};
-        border-radius: 20px;
-        box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        max-width: 400px;
+        margin: 3rem auto;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         overflow: hidden;
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 215, 0, 0.2);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
     }}
 
     .auth-tabs {{
@@ -456,43 +456,47 @@ def load_css():
         box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
     }}
 
-    /* Enhanced Input Field Styling */
+    /* Enhanced Input Field Styling - Clean White Inputs */
     .stTextInput > div > div > input {{
-        background: rgba(255, 255, 255, 0.95) !important;
-        color: #000000 !important;
-        border: 2px solid rgba(255, 215, 0, 0.4) !important;
-        border-radius: 8px !important;
-        padding: 10px 14px !important;
+        background: #ffffff !important;
+        color: #333333 !important;
+        border: 1px solid #e1e5e9 !important;
+        border-radius: 6px !important;
+        padding: 12px 16px !important;
         font-size: 14px !important;
         text-shadow: none !important;
-        max-width: 350px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        width: 100% !important;
+        max-width: none !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        transition: border-color 0.2s ease !important;
     }}
 
     .stTextInput > div > div > input:focus {{
-        border-color: #FFD700 !important;
-        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
+        border-color: #4285f4 !important;
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2) !important;
         outline: none !important;
     }}
 
     .stTextArea > div > div > textarea {{
-        background: rgba(255, 255, 255, 0.95) !important;
-        color: #000000 !important;
-        border: 2px solid rgba(255, 215, 0, 0.4) !important;
-        border-radius: 8px !important;
-        padding: 12px 14px !important;
+        background: #ffffff !important;
+        color: #333333 !important;
+        border: 1px solid #e1e5e9 !important;
+        border-radius: 6px !important;
+        padding: 12px 16px !important;
         font-size: 14px !important;
         text-shadow: none !important;
-        max-width: 500px !important;
+        width: 100% !important;
+        max-width: none !important;
         min-height: 100px !important;
         max-height: 250px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
         resize: vertical !important;
+        transition: border-color 0.2s ease !important;
     }}
 
     .stTextArea > div > div > textarea:focus {{
-        border-color: #FFD700 !important;
-        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
+        border-color: #4285f4 !important;
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2) !important;
         outline: none !important;
     }}
 
@@ -2480,19 +2484,20 @@ def render_login_page():
     """Professional centered login/register page"""
     # No theme toggle on login page for cleaner look
 
-    # Centered login container (removed unnecessary outer wrapper)
-
-    # Crown logo and title - more compact
+    # Centered login container with proper auth-container styling
     st.markdown("""
-    <div class="crown-logo" style="margin-bottom: 1rem;">
-        <div class="crown-icon">👑</div>
-        <div class="brand-letter" style="width: 80px; height: 80px; font-size: 2.5rem;">E</div>
-    </div>
-    <h1 style="font-size: 2rem; font-weight: 700; color: #FFD700; margin: 1rem 0;">Welcome to EduLLM</h1>
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 2rem 0;">
+        <div class="auth-container">
+            <div style="padding: 2rem;">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div class="crown-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">👑</div>
+                    <h1 style="font-size: 1.8rem; font-weight: 700; color: #333; margin: 0;">Welcome to EduLLM</h1>
+                    <p style="color: #666; margin: 0.5rem 0 0 0; font-size: 0.9rem;">Sign in to start learning</p>
+                </div>
     """, unsafe_allow_html=True)
 
-    # Centered auth container (removed unnecessary wrapper)
-    col1, col2, col3 = st.columns([0.5, 2, 0.5])
+    # Auth form content
+    col1, col2, col3 = st.columns([0.1, 1, 0.1])
     with col2:
         # Tabs
         tab_col1, tab_col2 = st.columns(2)
@@ -2590,6 +2595,13 @@ def render_login_page():
         if st.button('← Back to Home', use_container_width=True):
             st.session_state.page = 'landing'
             st.rerun()
+
+    # Close the auth container HTML
+    st.markdown("""
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def render_subjects_page():
