@@ -2489,7 +2489,7 @@ def render_landing_page():
 def render_login_page():
     """Clean centered login page with proper structure"""
     
-    # Clean login page CSS with background gradient
+    # Clean login page CSS with background gradient - remove all default spacing
     st.markdown("""
     <style>
     .stApp {
@@ -2497,9 +2497,31 @@ def render_login_page():
         background-attachment: fixed;
     }
     
+    /* Remove all default Streamlit padding and margins */
+    .main > div {
+        padding-top: 0rem !important;
+        padding-left: 0rem !important;
+        padding-right: 0rem !important;
+        padding-bottom: 0rem !important;
+    }
+    .block-container {
+        padding-top: 0rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-bottom: 0rem !important;
+        margin-top: 0rem !important;
+        max-width: none !important;
+    }
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    .stApp > header {
+        display: none !important;
+    }
+    
     .login-container {
         max-width: 420px;
-        margin: 50px auto;
+        margin: 20px auto 0 auto;
         padding: 30px 25px;
         background-color: #ffffff;
         border-radius: 12px;
@@ -2585,6 +2607,7 @@ def render_login_page():
 
     # Container with logo and title
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
+{{ ... }}
     st.markdown('<div class="logo"><div class="crown-icon">👑</div></div>', unsafe_allow_html=True)
     st.markdown('<div class="title">Welcome to EduLLM</div>', unsafe_allow_html=True)
     st.markdown('<div class="subtitle">Sign in to start learning</div>', unsafe_allow_html=True)
