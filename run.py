@@ -550,6 +550,35 @@ def load_css():
         text-shadow: none !important;
     }}
 
+    /* Math line styling with better contrast */
+    .math-line {{
+        background: rgba(255, 193, 7, 0.9) !important;
+        color: #000000 !important;
+        border: 2px solid #FFC107 !important;
+        font-weight: 600 !important;
+    }}
+
+    /* Final answer styling with better contrast */
+    .final-answer {{
+        background: rgba(76, 175, 80, 0.9) !important;
+        color: #000000 !important;
+        border: 2px solid #4CAF50 !important;
+        font-weight: 700 !important;
+    }}
+
+    /* Step code styling with better contrast */
+    .step-code {{
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #000000 !important;
+        border: 2px solid #4CAF50 !important;
+    }}
+
+    /* Improve general text readability */
+    .stMarkdown p, .stMarkdown div, .stMarkdown span {{
+        color: #FFFFFF !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+    }}
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -2844,11 +2873,29 @@ def render_login_page():
         
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("🔍 Google", key="google_login"):
-                google_oauth_login()
+            if st.button("🔍 Google Demo", key="google_login"):
+                # Use demo login only to avoid OAuth compliance issues
+                st.session_state.logged_in = True
+                st.session_state.username = "Demo Google User"
+                st.session_state.user_email = "demo.google@example.com"
+                st.session_state.user_id = 1001
+                st.session_state.join_date = "January 2025"
+                st.session_state.auth_method = "google_demo"
+                st.session_state.page = 'subjects'
+                st.success("✅ Demo Google login successful!")
+                st.rerun()
         with col2:
-            if st.button("🐙 GitHub", key="github_login"):
-                github_oauth_login()
+            if st.button("🐙 GitHub Demo", key="github_login"):
+                # Use demo login only to avoid OAuth compliance issues
+                st.session_state.logged_in = True
+                st.session_state.username = "Demo GitHub User"
+                st.session_state.user_email = "demo.github@example.com"
+                st.session_state.user_id = 1002
+                st.session_state.join_date = "January 2025"
+                st.session_state.auth_method = "github_demo"
+                st.session_state.page = 'subjects'
+                st.success("✅ Demo GitHub login successful!")
+                st.rerun()
 
     # Sign Up Tab
     with tabs[1]:
@@ -2875,11 +2922,29 @@ def render_login_page():
         
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("🔍 Google", key="google_signup"):
-                google_oauth_login()
+            if st.button("🔍 Google Demo", key="google_signup"):
+                # Use demo login only to avoid OAuth compliance issues
+                st.session_state.logged_in = True
+                st.session_state.username = "Demo Google User"
+                st.session_state.user_email = "demo.google@example.com"
+                st.session_state.user_id = 1001
+                st.session_state.join_date = "January 2025"
+                st.session_state.auth_method = "google_demo"
+                st.session_state.page = 'subjects'
+                st.success("✅ Demo Google signup successful!")
+                st.rerun()
         with col2:
-            if st.button("🐙 GitHub", key="github_signup"):
-                github_oauth_login()
+            if st.button("🐙 GitHub Demo", key="github_signup"):
+                # Use demo login only to avoid OAuth compliance issues
+                st.session_state.logged_in = True
+                st.session_state.username = "Demo GitHub User"
+                st.session_state.user_email = "demo.github@example.com"
+                st.session_state.user_id = 1002
+                st.session_state.join_date = "January 2025"
+                st.session_state.auth_method = "github_demo"
+                st.session_state.page = 'subjects'
+                st.success("✅ Demo GitHub signup successful!")
+                st.rerun()
 
     # Back to home button
     if st.button('← Back to Home'):
