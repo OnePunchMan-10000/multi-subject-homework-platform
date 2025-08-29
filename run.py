@@ -3475,7 +3475,7 @@ def render_about_page():
 def render_questions_page():
     """Questions page with hamburger menu"""
     
-
+    render_hamburger_navbar()
     subject = st.session_state.selected_subject
 
 
