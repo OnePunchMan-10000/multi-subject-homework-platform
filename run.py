@@ -66,6 +66,10 @@ def load_css():
         padding-top: 0 !important;
         min-height: 100vh;
     }}
+    .container
+    {{
+    opacity: 0 !important;
+    }}
     .stVerticalBlock
     {{
         display: flex !important;
