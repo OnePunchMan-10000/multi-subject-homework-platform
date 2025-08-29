@@ -67,11 +67,11 @@ def load_css():
         min-height: 100vh;
     }}
     .stVerticalBlock
-    {
+    {{
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        }
+        }}
     /* Enhanced text readability with shadows */
     .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, span, div {{
         color: {text_color} !important;
