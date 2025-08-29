@@ -66,6 +66,12 @@ def load_css():
         padding-top: 0 !important;
         min-height: 100vh;
     }}
+    .st-ae
+    {{
+    display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }}
     .container
     {{
     opacity: 0 !important;
