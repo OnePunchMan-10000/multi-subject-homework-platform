@@ -70,6 +70,7 @@ def load_css():
     {{
     display: flex !important;
         justify-content: center !important;
+        flex-direction: column;
         align-items: center !important;
     }}
     .container
