@@ -3022,12 +3022,7 @@ def render_login_page():
                 st.success("✅ Demo GitHub signup successful!")
                 st.rerun()
 
-    # Back to home button
-    if st.button('← Back to Home'):
-        st.session_state.page = 'landing'
-        st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    
 
 
 def render_subjects_page():
