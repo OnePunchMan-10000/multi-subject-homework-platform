@@ -2872,12 +2872,20 @@ def render_login_page():
         color: #cccccc !important;
         opacity: 1 !important;
     }
+    .stTabs
+    {
+    width:60% !important;
+    }
+    .st-cb
+    {
+    width:60% !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
     # Container with logo and title
     st.markdown('<div class="container">', unsafe_allow_html=True)
-    st.markdown('<div class="logo"><div class="crown-icon">👑</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="logo"><div class="crown-icon"></div></div>', unsafe_allow_html=True)
     st.markdown('<div class="title">Welcome to EduLLM</div>', unsafe_allow_html=True)
     st.markdown('<div class="subtitle">Sign in to start learning</div>', unsafe_allow_html=True)
 
