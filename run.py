@@ -6,6 +6,7 @@ import requests
 import json
 import os
 import hashlib
+import struct
 import matplotlib.pyplot as plt
 import numpy as np
 import io
@@ -2195,6 +2196,14 @@ import sqlite3
 
 DB_PATH = "homework_history.db"
 
+def generate_consistent_user_id(username_or_email: str) -> int:
+    """Generate a consistent user ID from username or email"""
+    # Use SHA256 to create a consistent hash
+    hash_obj = hashlib.sha256((username_or_email + "eduLLM_salt_2024").encode('utf-8'))
+    # Convert first 4 bytes to integer
+    user_id = struct.unpack('>I', hash_obj.digest()[:4])[0] % 1000000
+    return user_id
+
 def init_db():
     """Initialize the database with required tables"""
     try:
@@ -2910,15 +2919,14 @@ def render_login_page():
 
     # Login Tab
     with tabs[0]:
-        email = st.text_input("Email", placeholder="student@example.com", key="login_email")
+        username = st.text_input("Username", placeholder="your_username", key="login_username")
         password = st.text_input("Password", type="password", placeholder="••••••••", key="login_password")
 
         if st.button("Sign In", key="signin_btn"):
-            if email and password:
+            if username and password:
                 # Try backend authentication first
                 try:
-                    from app.backend import backend_login, backend_get_me
-                    ok, token_or_err = backend_login(email, password)
+                    ok, token_or_err = backend_login(username, password)
                     if ok:
                         token = token_or_err
                         st.session_state["access_token"] = token
@@ -2937,8 +2945,8 @@ def render_login_page():
                 except Exception as e:
                     # Fallback to simple login for demo
                     st.session_state.logged_in = True
-                    st.session_state.user_id = abs(hash(email)) % 1000000
-                    st.session_state.user_email = email
+                    st.session_state.user_id = generate_consistent_user_id(username)
+                    st.session_state.username = username
                     st.session_state.page = 'subjects'
                     st.success("Login successful (demo mode)!")
                     st.rerun()
@@ -2976,16 +2984,16 @@ def render_login_page():
     # Sign Up Tab
     with tabs[1]:
         name = st.text_input("Full Name", placeholder="Jane Doe", key="reg_name")
-        email = st.text_input("Email", placeholder="you@example.com", key="reg_email")
+        username = st.text_input("Username", placeholder="choose_username", key="reg_username")
         password = st.text_input("Password", type="password", placeholder="Create a password", key="reg_password")
         confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password", key="reg_confirm")
 
         if st.button("Sign Up", key="signup_btn"):
-            if name and email and password and confirm_password:
+            if name and username and password and confirm_password:
                 if password == confirm_password:
                     st.session_state.logged_in = True
-                    st.session_state.user_id = abs(hash(email)) % 1000000
-                    st.session_state.user_email = email
+                    st.session_state.user_id = generate_consistent_user_id(username)
+                    st.session_state.username = username
                     st.session_state.page = 'subjects'
                     st.success("Registration successful!")
                     st.rerun()
