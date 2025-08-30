@@ -2919,14 +2919,14 @@ def render_login_page():
 
     # Login Tab
     with tabs[0]:
-        username = st.text_input("Username", placeholder="your_username", key="login_username")
+        username_or_email = st.text_input("Username or Email", placeholder="username or email@example.com", key="login_username_email")
         password = st.text_input("Password", type="password", placeholder="••••••••", key="login_password")
 
         if st.button("Sign In", key="signin_btn"):
-            if username and password:
+            if username_or_email and password:
                 # Try backend authentication first
                 try:
-                    ok, token_or_err = backend_login(username, password)
+                    ok, token_or_err = backend_login(username_or_email, password)
                     if ok:
                         token = token_or_err
                         st.session_state["access_token"] = token
@@ -2945,8 +2945,12 @@ def render_login_page():
                 except Exception as e:
                     # Fallback to simple login for demo
                     st.session_state.logged_in = True
-                    st.session_state.user_id = generate_consistent_user_id(username)
-                    st.session_state.username = username
+                    st.session_state.user_id = generate_consistent_user_id(username_or_email)
+                    if "@" in username_or_email:
+                        st.session_state.user_email = username_or_email
+                        st.session_state.username = username_or_email.split("@")[0]
+                    else:
+                        st.session_state.username = username_or_email
                     st.session_state.page = 'subjects'
                     st.success("Login successful (demo mode)!")
                     st.rerun()
