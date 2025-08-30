@@ -2919,41 +2919,18 @@ def render_login_page():
 
     # Login Tab
     with tabs[0]:
-        username_or_email = st.text_input("Username or Email", placeholder="username or email@example.com", key="login_username_email")
+        email = st.text_input("Email", placeholder="student@example.com", key="login_email")
         password = st.text_input("Password", type="password", placeholder="••••••••", key="login_password")
 
         if st.button("Sign In", key="signin_btn"):
-            if username_or_email and password:
-                # Try backend authentication first
-                try:
-                    ok, token_or_err = backend_login(username_or_email, password)
-                    if ok:
-                        token = token_or_err
-                        st.session_state["access_token"] = token
-                        ok2, me_or_err = backend_get_me(token)
-                        if ok2:
-                            st.session_state["user_id"] = me_or_err.get("id")
-                            st.session_state["username"] = me_or_err.get("username")
-                            st.session_state.logged_in = True
-                            st.session_state.page = 'subjects'
-                            st.success("Login successful!")
-                            st.rerun()
-                        else:
-                            st.error(f"Login succeeded but fetching user failed: {me_or_err}")
-                    else:
-                        st.error(f"Login failed: {token_or_err}")
-                except Exception as e:
-                    # Fallback to simple login for demo
-                    st.session_state.logged_in = True
-                    st.session_state.user_id = generate_consistent_user_id(username_or_email)
-                    if "@" in username_or_email:
-                        st.session_state.user_email = username_or_email
-                        st.session_state.username = username_or_email.split("@")[0]
-                    else:
-                        st.session_state.username = username_or_email
-                    st.session_state.page = 'subjects'
-                    st.success("Login successful (demo mode)!")
-                    st.rerun()
+            if email and password:
+                # Fallback to simple login for demo (skip backend for now)
+                st.session_state.logged_in = True
+                st.session_state.user_id = generate_consistent_user_id(email)
+                st.session_state.user_email = email
+                st.session_state.page = 'subjects'
+                st.success("Login successful!")
+                st.rerun()
             else:
                 st.error("Please fill in all fields")
 
@@ -2988,16 +2965,16 @@ def render_login_page():
     # Sign Up Tab
     with tabs[1]:
         name = st.text_input("Full Name", placeholder="Jane Doe", key="reg_name")
-        username = st.text_input("Username", placeholder="choose_username", key="reg_username")
+        email = st.text_input("Email", placeholder="you@example.com", key="reg_email")
         password = st.text_input("Password", type="password", placeholder="Create a password", key="reg_password")
         confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password", key="reg_confirm")
 
         if st.button("Sign Up", key="signup_btn"):
-            if name and username and password and confirm_password:
+            if name and email and password and confirm_password:
                 if password == confirm_password:
                     st.session_state.logged_in = True
-                    st.session_state.user_id = generate_consistent_user_id(username)
-                    st.session_state.username = username
+                    st.session_state.user_id = generate_consistent_user_id(email)
+                    st.session_state.user_email = email
                     st.session_state.page = 'subjects'
                     st.success("Registration successful!")
                     st.rerun()
